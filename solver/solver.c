@@ -58,9 +58,9 @@ void test_check(int argc, char** argv)
     print_array(grid);
     printf("\n");
 
-    int r = check_row(num, grid, i);
+    int r = check_row(num, grid, i, j);
     printf("line %zu contain %i : %i\n", i, num, r);
-    r = check_col(num, grid, j);
+    r = check_col(num, grid, i, j);
     printf("col %zu contain %i : %i\n", j, num, r);
     r = check_squ(num, grid, i, j);
     printf("[%zu, %zu] contain %i : %i\n", i, j, num,  r);
@@ -91,10 +91,47 @@ void test_order(int argc, char** argv)
     int array[SIZE][SIZE] = {};
     possibility_array(grid, array);
 
-    int order[SIZE][SIZE] = {};
+    int order[SIZE * SIZE][2] = {};
     order_array(array, order);
     printf("Order Array :\n");
-    print_array(order);
+    for(size_t i = 0; i < SIZE * SIZE; ++i)
+    {
+	printf("[%i, %i] ", order[i][0], order[i][1]);
+	if((i + 1) % 9 == 0)
+	    printf("\n");
+    }
+}
+
+void test_well_place(int argc, char** argv)
+{
+    if(argc != 6)
+	exit_help();
+    
+    int num = atoi(argv[3]);
+    size_t i = atoi(argv[4]);
+    size_t j = atoi(argv[5]);
+
+    int grid[SIZE][SIZE] = {};
+    convert_grid(grid, argv[2]);
+    print_array(grid);
+    printf("\n");
+
+    printf("is number %i is well place : %i\n",
+	    num, well_place(num, grid, i, j));
+}
+
+void test_is_solve(int argc, char** argv)
+{
+    if(argc != 3)
+	exit_help();
+
+    int grid[SIZE][SIZE] = {};
+    convert_grid(grid, argv[2]);
+
+    if(is_solve(grid))
+        printf("%s is solve\n", argv[2]);
+    else
+        printf("%s is not solve\n", argv[2]);
 }
 
 int main(int argc,char** argv)
@@ -119,6 +156,14 @@ int main(int argc,char** argv)
     else if(strcmp(argv[1], "--ord") == 0)
     {
 	test_order(argc, argv);
+    }
+    else if(strcmp(argv[1], "--solve") == 0)
+    {
+	test_is_solve(argc, argv);
+    }
+    else if(strcmp(argv[1], "--well") == 0)
+    {
+	test_well_place(argc, argv);
     }
     else
     {

@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include "backtracking.h"
 
+
 // This function return 1 if number is
 // present in row i else 0
 int check_row(int number,
 	      int grid[][SIZE],
-	      size_t i)
+	      size_t i, size_t j)
 {
     for(size_t k = 0; k < SIZE; ++k)
     {
-	if(grid[i][k] == number)
+	if(j != k && grid[i][k] == number)
 	{
 	    return 1;
 	}
@@ -22,11 +23,11 @@ int check_row(int number,
 // present in column j else 0
 int check_col(int number,
 	      int grid[][SIZE],
-	      size_t j)
+	      size_t i, size_t j)
 {
     for(size_t k = 0; k < SIZE; ++k)
     {
-	if(grid[k][j] == number)
+	if(i != k && grid[k][j] == number)
 	{
 	    return 1;
 	}
@@ -56,6 +57,31 @@ int check_squ(int number,
     return 0;
 }
 
+// This function check if number can be place in case [i, j]
+int well_place(int number, int grid[][SIZE], size_t i, size_t j)
+{
+    return check_row(number, grid, i, j) +
+	   check_col(number, grid, i, j) +
+	   check_squ(number, grid, i, j) == 0 ? 1 : 0;
+}
+
+// This function check if the grid is solve
+int is_solve(int grid[][SIZE])
+{
+    for(size_t i = 0; i < 9; ++i)
+    {
+	for(size_t j = 0; j < 9; ++j)
+	{
+	    if(!well_place(grid[i][j], grid, i, j))
+	    {
+		printf("[%zu, %zu]", i, j);
+		return 0;
+	    }
+	}
+    }
+    return 1;
+}
+
 // this function make a array of int, when the case equal to:
 // 0: if there is a number
 // 1-9: if there is no number, representing the number
@@ -70,10 +96,7 @@ void possibility_array(int grid[][SIZE], int poss_array[][SIZE])
 	    {
 		for(int k = 1; k < 10; ++k)
 		{
-		    int presence = check_row(k, grid, i) +
-				   check_col(k, grid, j) +
-				   check_squ(k, grid, i, j);
-		    if(presence == 0)
+		    if(well_place(k, grid, i, j))
 		    {
 			poss_array[i][j] += 1;
 		    }
@@ -85,7 +108,7 @@ void possibility_array(int grid[][SIZE], int poss_array[][SIZE])
 
 // This function make an array of int,
 // the case gives the filling order
-void order_array(int poss_array[][SIZE], int ord_array[][SIZE])
+void order_array(int poss_array[][SIZE], int ord_array[][2])
 {
     int order = 1;
     for(int k = 1; k < 10; ++k)
@@ -96,10 +119,17 @@ void order_array(int poss_array[][SIZE], int ord_array[][SIZE])
 	    {
 		if(poss_array[i][j] == k)
 		{
-		    ord_array[i][j] = order;
+		    ord_array[order - 1][0] = i;
+		    ord_array[order - 1][1] = j;
 		    ++order;
 		}
 	    }
 	}
     }
+}
+
+
+void backtracking_algo(int grid[][SIZE], int order[][SIZE])
+{
+
 }
