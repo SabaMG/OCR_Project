@@ -54,11 +54,11 @@ void write_grid(int grid[][SIZE], char filename[])
 	for(size_t j = 0; j < 9; ++j)
 	{
 	    fputc(to_char(grid[i][j]), stream);
-	    if((j + 1) % 3 == 0)
+	    if(j == 2 || j == 5)
 		fputc(' ', stream);
 	}
 	fputc('\n', stream);
-	if((i + 1)% 3 == 0)
+	if(i == 2 || i == 5)
 	    fputc('\n', stream);
     }
 
