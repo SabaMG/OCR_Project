@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "function.h"
+#include "read_file.h"
 
 void print_grid(char filename[])
 {
@@ -25,7 +25,7 @@ void print_grid(char filename[])
     fclose(stream);
 }
 
-void convert_grid(unsigned int grid[][GRID_SIZE], char filename[])
+void convert_grid(int grid[][GRID_SIZE], char filename[])
 {
     // open stream reader in stream
     FILE* stream;
@@ -62,7 +62,7 @@ void convert_grid(unsigned int grid[][GRID_SIZE], char filename[])
     fclose(stream);
 }
 
-unsigned int convert(char c)
+int convert(char c)
 {
     if(c == '.')
 	return 0;
