@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include "backtracking.h"
 
-
-// This function return 1 if number is
 // present in row i else 0
 int check_row(int number,
 	      int grid[][SIZE],
@@ -74,7 +72,22 @@ int is_solve(int grid[][SIZE])
 	{
 	    if(!well_place(grid[i][j], grid, i, j))
 	    {
-		printf("[%zu, %zu]", i, j);
+		return 0;
+	    }
+	}
+    }
+    return 1;
+}
+
+int is_complete(int grid[][SIZE])
+{
+    for(size_t i = 0; i < 9; ++i)
+    {
+	for(size_t j = 0; j < 9; ++j)
+	{
+	    //printf("[%zu, %zu]", i ,j);
+	    if(grid[i][j] == 0)
+	    {
 		return 0;
 	    }
 	}
@@ -128,8 +141,59 @@ void order_array(int poss_array[][SIZE], int ord_array[][2])
     }
 }
 
-
-void backtracking_algo(int grid[][SIZE], int order[][SIZE])
+// This function copy the array original in the array copy
+void copy_array(int original[][SIZE], int copy[][SIZE])
 {
+    for(size_t i = 0; i < 9; ++i)
+    {
+	for(size_t j = 0; j < 9; ++j)
+	{
+	    copy[i][j] = original[i][j];
+	}
+    }
+}
 
+// This function solve the original grid
+int backtracking_algo(int original[][SIZE], 
+		      int grid[][SIZE],
+		      int order[][2], size_t order_i)
+{   
+    //printf("|%zu| ", order_i);
+    // copy the grid
+    int copy[SIZE][SIZE];
+    copy_array(grid, copy);
+
+    // coordinate of case to complete
+    size_t i = order[order_i][0];
+    size_t j = order[order_i][1];
+    for(int k = 1; k < 10; ++k)
+    {
+	// if number k is well place 
+        if(well_place(k, copy, i, j))
+        {
+	    // modify copy and check if it complete
+	    copy[i][j] = k;
+	    if(is_complete(copy))
+	    {
+	        // if copy is solve modify original
+	        if(is_solve(copy))
+	        {
+		    original[i][j] = k;
+		    return 1;
+		}
+	    }
+	    else
+	    {
+		int son = backtracking_algo(original, copy, order, order_i + 1);
+	        // if son solve grid modify original
+		if(son)
+		{
+		    original[i][j] = k;
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
 }

@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra
 LDFALGS =
 LDLIBS = 
 
-SRC = solver.c read_file.c backtracking.c
+SRC = solver.c file.c backtracking.c
 OBJ = ${SRC:.c=.o}
 DEP = ${SRC:.c=.d}
 
@@ -22,3 +22,4 @@ clean:
 	${RM} ${OBJ}
 	${RM} ${DEP}
 	${RM} solver
+	${RM} *.result
