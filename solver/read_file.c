@@ -25,7 +25,7 @@ void print_grid(char filename[])
     fclose(stream);
 }
 
-void convert_grid(int grid[][GRID_SIZE], char filename[])
+void convert_grid(int grid[][SIZE], char filename[])
 {
     // open stream reader in stream
     FILE* stream;

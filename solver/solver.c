@@ -15,9 +15,23 @@ void exit_help()
     errx(EXIT_FAILURE, "%s", help);
 }
 
-size_t c1(char c)
+void print_array(int grid[][SIZE])
 {
-    return c - 48;
+    for(size_t i = 0; i < 9; ++i)
+    {
+	for ( size_t j = 0; j < 9; ++j)
+	{
+	    if(j % 3 == 0)
+		printf(" ");
+	    if(grid[i][j] != 0)
+		printf("[%i]", grid[i][j]);
+	    else
+		printf("[ ]");
+	}
+	if((i + 1) % 3 == 0)
+	    printf("\n");
+	printf("\n");
+    }
 }
 
 void test_read(int argc, char** argv)
@@ -25,16 +39,9 @@ void test_read(int argc, char** argv)
     if(argc != 3)
 	exit_help();
 
-    int grid[GRID_SIZE][GRID_SIZE];
+    int grid[SIZE][SIZE] = {0};
     convert_grid(grid, argv[2]);
-    for(size_t i = 0; i < 9; ++i)
-    {
-	for (size_t j = 0; j < 9; ++j)
-	{
-	    printf("%i|", grid[i][j]);
-	}
-	printf("\n");
-    }
+    print_array(grid);
 }
 
 void test_check(int argc, char** argv)
@@ -46,11 +53,10 @@ void test_check(int argc, char** argv)
     size_t i = atoi(argv[4]);
     size_t j = atoi(argv[5]);
 
-    print_grid(argv[2]);
-    printf("\n");
-
-    int grid[GRID_SIZE][GRID_SIZE];
+    int grid[SIZE][SIZE] = {};
     convert_grid(grid, argv[2]);
+    print_array(grid);
+    printf("\n");
 
     int r = check_row(num, grid, i);
     printf("line %zu contain %i : %i\n", i, num, r);
@@ -58,6 +64,37 @@ void test_check(int argc, char** argv)
     printf("col %zu contain %i : %i\n", j, num, r);
     r = check_squ(num, grid, i, j);
     printf("[%zu, %zu] contain %i : %i\n", i, j, num,  r);
+}
+
+void test_possibility(int argc, char** argv)
+{
+    if(argc != 3)
+	exit_help();
+
+    int grid[SIZE][SIZE] = {};
+    convert_grid(grid, argv[2]);
+    
+    int array[SIZE][SIZE] = {};
+    possibility_array(grid, array);
+    printf("Possibility array :\n");
+    print_array(array);
+}
+
+void test_order(int argc, char** argv)
+{
+    if(argc != 3)
+	exit_help();
+
+    int grid[SIZE][SIZE] = {};
+    convert_grid(grid, argv[2]);
+    
+    int array[SIZE][SIZE] = {};
+    possibility_array(grid, array);
+
+    int order[SIZE][SIZE] = {};
+    order_array(array, order);
+    printf("Order Array :\n");
+    print_array(order);
 }
 
 int main(int argc,char** argv)
@@ -74,6 +111,14 @@ int main(int argc,char** argv)
     else if(strcmp(argv[1], "--check") == 0)
     {
 	test_check(argc, argv);
+    }
+    else if(strcmp(argv[1], "--poss") == 0)
+    {
+	test_possibility(argc, argv);
+    }
+    else if(strcmp(argv[1], "--ord") == 0)
+    {
+	test_order(argc, argv);
     }
     else
     {
