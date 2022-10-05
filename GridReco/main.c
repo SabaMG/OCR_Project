@@ -14,6 +14,19 @@
 
 //#define main main
 
+size_t maxList(int _list[], size_t len){
+    size_t max_index = 0;
+    int max = 0;
+    for (size_t i = 0; i < len; i++){
+        if (_list[i] > max){
+            max = _list[i];
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
+
 int main(int argc, char *argv[]){
     
     SDL_Window* window;
@@ -98,7 +111,7 @@ int main(int argc, char *argv[]){
                 }
             }
         }
-        //printf("%i\n", x);
+        //printf("%i / %i\n", x, img->w);
     }
 
     size_t max_index = 0;
@@ -111,8 +124,50 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    int angle = (max_index - 90) * ((((int)max_index - 90) < 0) ? -1 : 1);
+    int angle = max_index;//(max_index - 90) * ((((int)max_index - 90) < 0) ? -1 : 1);
     printf("Angle: %i\n", angle);
+    SDL_UpdateTexture(background, NULL, img->pixels,
+        img->w * sizeof(Uint32));
+
+    size_t lenX = img->w;
+    size_t lenY = img->h;
+    int linesX[lenX];
+    int linesY[lenY];
+    for (size_t i = 0; i < lenX; i++){
+        linesX[i] = 0;    
+    }
+    for (size_t i = 0; i < lenY; i++){
+        linesY[i] = 0;
+    }
+    if (angle == 0){
+        for (size_t x = 0; x < lenX; x++){
+            for (size_t y = 0; y < lenY; y++){
+                Uint32 pixel = pixels[y * (lenX) + x];
+                if ((pixel & 0xff) == 0xff){
+                    linesX[x]++;
+                    linesY[y]++;
+                }
+            }
+        }
+    }
+
+    for (size_t round = 0; round < 10; round++){
+        size_t maxX = maxList(linesX, lenX);
+        for (size_t j = 0; j < lenY; j++){
+            pixels[j * (lenX) + maxX] = (0xff << 24) | (0xff << 16) | (0x00 << 8) | (0x00);
+            linesX[maxX] *= -1;
+        }
+    }
+    /*for (size_t i = 0; i < 10; i++){
+        size_t* Ro = 0;
+        int thetA = MaxIndexInTable(Hough_lines, diag_length, Ro);
+        Hough_lines[*Ro][thetA] *= -1;
+        size_t x0 = (size_t)(cos(thetA)*(double)*Ro);
+        printf("i: %zu x0: %zu\n", i, x0);
+        for (size_t y = 0; y < (size_t)img->h; y++)
+            pixels[y * (img->w) + x0] = (0xff << 24) | (0xff << 16);
+    }*/
+
     SDL_UpdateTexture(background, NULL, img->pixels,
         img->w * sizeof(Uint32));
     
@@ -125,13 +180,7 @@ int main(int argc, char *argv[]){
     SDL_RenderClear(renderer);
 
     
-
-    SDL_Rect pos;
-    pos.x = 0;
-    pos.y = 0;
-    pos.w = img->w;
-    pos.h = img->h;
-    SDL_RenderCopy(renderer, background, NULL, &pos);
+    SDL_RenderCopy(renderer, background, NULL, NULL);
     /*if (SDL_RenderCopy(renderer, background, NULL, &pos) != 0){
         perror ("Copy errors found");
         return 1;
