@@ -26,6 +26,18 @@ size_t maxList(int _list[], size_t len){
     return max_index;
 }
 
+size_t minList(size_t _list[], size_t len){
+    size_t min_index = 0;
+    size_t min = _list[0];
+    for (size_t i = 0; i < len; i++){
+        if (_list[i] < min){
+            min = _list[i];
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
 
 int main(int argc, char *argv[]){
     
@@ -133,6 +145,8 @@ int main(int argc, char *argv[]){
     size_t lenY = img->h;
     int linesX[lenX];
     int linesY[lenY];
+    size_t tmp_X[10] = {};
+    size_t tmp_Y[10] = {};
     for (size_t i = 0; i < lenX; i++){
         linesX[i] = 0;    
     }
@@ -155,9 +169,67 @@ int main(int argc, char *argv[]){
         size_t maxX = maxList(linesX, lenX);
         for (size_t j = 0; j < lenY; j++){
             pixels[j * (lenX) + maxX] = (0xff << 24) | (0xff << 16) | (0x00 << 8) | (0x00);
-            linesX[maxX] *= -1;
         }
+        size_t ind = maxX-1;
+            int threshold = (int)((float)(linesX[maxX])*0.90);
+            while (ind > 0 && (linesX[ind] > threshold || maxX - ind < 10))
+            {
+                linesX[ind] *= -1;
+                ind--;
+            }
+            ind = maxX + 1;
+            while (ind < lenX && (linesX[ind] > threshold || ind - maxX < 10))
+            {
+                linesX[ind] *= -1;
+                ind++;
+            }
+            linesX[maxX] *= -1;
+            tmp_X[round] = maxX;
     }
+
+    for (size_t round = 0; round < 10; round++){
+        size_t maxY = maxList(linesY, lenY);
+        for (size_t j = 0; j < lenX; j++){
+            pixels[maxY * lenX + j] = (0xff << 24) | (0xff << 16) | (0x00 << 8) | (0x00);
+        }
+        size_t ind = maxY-1;
+            int threshold = (int)((float)(linesY[maxY])*0.90);
+            while (ind > 0 && (linesY[ind] > threshold || maxY - ind < 10))
+            {
+                linesY[ind] *= -1;
+                ind--;
+            }
+            ind = maxY + 1;
+            while (ind < lenY && (linesY[ind] > threshold || ind - maxY < 10))
+            {
+                linesY[ind] *= -1;
+                ind++;
+            }
+            linesY[maxY] *= -1;
+            tmp_Y[round] = maxY;
+    }
+
+    size_t coord_X_list[10] = {};
+    size_t coord_Y_list[10] = {};
+    for (size_t i = 0; i < 10; i++)
+    {
+        size_t tmp = minList(tmp_X, 10);
+        printf("%zu\n", tmp);
+        coord_X_list[i] = tmp;
+        tmp_X[tmp] = 0;
+        tmp = minList(tmp_Y, 10);
+        coord_Y_list[i] = tmp;
+        tmp_Y[tmp] = 0;
+    }
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        printf("%zu/", coord_X_list[i]);
+        printf("%zu\n", coord_Y_list[i]);
+    }
+    
+    
+
     /*for (size_t i = 0; i < 10; i++){
         size_t* Ro = 0;
         int thetA = MaxIndexInTable(Hough_lines, diag_length, Ro);
@@ -195,6 +267,9 @@ int main(int argc, char *argv[]){
     SDL_Delay(1000);
 
     // Always be sure to clean up
+    SDL_DestroyTexture(background);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     IMG_Quit();
     SDL_Quit();
     return 0;
