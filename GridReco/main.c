@@ -214,19 +214,34 @@ int main(int argc, char *argv[]){
     for (size_t i = 0; i < 10; i++)
     {
         size_t tmp = minList(tmp_X, 10);
-        printf("%zu\n", tmp);
-        coord_X_list[i] = tmp;
-        tmp_X[tmp] = 0;
+        //printf("%zu\n", tmp);
+        coord_X_list[i] = tmp_X[tmp];
+        tmp_X[tmp] = lenX;
         tmp = minList(tmp_Y, 10);
-        coord_Y_list[i] = tmp;
-        tmp_Y[tmp] = 0;
+        coord_Y_list[i] = tmp_Y[tmp];
+        tmp_Y[tmp] = lenY;
     }
 
-    for (size_t i = 0; i < 10; i++)
+    /*SDL_Rect case_;
+    case_.x = coord_X_list[0];
+    case_.y = coord_Y_list[0];
+    case_.w = coord_X_list[1]-coord_X_list[0];
+    case_.h = coord_Y_list[1]-coord_Y_list[0];
+    SDL_Surface resultSurf;
+    SDL_BlitSurface(img, &case_, &resultSurf, NULL);
+    IMG_SaveJPG(&resultSurf, "testable.jpg", 1);*/
+
+    /*SDL_Texture* result = SDL_CreateTexture(renderer,
+        SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC,
+        case.w, case.h);
+    SDL_RenderCopy(renderer, background, &case, NULL)
+    IMG_SaveJPG(img, "testable.jpg", 240);*/
+
+    /*for (size_t i = 0; i < 10; i++)
     {
         printf("%zu/", coord_X_list[i]);
         printf("%zu\n", coord_Y_list[i]);
-    }
+    }*/
     
     
 
@@ -267,6 +282,7 @@ int main(int argc, char *argv[]){
     SDL_Delay(1000);
 
     // Always be sure to clean up
+    SDL_FreeSurface(img);
     SDL_DestroyTexture(background);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
