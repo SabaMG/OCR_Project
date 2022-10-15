@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
     if (SDL_Init(SDL_INIT_VIDEO) < 0 || IMG_Init(1) == 0)
             return 1;
 
-    if (argc != 2)
+    if (argc != 3)
             return 1;
     
     //SDL_Surface __Surf = *IMG_Load(argv[1]);
@@ -221,15 +221,27 @@ int main(int argc, char *argv[]){
         coord_Y_list[i] = tmp_Y[tmp];
         tmp_Y[tmp] = lenY;
     }
-
-    /*SDL_Rect case_;
-    case_.x = coord_X_list[0];
-    case_.y = coord_Y_list[0];
-    case_.w = coord_X_list[1]-coord_X_list[0];
-    case_.h = coord_Y_list[1]-coord_Y_list[0];
-    SDL_Surface resultSurf;
-    SDL_BlitSurface(img, &case_, &resultSurf, NULL);
-    IMG_SaveJPG(&resultSurf, "testable.jpg", 1);*/
+    
+    SDL_Surface *newImg = IMG_Load(argv[2]);
+    char filename_[] = {'c', 'a', 's', 'e', 's', '/', 't', 'e', 's', 't', 'a', 'b', 'l', 'e', '0', '0', '.', 'j', 'p', 'g', 0};
+    for (size_t j = 0; j < 9; j++){
+        for (size_t i = 0; i < 9; i++){
+            SDL_Rect case_;
+            case_.x = coord_X_list[i];
+            case_.y = coord_Y_list[j];
+            case_.w = coord_X_list[i+1]-coord_X_list[i];
+            case_.h = coord_Y_list[j+1]-coord_Y_list[j];
+            SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w, case_.h, 32, 0, 0, 0, 0);
+            SDL_UnlockSurface(resultSurf);
+            if (SDL_BlitSurface(newImg, &case_, resultSurf, NULL) == 0)
+            {
+                //printf("hehehe\n");
+                filename_[14] = '0' + i;
+                filename_[15] = '0' + j;
+                IMG_SaveJPG(resultSurf, filename_, 100/*case_.w < case_.h ? case_.w : case_.h*/);
+            }
+        }
+    }
 
     /*SDL_Texture* result = SDL_CreateTexture(renderer,
         SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC,
@@ -257,6 +269,7 @@ int main(int argc, char *argv[]){
 
     SDL_UpdateTexture(background, NULL, img->pixels,
         img->w * sizeof(Uint32));
+    SDL_FreeSurface(img);
     
     //SDL_Texture* background = IMG_LoadTexture(renderer, argv[1]);
 
@@ -282,7 +295,6 @@ int main(int argc, char *argv[]){
     SDL_Delay(1000);
 
     // Always be sure to clean up
-    SDL_FreeSurface(img);
     SDL_DestroyTexture(background);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
