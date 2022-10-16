@@ -5,6 +5,7 @@ extern const int nOutputs;
 extern const int nTrainingSets;
 
 int train(
+		int vflag,
 		double lr,
 		int nEpochs,
 		double hiddenLayerBias[],

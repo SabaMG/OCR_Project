@@ -19,45 +19,21 @@
 	- ajouter la sauvegarde / chargement des poids depuis un fichier.
 	- ajouter un prompt pour saisir les inputs.
 	- ajouter un print pour le resultat.
-	- ajouter un timer pour l'apprentissage.
 	- ajouter les options
-		-ep (nombre d'epochs, par default: 10000)
-		-v (verbose: afficher les logs de l'apprentissage)
-		-lr (learning rate, par default: 0.1)
 		-lw (load weights, suivi d'un nom de fichier)
 		-sw (save weights, suivi d'un nom de fichier)
 
 */
 
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 #include "train.h"
 #include "utils.h"
 
-/* print two dimensions double array */
-/*
-void printM(double a[][2], size_t rows, size_t cols) {
-	for (size_t row = 0; row < rows; row++) {
-		for (size_t col = 0; col < cols; col++) {
-			printf("%4g", a[row][col]);
-		}
-		printf("\n");
-	}
-}
-*/
-
-
-/* print int array */
-/*
-void printA(int a[], size_t l) {
-	printf("[ ");
-	for (size_t i = 0; i < l; i++) {
-		printf("%i, ", a[i]);
-	}
-	printf("]\n");
-}
-*/
-
-int main() {
+int main(int argc, char **argv) {
 
 	double hiddenLayer[nHiddenNodes];
 	double outputLayer[nOutputs];
@@ -77,23 +53,89 @@ int main() {
 									  {1.0f},
 									  {1.0f},
 									  {0.0f}};
+
+	/* parsing command line arguments */
+	int vflag = 0; /* verbose mode */
+	int tflag = 0; /* trainig mode */
+	char *evalue = NULL; /* set epochs for training */
+	char *rvalue = NULL; /* set learning rate for training */
+	int index;
+	int c;
+
+	while ((c = getopt (argc, argv, "tve:r:")) != -1) {
+		switch (c)
+		{
+			case 'v':
+				vflag = 1;
+				break;
+			case 't':
+				tflag = 1;
+				break;
+			case 'e':
+				evalue = optarg;
+				break;
+			case 'r':
+				rvalue = optarg;
+				break;
+			case '?':
+				if (optopt == 'e' || optopt == 'r')
+					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+				else if (isprint (optopt))
+					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+				else
+					fprintf (stderr,
+							"Unknown option character `\\x%x'.\n",
+							optopt);
+				return 1;
+			default:
+				abort ();
+		}
+	}
+	for (index = optind; index < argc; index++) {
+		printf ("Non-option argument %s\n", argv[index]);
+	}
+	
+
+	if (tflag) { /* if training mode */
+		const double defaultLR = 0.1f; /* learning rate */
+		const int defaultNumEpochs = 10000; /* default epochs value */
+
+		/* change epochs if in args */
+		int nEpochs = defaultNumEpochs;
+		if (evalue != NULL) {
+			nEpochs = atoi(evalue);
+		}
+		/* change lr if in arg */
+		double lr = defaultLR;
+		if (rvalue != NULL) {
+			lr = atof(rvalue);
+		}
+
+		/* initialization of weights */
+		initWeights(hiddenWeights, outputWeights, outputLayerBias);
+
+		/* start training */
+		double time_spent = 0.0f;
+		clock_t begin = clock();
+
+		int error = train(vflag, lr, nEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+
+		clock_t end = clock();
+		time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+
+		if (error == 0) {
+			printf("\nTraining successfully completed in %f seconds (epochs = %i; learning rate = %g)\n", time_spent, nEpochs, lr);
+		}
+	}
+
 	/*
 	// testing shuffle algorithm
 	int a[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 	for (int i = 0; i < 50; i++) {
-		shuffle(a, 10);
-		printA(a, 10);
+	shuffle(a, 10);
+	printA(a, 10);
 	}
-	*/
-	
-	// Initialize weights.
-	initWeights(hiddenWeights, outputWeights, outputLayerBias);
+	 */
 
-	const double lr = 0.1f; // Define learning rate of nn.
-	int nEpochs = 10000;
-
-	// Train nn.
-	train(lr, nEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
-
-	return 0;
+	return EXIT_SUCCESS;
 }

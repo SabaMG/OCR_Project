@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <math.h>
 #include "utils.h"
 
 /* train the neural network for a number of epochs */
 int train(
+		int vflag,
 		double lr,
 		int nEpochs,
 		double hiddenLayerBias[],
@@ -45,10 +47,13 @@ int train(
 				outputLayer[j] = sigmoid(activation); // Update output Layer.
 			}
 
-			// Print result of pass.
-			printf("Input: %g %g\tOutput: %g\tExpected: %g\n",
-					trainingInputs[i][0], trainingInputs[i][1],
-					outputLayer[0], trainingOutputs[i][0]);
+			if (vflag) {
+				// Print result of pass.
+				printf("%i - %i Input: %g %g (%i)\tOutput: %5f\tExpected: %g\n",
+						epoch, (int)x,
+						trainingInputs[i][0], trainingInputs[i][1], i,
+						outputLayer[0], trainingOutputs[i][0]);
+			}
 
 			// Backpropagation pass.
 
@@ -58,7 +63,7 @@ int train(
 				double error = (trainingOutputs[i][j] - outputLayer[j]);
 				deltaOutput[j] = error * dSigmoid(outputLayer[j]);
 			}
-			
+
 			// Compute change in hidden weights.
 			double deltaHidden[nHiddenNodes];
 			for (size_t j = 0; j < nHiddenNodes; j++) {
@@ -68,7 +73,7 @@ int train(
 				}
 				deltaHidden[j] = error * dSigmoid(hiddenLayer[j]);
 			}
-			
+
 			// Apply change in output weights.
 			for (int j = 0; j < nOutputs; j++) {
 				outputLayerBias[j] += deltaOutput[j] * lr;
@@ -87,8 +92,7 @@ int train(
 		}
 	}
 
-	// Print final results after training.
-	printf("\n");
+	/* Print final results after training. */
 	printf("====================================\n");
 	printf("===|FINAL RESULTS AFTER TRAINING|===\n");
 	printf("====================================\n\n");
@@ -100,8 +104,7 @@ int train(
 		}
 		printf("]\n");
 	}
-	printf("\n");
-	printf("Final Outputs Weights\n");
+	printf("\nFinal Outputs Weights\n");
 	for (size_t i = 0; i < nHiddenNodes; i++) {
 		printf("[ ");
 		for (size_t j = 0; j < nOutputs; j++) {
@@ -109,15 +112,45 @@ int train(
 		}
 		printf("]\n");
 	}
-	printf("\n");
-	printf("Final Hidden Biases\n");
+	printf("\nFinal Hidden Biases\n");
 	for (size_t i = 0; i < nHiddenNodes; i++) {
 		printf("%f\n", hiddenLayerBias[i]);
 	}
-	printf("\n");
-	printf("Final Output Biases\n");
+	printf("\nFinal Output Biases\n");
 	for (size_t i = 0; i < nOutputs; i++) {
 		printf("%f\n", outputLayerBias[i]);
+	}
+	
+	/* Do one last forward pass without backpropagation */
+	printf("\nLast Training Session\n");
+	int order[] = {0, 1, 2, 3};
+	for (size_t x = 0; x < nTrainingSets; x++) {
+		int i = order[x];
+
+		// Compute hidden layer activation.
+		for(size_t j = 0; j < nHiddenNodes; j++) {
+			double activation = hiddenLayerBias[j];
+			for (size_t k = 0; k < nInputs; k++) {
+				activation += trainingInputs[i][k] * hiddenWeights[k][j];
+			}
+			hiddenLayer[j] = sigmoid(activation); // Update hidden layer.
+		}
+
+		// Compute output layer activation.
+		for (size_t j = 0; j < nOutputs; j++) {
+			double activation = outputLayerBias[j];
+			for (size_t k = 0; k < nHiddenNodes; k++) {
+				activation += hiddenLayer[k] * outputWeights[k][j];
+			}
+			outputLayer[j] = sigmoid(activation); // Update output Layer.
+		}
+
+		double percentage =  round(outputLayer[0]) == 0.0f ? (1.0f - outputLayer[0]) * 100.0f : outputLayer[0] * 100.0f;
+
+		printf("Input: %g %g\tOutput: %5f\tExpected: %g\t %5f%%\n",
+				trainingInputs[i][0], trainingInputs[i][1],
+				outputLayer[0], trainingOutputs[i][0], percentage);
+
 	}
 
 	return 0;
