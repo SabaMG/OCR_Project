@@ -6,15 +6,16 @@ CFLAGS = -Wall -Wextra -std=c99 -O0 -g
 LDFLAGS =
 LDLIBS =
 
-OBJ = xor.o
+SRC = main.c train.c utils.c
+OBJ = ${SRC:.c=.o}
 DEP = ${OBJ:.o=.d}
 
-all: xor
+all: main
 
 main: ${OBJ}
 
 clean:
-	${RM} ${OBJ} ${DEP} xor
+	${RM} ${OBJ} ${DEP} main
 
 -include ${DEP}
 
