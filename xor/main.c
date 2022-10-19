@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (!tflag) { /* if normal mode (not in training mode) */
+
 		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
 		const double defaultLR = 0.1f; /* learning rate */
 		const int defaultNumEpochs = 10000; /* default epochs value */
@@ -102,6 +103,7 @@ int main(int argc, char **argv) {
 		printf("END OF TRAINING\n");
 		printf("\n");
 		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
+
 		char i1;
 		while (1) { /* get first input */
 			printf("Enter first input: ");
@@ -113,6 +115,7 @@ int main(int argc, char **argv) {
 				printf("Input should be 0 or 1, try again.\n");
 			}
 		}
+		/* without it bugs! */ getchar(); /* without its bugs! */
 		char i2;
 		while (1) { /* get second input */
 			printf("Enter second input: ");
@@ -124,6 +127,7 @@ int main(int argc, char **argv) {
 				printf("Input should be 0 or 1, try again.\n");
 			}
 		}
+
 		/* build input array */
 		double inputs[2];
 		inputs[0] = (double)(i1 - 48);
@@ -136,7 +140,7 @@ int main(int argc, char **argv) {
 		//system("clear"); /* clear screen for print results */
 		printf("\n");
 		printf("RESULTS AFTER FORWARD PASS IN THE NEURAL NETWORK\n");
-		printf("Input: %g %g\tOutput: %5f\t\n",
+		printf("Input: %g %g\tOutput: %.f\t\n",
 				inputs[0], inputs[1], outputLayer[0]);
 	}
 
@@ -162,14 +166,13 @@ int main(int argc, char **argv) {
 		clock_t begin = clock();
 
 		/* do train */
-		int error = train(vflag, lr, nEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+		train(vflag, lr, nEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
 
 		clock_t end = clock(); /* stop timer */
 		time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
 
-		if (error == 0) { /* print info */
-			printf("\nTraining successfully completed in %f seconds (epochs = %i; learning rate = %g)\n", time_spent, nEpochs, lr);
-		}
+		/* print some info */
+		printf("\nTraining successfully completed in %f seconds (epochs = %i; learning rate = %g)\n", time_spent, nEpochs, lr);
 	}
 
 	/*
