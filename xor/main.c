@@ -15,7 +15,6 @@
 	   1 1 -> 0
 		
 	TODO
-	- diviser en plusieurs fichier: main.c, train.c, utils.c
 	- ajouter la sauvegarde / chargement des poids depuis un fichier.
 	- ajouter un prompt pour saisir les inputs.
 	- ajouter un print pour le resultat.
@@ -30,7 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include "train.h"
+#include "neural_network.h"
 #include "utils.h"
 
 int main(int argc, char **argv) {
@@ -94,7 +93,46 @@ int main(int argc, char **argv) {
 	for (index = optind; index < argc; index++) {
 		printf ("Non-option argument %s\n", argv[index]);
 	}
-	
+
+	if (!tflag) { /* if normal mode (not in training mode) */
+		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
+		const double defaultLR = 0.1f; /* learning rate */
+		const int defaultNumEpochs = 10000; /* default epochs value */
+		initWeights(hiddenWeights, outputWeights, outputLayerBias);
+		train(vflag, defaultLR, defaultNumEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+		printf("\n");
+		printf("END OF TRAINING\n");
+		printf("\n");
+		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
+		/* get inputs */
+		char s1;
+		char s2;
+		int isWrong = 1;
+		while (isWrong) {
+			printf("Enter first input: ");
+			scanf("%s", &s1);
+			if (s1 == '0' || s1 == '1') {
+				isWrong = 0;
+			}
+			else {
+				printf("Input should be 0 or 1. Try again.\n");
+			}
+		}
+		isWrong = 1;
+		while (isWrong) {
+			printf("Enter second input: ");
+			scanf("%s", &s2);
+			if (s2 == '0' || s2 == '1') {
+				isWrong = 0;
+			}
+			else {
+				printf("Input should be 0 or 1. Try again.\n");
+			}
+		}
+		int i1 = atoi(&s1);
+		int i2 = atoi(&s2);
+		printf("Inputs: %i, %i\n", i1, i2);
+	}
 
 	if (tflag) { /* if training mode */
 		const double defaultLR = 0.1f; /* learning rate */

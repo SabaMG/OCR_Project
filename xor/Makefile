@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra -std=c99 -O0 -g
 LDFLAGS =
 LDLIBS =
 
-SRC = main.c train.c utils.c
+SRC = main.c neural_network.c utils.c
 OBJ = ${SRC:.c=.o}
 DEP = ${OBJ:.o=.d}
 
