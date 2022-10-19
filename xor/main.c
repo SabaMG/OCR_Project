@@ -16,8 +16,6 @@
 		
 	TODO
 	- ajouter la sauvegarde / chargement des poids depuis un fichier.
-	- ajouter un prompt pour saisir les inputs.
-	- ajouter un print pour le resultat.
 	- ajouter les options
 		-lw (load weights, suivi d'un nom de fichier)
 		-sw (save weights, suivi d'un nom de fichier)
@@ -104,34 +102,42 @@ int main(int argc, char **argv) {
 		printf("END OF TRAINING\n");
 		printf("\n");
 		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
-		/* get inputs */
-		char s1;
-		char s2;
-		int isWrong = 1;
-		while (isWrong) {
+		char i1;
+		while (1) { /* get first input */
 			printf("Enter first input: ");
-			scanf("%s", &s1);
-			if (s1 == '0' || s1 == '1') {
-				isWrong = 0;
+			i1 = getchar();
+			if (i1 == '0' || i1 == '1') {
+				break;
 			}
 			else {
-				printf("Input should be 0 or 1. Try again.\n");
+				printf("Input should be 0 or 1, try again.\n");
 			}
 		}
-		isWrong = 1;
-		while (isWrong) {
+		char i2;
+		while (1) { /* get second input */
 			printf("Enter second input: ");
-			scanf("%s", &s2);
-			if (s2 == '0' || s2 == '1') {
-				isWrong = 0;
+			i2 = getchar();
+			if (i2 == '0' || i2 == '1') {
+				break;
 			}
 			else {
-				printf("Input should be 0 or 1. Try again.\n");
+				printf("Input should be 0 or 1, try again.\n");
 			}
 		}
-		int i1 = atoi(&s1);
-		int i2 = atoi(&s2);
-		printf("Inputs: %i, %i\n", i1, i2);
+		/* build input array */
+		double inputs[2];
+		inputs[0] = (double)(i1 - 48);
+		inputs[1] = (double)(i2 - 48);
+
+		/* do forward pass */
+		forward_pass(inputs, hiddenLayerBias, outputLayerBias, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+
+		/* print results */
+		//system("clear"); /* clear screen for print results */
+		printf("\n");
+		printf("RESULTS AFTER FORWARD PASS IN THE NEURAL NETWORK\n");
+		printf("Input: %g %g\tOutput: %5f\t\n",
+				inputs[0], inputs[1], outputLayer[0]);
 	}
 
 	if (tflag) { /* if training mode */
@@ -152,16 +158,16 @@ int main(int argc, char **argv) {
 		/* initialization of weights */
 		initWeights(hiddenWeights, outputWeights, outputLayerBias);
 
-		/* start training */
-		double time_spent = 0.0f;
+		double time_spent = 0.0f; /* start timer */
 		clock_t begin = clock();
 
+		/* do train */
 		int error = train(vflag, lr, nEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
 
-		clock_t end = clock();
+		clock_t end = clock(); /* stop timer */
 		time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
 
-		if (error == 0) {
+		if (error == 0) { /* print info */
 			printf("\nTraining successfully completed in %f seconds (epochs = %i; learning rate = %g)\n", time_spent, nEpochs, lr);
 		}
 	}

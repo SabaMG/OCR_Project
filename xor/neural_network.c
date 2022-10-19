@@ -2,19 +2,57 @@
 #include <math.h>
 #include "utils.h"
 
+/* forward pass
+   outputLayer array is updated after pass
+   used also for training */
+int forward_pass(
+		double inputs[],
+		double hiddenLayerBias[],
+		double outputLayerBias[],
+		double hiddenWeights[][nHiddenNodes],
+		double outputWeights[][nOutputs],
+		double hiddenLayer[],
+		double outputLayer[]
+		) {
+
+	// Compute hidden layer activation.
+	for (size_t j = 0; j < nHiddenNodes; j++)
+	{
+		double activation = hiddenLayerBias[j];
+		for (size_t k = 0; k < nInputs; k++)
+		{
+			activation += inputs[k] * hiddenWeights[k][j];
+		}
+		hiddenLayer[j] = sigmoid(activation); // Update hidden layer.
+	}
+
+	// Compute output layer activation.
+	for (size_t j = 0; j < nOutputs; j++)
+	{
+		double activation = outputLayerBias[j];
+		for (size_t k = 0; k < nHiddenNodes; k++)
+		{
+			activation += hiddenLayer[k] * outputWeights[k][j];
+		}
+		outputLayer[j] = sigmoid(activation); // Update output Layer.
+	}
+
+	return 0;
+}
+
 /* train the neural network for a number of epochs */
 int train(
-	int vflag,
-	double lr,
-	int nEpochs,
-	double hiddenLayerBias[],
-	double outputLayerBias[],
-	double trainingInputs[][nInputs],
-	double trainingOutputs[][nOutputs],
-	double hiddenWeights[][nHiddenNodes],
-	double outputWeights[][nOutputs],
-	double hiddenLayer[],
-	double outputLayer[])
+		int vflag,
+		double lr,
+		int nEpochs,
+		double hiddenLayerBias[],
+		double outputLayerBias[],
+		double trainingInputs[][nInputs],
+		double trainingOutputs[][nOutputs],
+		double hiddenWeights[][nHiddenNodes],
+		double outputWeights[][nOutputs],
+		double hiddenLayer[],
+		double outputLayer[])
 {
 
 	// Order of indexes of inputs in which nn is going to take the data.
@@ -57,9 +95,9 @@ int train(
 			{
 				// Print result of pass.
 				printf("%i - %i Input: %g %g (%i)\tOutput: %5f\tExpected: %g\n",
-					   epoch, (int)x,
-					   trainingInputs[i][0], trainingInputs[i][1], i,
-					   outputLayer[0], trainingOutputs[i][0]);
+						epoch, (int)x,
+						trainingInputs[i][0], trainingInputs[i][1], i,
+						outputLayer[0], trainingOutputs[i][0]);
 			}
 
 			// Backpropagation pass.
@@ -173,8 +211,8 @@ int train(
 		double percentage = round(outputLayer[0]) == 0.0f ? (1.0f - outputLayer[0]) * 100.0f : outputLayer[0] * 100.0f;
 
 		printf("Input: %g %g\tOutput: %5f\tExpected: %g\t %5f%%\n",
-			   trainingInputs[i][0], trainingInputs[i][1],
-			   outputLayer[0], trainingOutputs[i][0], percentage);
+				trainingInputs[i][0], trainingInputs[i][1],
+				outputLayer[0], trainingOutputs[i][0], percentage);
 	}
 
 	return 0;
