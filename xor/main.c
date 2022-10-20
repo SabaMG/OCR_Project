@@ -23,10 +23,9 @@
 */
 
 #include <err.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 #include <time.h>
 #include "neural_network.h"
 #include "utils.h"
@@ -52,65 +51,53 @@ int main(int argc, char **argv) {
 									  {1.0f},
 									  {0.0f}};
 
-	/* parsing command line arguments */
 	int vflag = 0; /* verbose mode */
 	int tflag = 0; /* trainig mode */
 	char *evalue = NULL; /* set epochs for training */
 	char *rvalue = NULL; /* set learning rate for training */
 	char *lvalue = NULL; /* set load option (path) */
-	int index;
-	int c;
 	char *arg;
 
-	int i = 0;
+	/* parsing command line arguments */
+	int i = 1;
 	while (i < argc) {
 		arg = argv[i];
-		if (strcmp(arg, "-v") == 0) {
+		if (strcmp(arg, "-v") == 0)
 			vflag = 1;
-		}
 		else if (strcmp(arg, "-t") == 0) {
 			tflag = 1;
 		}
-		printf("arg %i = %s\n", i, argv[i]);
+		else if (strcmp(arg, "-e") == 0) {
+			if (!tflag)
+				errx(EXIT_FAILURE, "Option -e requires to be in training mode (add -t).");
+			i++;
+			if (i < argc)
+				evalue = argv[i];
+			else
+				errx(EXIT_FAILURE, "Option -e requires an argument.");
+		}
+		else if (strcmp(arg, "-r") == 0) {
+			if (!tflag)
+				errx(EXIT_FAILURE, "Option -r requires to be in training mode (add -t).");
+			i++;
+			if (i < argc)
+				rvalue = argv[i];
+			else
+				errx(EXIT_FAILURE, "Option -r requires an argument.");
+		}
+		else if (strcmp(arg, "-l") == 0) {
+			if (tflag)
+				errx(EXIT_FAILURE, "Option -l requires to be in normal mode (remove -t).");
+			i++;
+			if (i < argc)
+				lvalue = argv[i];
+			else
+				errx(EXIT_FAILURE, "Option -l requires an argument.");
+		}
+		else
+			errx(EXIT_FAILURE, "Unknown option %s.", argv[i]);
 		i++;
 	}
-	/*
-	while ((c = getopt (argc, argv, "tve:r:l:")) != -1) {
-		switch (c)
-		{
-			case 'l':
-				lvalue = optarg;
-				break;
-			case 'v':
-				vflag = 1;
-				break;
-			case 't':
-				tflag = 1;
-				break;
-			case 'e':
-				evalue = optarg;
-				break;
-			case 'r':
-				rvalue = optarg;
-				break;
-			case '?':
-				if (optopt == 'e' || optopt == 'r' || optopt == 'l')
-					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-				else if (isprint (optopt))
-					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-				else
-					fprintf (stderr,
-							"Unknown option character `\\x%x'.\n",
-							optopt);
-				return 1;
-			default:
-				abort ();
-		}
-	}
-	for (index = optind; index < argc; index++) {
-		printf ("Non-option argument %s\n", argv[index]);
-	}
-	*/
 
 	if (lvalue != NULL) { /* load_weights from lvalue */
 		int error = load_weights(lvalue);

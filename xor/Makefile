@@ -1,8 +1,8 @@
 # Makefile
 
-CC = gcc-11
+CC = gcc
 CPPFLAGS = -MMD
-CFLAGS = -Wall -Wextra -std=c99 -O0 -g
+CFLAGS = -Wall -Wextra -std=c99 -O0 -g -lm
 LDFLAGS =
 LDLIBS =
 
