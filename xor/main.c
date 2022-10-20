@@ -22,6 +22,7 @@
 
 */
 
+#include <err.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,12 +57,16 @@ int main(int argc, char **argv) {
 	int tflag = 0; /* trainig mode */
 	char *evalue = NULL; /* set epochs for training */
 	char *rvalue = NULL; /* set learning rate for training */
+	char *lvalue = NULL; /* set load option (path) */
 	int index;
 	int c;
 
-	while ((c = getopt (argc, argv, "tve:r:")) != -1) {
+	while ((c = getopt (argc, argv, "tve:r:l:")) != -1) {
 		switch (c)
 		{
+			case 'l':
+				lvalue = optarg;
+				break;
 			case 'v':
 				vflag = 1;
 				break;
@@ -75,7 +80,7 @@ int main(int argc, char **argv) {
 				rvalue = optarg;
 				break;
 			case '?':
-				if (optopt == 'e' || optopt == 'r')
+				if (optopt == 'e' || optopt == 'r' || optopt == 'l')
 					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 				else if (isprint (optopt))
 					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -92,8 +97,14 @@ int main(int argc, char **argv) {
 		printf ("Non-option argument %s\n", argv[index]);
 	}
 
-	if (!tflag) { /* if normal mode (not in training mode) */
+	if (lvalue != NULL) { /* load_weights from lvalue */
+		int error = load_weights(lvalue);
+		if (error)
+			errx(1, "Failed to load weights.\n");
+		return 0;
+	}
 
+	if (!tflag) { /* if normal mode (not in training mode) */
 		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
 		const double defaultLR = 0.1f; /* learning rate */
 		const int defaultNumEpochs = 10000; /* default epochs value */

@@ -13,5 +13,6 @@ int initWeights(
 		double outputWeights[][nOutputs],
 		double outputLayerBias[]
 		);
+int load_weights(char *path);
 
 

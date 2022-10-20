@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include  <string.h>
 #include <math.h>
 #include "utils.h"
 
@@ -63,4 +65,24 @@ int initWeights(
 	}
 	return 0;
 }
+
+/* load weights */
+int load_weights(char *path) {
+	FILE* ptr;
+	char ch;
+
+	ptr = fopen(path, "r"); /* open file in reading mode */
+	if (NULL == ptr) /* return if error */
+		return 1;
+
+	do { /* read file character at once */
+		ch = fgetc(ptr);
+		printf("%c", ch);
+} while (ch != EOF); /* stop if end of file */
+
+fclose(ptr); /* close file */
+return 0;
+}
+
+/* save weights */
 
