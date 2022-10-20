@@ -17,8 +17,8 @@
 	TODO
 	- ajouter la sauvegarde / chargement des poids depuis un fichier.
 	- ajouter les options
-		-lw (load weights, suivi d'un nom de fichier)
-		-sw (save weights, suivi d'un nom de fichier)
+		-l (load weights, suivi d'un nom de fichier)
+		-s (save weights, suivi d'un nom de fichier)
 
 */
 
@@ -60,7 +60,21 @@ int main(int argc, char **argv) {
 	char *lvalue = NULL; /* set load option (path) */
 	int index;
 	int c;
+	char *arg;
 
+	int i = 0;
+	while (i < argc) {
+		arg = argv[i];
+		if (strcmp(arg, "-v") == 0) {
+			vflag = 1;
+		}
+		else if (strcmp(arg, "-t") == 0) {
+			tflag = 1;
+		}
+		printf("arg %i = %s\n", i, argv[i]);
+		i++;
+	}
+	/*
 	while ((c = getopt (argc, argv, "tve:r:l:")) != -1) {
 		switch (c)
 		{
@@ -96,6 +110,7 @@ int main(int argc, char **argv) {
 	for (index = optind; index < argc; index++) {
 		printf ("Non-option argument %s\n", argv[index]);
 	}
+	*/
 
 	if (lvalue != NULL) { /* load_weights from lvalue */
 		int error = load_weights(lvalue);
