@@ -2,8 +2,8 @@
 
 CC = gcc
 CPPFLAGS = -MMD
-CFLAGS = -Wall -Wextra -std=c99 -O0 -g -lm
-LDFLAGS =
+CFLAGS = -Wall -Wextra -std=c99 -O0 -g
+LDFLAGS = -lm
 LDLIBS =
 
 SRC = main.c neural_network.c utils.c

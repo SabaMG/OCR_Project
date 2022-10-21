@@ -32,11 +32,11 @@
 
 int main(int argc, char **argv) {
 
-	double hiddenLayer[nHiddenNodes];
-	double outputLayer[nOutputs];
+	double hiddenLayer[nHiddenNodes] = {};
+	double outputLayer[nOutputs] = {};
 	
-	double hiddenLayerBias[nHiddenNodes];
-	double outputLayerBias[nOutputs];
+	double hiddenLayerBias[nHiddenNodes] = {};
+	double outputLayerBias[nOutputs] = {};
 
 	double hiddenWeights[nInputs][nHiddenNodes];
 	double outputWeights[nHiddenNodes][nOutputs];
