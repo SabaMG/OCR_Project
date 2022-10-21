@@ -3,41 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-//#define PI 3.14159265
-#include <errno.h>
+#include <err.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-//#include "src/include/SDL2/SDL.h"
-//#include "src/include/SDL2/SDL_image.h"
-
-//#define main main
-
-size_t maxList(int _list[], size_t len){
-    size_t max_index = 0;
-    int max = 0;
-    for (size_t i = 0; i < len; i++){
-        if (_list[i] > max){
-            max = _list[i];
-            max_index = i;
-        }
-    }
-    return max_index;
-}
-
-size_t minList(size_t _list[], size_t len){
-    size_t min_index = 0;
-    size_t min = _list[0];
-    for (size_t i = 0; i < len; i++){
-        if (_list[i] < min){
-            min = _list[i];
-            min_index = i;
-        }
-    }
-    return min_index;
-}
-
+#include "tool.h"
 
 int main(int argc, char *argv[]){
     
@@ -46,45 +17,41 @@ int main(int argc, char *argv[]){
 
     // Initialize SDL.
     if (SDL_Init(SDL_INIT_VIDEO) < 0 || IMG_Init(1) == 0)
-            return 1;
+	    errx(1, "renderer errors found");
 
     if (argc != 3)
-            return 1;
-    
-    //SDL_Surface __Surf = *IMG_Load(argv[1]);
-
+	    errx(1, "args errors found : 2 expected");
 
     SDL_Surface *img = IMG_Load(argv[1]);
     if (img == NULL)
-        return 1;
+	    errx(1, "Surface errors found");
 
     window = SDL_CreateWindow("SDL_RenderClear",
                         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                         img->w, img->h,
                         0);
+    if (window == NULL)
+	    errx(1, "window error found");
 
     // We must call SDL_CreateRenderer in order for draw calls to affect this window.
     renderer = SDL_CreateRenderer(window, -1, 0);
-    /*if (renderer == NULL)
-    {
-        perror ("renderer errors found");
-        return 1;
-    }*/
+    if (renderer == NULL)
+        errx(1, "renderer errors found");
 
-    ///SDL_Texture *background = SDL_CreateTextureFromSurface(renderer, img);
+    //SDL_Texture *background=SDL_CreateTextureFromSurface(renderer,img);
     SDL_Texture *background = SDL_CreateTexture(renderer,
-        SDL_PIXELFORMAT_ARGB8888/*img->format->format*/, SDL_TEXTUREACCESS_STATIC,
-        img->w, img->h);
+        SDL_PIXELFORMAT_ARGB8888/*img->format->format*/,
+	SDL_TEXTUREACCESS_STATIC, img->w, img->h);
     if (background == NULL)
         return 1;
     img = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_ARGB8888, 0);
 
 
 
-    size_t diag_length = (size_t)(sqrt(((img->w) * (img->w))+((img->h) * (img->h))));
+    size_t diag_length = diagLen(img->w, img->h);
     printf("Diagonal_length: %zu\n", diag_length);
+
     int Hough_lines[diag_length][91];
-    //memset( Hough_lines, 0, ((int)(diag_length))*91*sizeof(int) );
     for (size_t i = 0; i < diag_length; i++)
     {
         for (size_t j = 0; j < 91; j++)
