@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <err.h>
+#include <sys/stat.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]){
     printf("Diagonal_length: %zu\n", diag_length);
 
     //Init Hough array[rho][theta]
-    int Hough_lines[diag_length][91];
+    /*int Hough_lines[diag_length][91];
     for (size_t i = 0; i < diag_length; i++)
     {
         for (size_t j = 0; j < 91; j++)
@@ -52,7 +53,8 @@ int main(int argc, char *argv[]){
     HoughAngle(img, Hough_lines, diag_length);
 
     //Rotation angle = theta coordinate of max value
-    int angle = MaxIndex2DArray(Hough_lines, diag_length, 91);
+    int angle = MaxIndex2DArray(Hough_lines, diag_length, 91);*/
+    int angle = 0;
     printf("Angle: %i\n", angle);
 
     //Init lists to detect lines
@@ -94,9 +96,17 @@ int main(int argc, char *argv[]){
         tmp_Y[tmp] = lenY;
     }
     
-    
+    //Sets the directory to put the boxes into
+    struct stat st;
+    if (stat("./boxes", &st) == 0)
+        printf("/boxes is present\n");
+    else{
+        if (mkdir("./boxes", 0700) == -1)
+            errx(1, "Unable to create ./boxes");
+        printf("/boxes has been created\n");
+    }
     //Path to save the sudoku boxes
-    char filename_[] = {'c', 'a', 's', 'e', 's', '/', 't', 'e', 's', 't', 'a',
+    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 't', 'e', 's', 't', 'a',
      'b', 'l', 'e', '0', '0', '.', 'j', 'p', 'g', 0};
     //Cuting and saving them
     CutAndSaveBoxes(argv[2], coord_X_list, coord_Y_list, filename_);
