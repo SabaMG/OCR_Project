@@ -106,10 +106,10 @@ int main(int argc, char *argv[]){
         printf("/boxes has been created\n");
     }
     //Path to save the sudoku boxes
-    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 't', 'e', 's', 't', 'a',
-     'b', 'l', 'e', '0', '0', '.', 'j', 'p', 'g', 0};
+    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
+     '0', '0', '.', 'j', 'p', 'g', 0};
     //Cuting and saving them
-    CutAndSaveBoxes(argv[2], coord_X_list, coord_Y_list, filename_);
+    CutAndSaveBoxes(argv[2], coord_X_list, coord_Y_list, filename_, 10, 11);
 
     //Rendering if display is true
     if (display){

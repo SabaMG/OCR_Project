@@ -127,7 +127,7 @@ void DisplayLines(Uint32* pixels, size_t listX[], size_t listY[], size_t ImgW,
 
 //Cuts the picture based on the intersections and saves all boxes
 void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
- char* pathToSave){
+ char* pathToSave, size_t iIndex, size_t jIndex){
     //Load the original picture (without sobel filter)
     SDL_Surface *newImg = IMG_Load(PictPath);
     for (size_t j = 0; j < 9; j++){
@@ -142,8 +142,8 @@ void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
             SDL_UnlockSurface(resultSurf);
             if (SDL_BlitSurface(newImg, &case_, resultSurf, NULL) == 0)
             {
-                pathToSave[14] = '0' + i;
-                pathToSave[15] = '0' + j;
+                pathToSave[iIndex] = '0' + i;
+                pathToSave[jIndex] = '0' + j;
                 IMG_SaveJPG(resultSurf, pathToSave, 100);
             }
         }

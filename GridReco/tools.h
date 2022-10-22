@@ -15,6 +15,6 @@ void Sort10MaxsIndexs(int list[], size_t len, size_t dest[]);
 void DisplayLines(Uint32* pixels, size_t listX[], size_t listY[],
  size_t ImgW, size_t ImgH);
 void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
- char* pathToSave);
+ char* pathToSave, size_t iIndex, size_t jIndex);
 
 #endif
