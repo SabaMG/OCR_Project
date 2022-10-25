@@ -1,6 +1,9 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include  <string.h>
 #include <math.h>
 #include "utils.h"
+#include "impl.h"
 
 /* return sigmoid(x)
 	https://en.wikipedia.org/wiki/Sigmoid_function */
@@ -32,35 +35,3 @@ void shuffle(int array[], size_t n) {
 		}
 	}
 }
-
-/* initWeights initialize weights of hidden neurones and of output nodes
-   and initialize bias
-	set weights at random values */
-int initWeights(
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
-		double outputLayerBias[]
-		) {
-
-	// Set hiddenWeights to random values.
-	for (size_t i = 0; i < nInputs; i++) {
-		for (size_t j = 0; j < nHiddenNodes; j++) {
-			hiddenWeights[i][j] = getRandom();
-		}
-	}
-
-	// Set outputWeights to random values.
-	for (size_t i = 0; i < nHiddenNodes; i++) {
-		for (size_t j = 0; j < nOutputs; j++) {
-			outputWeights[i][j] = getRandom();
-		}
-	}
-
-	// Set outputLayerBias to random values.
-	// TODO: do a init bias function ?
-	for (size_t i = 0; i < nOutputs; i++) {
-		outputLayerBias[i] = getRandom();
-	}
-	return 0;
-}
-

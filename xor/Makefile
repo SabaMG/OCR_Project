@@ -1,12 +1,11 @@
 # Makefile
 
-CC = gcc-11
+CC = gcc
 CPPFLAGS = -MMD
 CFLAGS = -Wall -Wextra -std=c99 -O0 -g
-LDFLAGS =
-LDLIBS =
+LDFLAGS = -lm
 
-SRC = main.c neural_network.c utils.c
+SRC = main.c neural_network.c utils.c impl.c file.c
 OBJ = ${SRC:.c=.o}
 DEP = ${OBJ:.o=.d}
 
