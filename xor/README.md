@@ -36,4 +36,4 @@ Two modes are available: the normal mode to use the neural network and the train
 
 ## Uninstallation
 
-Clean all objects and executables files with `make clean`.
+Clean all object and executable files with `make clean`.
