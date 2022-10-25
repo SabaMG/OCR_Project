@@ -23,4 +23,7 @@ typedef struct neuron Neuron;
 
 void print_layer(Layer l[], size_t size);
 void free_network(Layer l[], size_t size);
-void generate_network(Layer l[], size_t layers, size_t neurons[], size_t inputs[]);
+void generate_network(Layer l[],
+                      size_t layers,
+                      size_t neurons[],
+                      size_t inputs[]);

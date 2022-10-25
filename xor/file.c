@@ -62,7 +62,6 @@ void load_weights(char *path, Layer l[])
                     break;
                 strncat(val_str, &c, 1);
         }
-        printf("-%c : %hhi\n", c, c);
     }
     
     // close stream reader
@@ -116,20 +115,3 @@ void save_weights(char *path, Layer l[], size_t nb_layer)
     }
 }
 
-int main(int argc, char** argv)
-{
-    size_t layers = 2;
-    size_t neurons[] = {2, 1};
-    size_t inputs[] = {2,2};
-    Layer l[layers];
-    generate_network(l, layers, neurons, inputs);
-    print_layer(l, layers);
-    printf("test print : %f\n", l[0].neurons[0].weights[0]);
-    
-//    save_weights(argv[1], l, layers);
-    load_weights(argv[1], l);
-    print_layer(l, layers);
-
-    free_network(l, layers);
-    return 0;
-}
