@@ -1,5 +1,48 @@
-# Projet_S3_OCR
-Creation d'un repo pour OCR en attendant celui fourni par l'ecole
+# EPITA - S3 - OCR
 
-[] todo #1
-[X] todo #2
+OCR *(Optical Character Recognition)* software solving a sudoku grid.
+
+## Table of contents
+
+- [Grid Recognition](#gridrecognition)
+- [Sudoku Solver](#solver)
+- [XOR Neural Network](#xor)
+
+## Grid Recognition
+
+## Sudoku Solver
+
+## XOR Neural Network
+
+Proof of concept for the main neural network of the optical character recognition program. 
+
+Mini neural network that is able to learn the function or exclusive (xor).
+
+Weights and biases of the neurons can be exported after the training phase and loaded from a file.
+
+Two modes are available: the normal mode to use the neural network and the training mode to train the network.
+
+
+### Installation
+
+1. Compile the project in `/xor` with the command `make`.
+
+2. Run the program with `./main`.
+
+
+### Usage
+
+* Global usage: `./main [OPTIONS...] [PARAMETERS...]`.
+
+* Normal mode: `./main -l [input file]`.
+
+* Training mode:
+	- Run with default parameters: epochs = 10000, learning rate = 0.1: `./main -t`.
+	- Save weights and biases: `./main -t -s [output file]`.
+	- Specify the number of epoch:	`./main -t -e [number]`.
+	- Specify the learning rate:	`./main -t -r [number]`.
+	- Verbose mode (print the results of each epoch) `./main -t -v`.
+
+### Uninstallation
+
+Clean all object and executable files with `make clean`.
