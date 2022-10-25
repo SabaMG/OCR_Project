@@ -4,9 +4,9 @@ OCR *(Optical Character Recognition)* software solving a sudoku grid.
 
 ## Table of contents
 
-- [Grid Recognition](#gridrecognition)
-- [Sudoku Solver](#solver)
-- [XOR Neural Network](#xor)
+- [Grid Recognition](#GridRecognition)
+- [Sudoku Solver](#SudokuSolver)
+- [XOR Neural Network](#XORNeuralNetwork)
 
 ## Grid Recognition
 
