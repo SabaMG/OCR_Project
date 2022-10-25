@@ -1,4 +1,5 @@
 #pragma once
+#include "impl.h"
 extern const int nInputs;
 extern const int nHiddenNodes;
 extern const int nOutputs;
@@ -6,10 +7,7 @@ extern const int nTrainingSets;
 
 void forward_pass(
 		double inputs[],
-		double hiddenLayerBias[],
-		double outputLayerBias[],
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
+		Layer aLayers[],
 		double hiddenLayer[],
 		double outputLayer[]
 );
@@ -17,12 +15,9 @@ void forward_pass(
 void backpropagation_pass(
 		int i,
 		double lr,
-		double hiddenLayerBias[],
-		double outputLayerBias[],
 		double trainingInputs[][nInputs],
 		double trainingOutputs[][nOutputs],
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
+		Layer aLayers[],
 		double hiddenLayer[],
 		double outputLayer[]
 		);
@@ -31,12 +26,9 @@ void train(
 		int vflag,
 		double lr,
 		int nEpochs,
-		double hiddenLayerBias[],
-		double outputLayerBias[],
 		double trainingInputs[][nInputs],
 		double trainingOutputs[][nOutputs],
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
+		Layer aLayers[],
 		double hiddenLayer[],
 		double outputLayer[]
 		);

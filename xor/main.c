@@ -1,5 +1,5 @@
 /*
-	Author: Charles-Antoine Leger
+	Author: Charles-Antoine Leger & Lucas Siauve
 
 	Mini neural network capable of learning the xor (or exclusive) function
 	
@@ -14,29 +14,6 @@
 	   1 0 -> 1
 	   1 1 -> 0
 		
-int main(int argc, char** argv)
-{
-    size_t layers = 2;
-    size_t neurons[] = {2, 1};
-    size_t inputs[] = {2,2};
-    Layer l[layers];
-    generate_network(l, layers, neurons, inputs);
-    print_layer(l, layers);
-    printf("test print : %f\n", l[0].neurons[0].weights[0]);
-    
-//    save_weights(argv[1], l, layers);
-    load_weights(argv[1], l);
-    print_layer(l, layers);
-
-    free_network(l, layers);
-    return 0;
-}
-	TODO
-	- ajouter la sauvegarde / chargement des poids depuis un fichier.
-	- ajouter les options
-		-l (load weights, suivi d'un nom de fichier)
-		-s (save weights, suivi d'un nom de fichier)
-
 */
 
 #include <err.h>
@@ -45,18 +22,14 @@ int main(int argc, char** argv)
 #include <string.h>
 #include <time.h>
 #include "neural_network.h"
+#include "impl.h"
 #include "utils.h"
+#include "file.h"
 
 int main(int argc, char **argv) {
 
-	double hiddenLayer[nHiddenNodes] = {};
-	double outputLayer[nOutputs] = {};
-	
-	double hiddenLayerBias[nHiddenNodes] = {};
-	double outputLayerBias[nOutputs] = {};
-
-	double hiddenWeights[nInputs][nHiddenNodes];
-	double outputWeights[nHiddenNodes][nOutputs];
+	double hiddenLayer[2] = {};
+	double outputLayer[1] = {};
 
 	double trainingInputs[nTrainingSets][nInputs] = {{0.0f, 0.0f},
 									  {0.0f, 1.0f},
@@ -67,12 +40,22 @@ int main(int argc, char **argv) {
 									  {1.0f},
 									  {1.0f},
 									  {0.0f}};
+	size_t nLayers = 2;
+	size_t aNeurons[] = {2, 1};
+	size_t aInputs[] = { 2, 2};
+
+	/* create nn */
+	Layer aLayers[nLayers];
+
+	/* generating the neural network */
+	generate_network(aLayers, nLayers, aNeurons, aInputs);
 
 	int vflag = 0; /* verbose mode */
 	int tflag = 0; /* trainig mode */
 	char *evalue = NULL; /* set epochs for training */
 	char *rvalue = NULL; /* set learning rate for training */
 	char *lvalue = NULL; /* set load option (path) */
+	char *svalue = NULL; /* set save option (path) */
 	char *arg;
 
 	/* parsing command line arguments */
@@ -111,28 +94,35 @@ int main(int argc, char **argv) {
 			else
 				errx(EXIT_FAILURE, "Option -l requires an argument.");
 		}
+		else if (strcmp(arg, "-s") == 0) {
+			if (!tflag)
+				errx(EXIT_FAILURE, "Option -s requires to be in training mode (add -t).");
+			i++;
+			if (i < argc)
+				svalue = argv[i];
+			else
+				errx(EXIT_FAILURE, "Option -s requires an argument.");
+		}
 		else
 			errx(EXIT_FAILURE, "Unknown option %s.", argv[i]);
 		i++;
 	}
 
-	if (lvalue != NULL) { /* load_weights from lvalue */
-		int error = load_weights(lvalue);
-		if (error)
-			errx(1, "Failed to load weights.\n");
-		return 0;
-	}
 
 	if (!tflag) { /* if normal mode (not in training mode) */
-		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
-		const double defaultLR = 0.1f; /* learning rate */
-		const int defaultNumEpochs = 10000; /* default epochs value */
-		initWeights(hiddenWeights, outputWeights, outputLayerBias);
-		train(vflag, defaultLR, defaultNumEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
-		printf("\n");
-		printf("END OF TRAINING\n");
-		printf("\n");
-		/* !!! BECAUSE SAVE / LOAD WEIGHTS NOT IMPLEMENTED !!! */
+
+		if (lvalue != NULL) { /* load_weights from lvalue */
+			load_weights(lvalue, aLayers);
+			printf("=========\n");
+			printf("Loading the neural network from '%s':\n\n", lvalue);
+			print_layer(aLayers, nLayers);
+			printf("=========\n\n");
+		}
+		else {
+			printf("=========\n");
+			printf("It seems that you have not loaded a neural network, the weights and biases are randomly initialized by default.\n");
+			printf("=========\n\n");
+		}
 
 		char i1;
 		while (1) { /* get first input */
@@ -145,7 +135,9 @@ int main(int argc, char **argv) {
 				printf("Input should be 0 or 1, try again.\n");
 			}
 		}
+
 		/* without it bugs! */ getchar(); /* without its bugs! */
+
 		char i2;
 		while (1) { /* get second input */
 			printf("Enter second input: ");
@@ -164,7 +156,7 @@ int main(int argc, char **argv) {
 		inputs[1] = (double)(i2 - 48);
 
 		/* do forward pass */
-		forward_pass(inputs, hiddenLayerBias, outputLayerBias, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+		forward_pass(inputs, aLayers, hiddenLayer, outputLayer);
 
 		/* print results */
 		//system("clear"); /* clear screen for print results */
@@ -189,30 +181,26 @@ int main(int argc, char **argv) {
 			lr = atof(rvalue);
 		}
 
-		/* initialization of weights */
-		initWeights(hiddenWeights, outputWeights, outputLayerBias);
-
 		double time_spent = 0.0f; /* start timer */
 		clock_t begin = clock();
 
 		/* do train */
-		train(vflag, lr, nEpochs, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+		train(vflag, lr, nEpochs, trainingInputs, trainingOutputs, aLayers, hiddenLayer, outputLayer);
 
 		clock_t end = clock(); /* stop timer */
 		time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
 
 		/* print some info */
 		printf("\nTraining successfully completed in %f seconds (epochs = %i; learning rate = %g)\n", time_spent, nEpochs, lr);
+
+		if (svalue != NULL) { /* save_weights from svalue */
+			save_weights(svalue, aLayers, nLayers);
+			printf("\nNeural network successfully saved in '%s'.\n", svalue);
+		}
 	}
 
-	/*
-	// testing shuffle algorithm
-	int a[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-	for (int i = 0; i < 50; i++) {
-	shuffle(a, 10);
-	printA(a, 10);
-	}
-	 */
+	/* free memory */
+	free_network(aLayers, nLayers);
 
 	return EXIT_SUCCESS;
 }

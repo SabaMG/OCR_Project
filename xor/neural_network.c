@@ -1,37 +1,35 @@
 #include <stdio.h>
 #include <math.h>
 #include "utils.h"
+#include "impl.h"
 
 /* forward pass
    outputLayer array is updated after pass */
 void forward_pass(
 		double inputs[],
-		double hiddenLayerBias[],
-		double outputLayerBias[],
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
+		Layer aLayers[],
 		double hiddenLayer[],
 		double outputLayer[]
 		) {
 
 	// Compute hidden layer activation.
-	for (size_t j = 0; j < nHiddenNodes; j++)
+	for (size_t j = 0; j < aLayers[0].size; j++)
 	{
-		double activation = hiddenLayerBias[j];
+		double activation = aLayers[0].neurons[j].bias;
 		for (size_t k = 0; k < nInputs; k++)
 		{
-			activation += inputs[k] * hiddenWeights[k][j];
+			activation += inputs[k] * aLayers[0].neurons[j].weights[k];
 		}
 		hiddenLayer[j] = sigmoid(activation); // Update hidden layer.
 	}
 
 	// Compute output layer activation.
-	for (size_t j = 0; j < nOutputs; j++)
+	for (size_t j = 0; j < aLayers[1].size; j++)
 	{
-		double activation = outputLayerBias[j];
-		for (size_t k = 0; k < nHiddenNodes; k++)
+		double activation = aLayers[1].neurons[j].bias;
+		for (size_t k = 0; k < aLayers[0].size; k++)
 		{
-			activation += hiddenLayer[k] * outputWeights[k][j];
+			activation += hiddenLayer[k] * aLayers[1].neurons[j].weights[k];
 		}
 		outputLayer[j] = sigmoid(activation); // Update output Layer.
 	}
@@ -42,12 +40,9 @@ void forward_pass(
 void backpropagation_pass(
 		int i,
 		double lr,
-		double hiddenLayerBias[],
-		double outputLayerBias[],
 		double trainingInputs[][nInputs],
 		double trainingOutputs[][nOutputs],
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
+		Layer aLayers[],
 		double hiddenLayer[],
 		double outputLayer[]
 		) {
@@ -66,7 +61,7 @@ void backpropagation_pass(
 		double error = 0.0f;
 		for (size_t k = 0; k < nOutputs; k++)
 		{
-			error += deltaOutput[k] * outputWeights[j][k];
+			error += deltaOutput[k] * aLayers[1].neurons[k].weights[j];
 		}
 		deltaHidden[j] = error * dSigmoid(hiddenLayer[j]);
 	}
@@ -74,20 +69,20 @@ void backpropagation_pass(
 	// Apply change in output weights.
 	for (int j = 0; j < nOutputs; j++)
 	{
-		outputLayerBias[j] += deltaOutput[j] * lr;
+		aLayers[1].neurons[j].bias += deltaOutput[j] * lr;
 		for (int k = 0; k < nHiddenNodes; k++)
 		{
-			outputWeights[k][j] += hiddenLayer[k] * deltaOutput[j] * lr;
+			aLayers[1].neurons[j].weights[k] += hiddenLayer[k] * deltaOutput[j] * lr;
 		}
 	}
 
 	// Apply change in hidden weights.
 	for (int j = 0; j < nHiddenNodes; j++)
 	{
-		hiddenLayerBias[j] += deltaHidden[j] * lr;
+		aLayers[0].neurons[j].bias += deltaHidden[j] * lr;
 		for (int k = 0; k < nInputs; k++)
 		{
-			hiddenWeights[k][j] += trainingInputs[i][k] * deltaHidden[j] * lr;
+			aLayers[0].neurons[j].weights[k] += trainingInputs[i][k] * deltaHidden[j] * lr;
 		}
 	}
 }
@@ -97,12 +92,9 @@ void train(
 		int vflag,
 		double lr,
 		int nEpochs,
-		double hiddenLayerBias[],
-		double outputLayerBias[],
 		double trainingInputs[][nInputs],
 		double trainingOutputs[][nOutputs],
-		double hiddenWeights[][nHiddenNodes],
-		double outputWeights[][nOutputs],
+		Layer aLayers[],
 		double hiddenLayer[],
 		double outputLayer[]
 		) {
@@ -120,7 +112,7 @@ void train(
 			int i = trainingSetOrder[x];
 
 			/* forward pass */
-			forward_pass(trainingInputs[i], hiddenLayerBias, outputLayerBias, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+			forward_pass(trainingInputs[i], aLayers, hiddenLayer, outputLayer);
 
 			if (vflag) /* print result of pass */
 			{
@@ -131,7 +123,7 @@ void train(
 			}
 
 			/* backpropagation pass */
-			backpropagation_pass(i, lr, hiddenLayerBias, outputLayerBias, trainingInputs, trainingOutputs, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+			backpropagation_pass(i, lr, trainingInputs, trainingOutputs, aLayers, hiddenLayer, outputLayer);
 		}
 	}
 
@@ -145,7 +137,8 @@ void train(
 		printf("[ ");
 		for (size_t j = 0; j < nHiddenNodes; j++)
 		{
-			printf("%f ", hiddenWeights[i][j]);
+			//printf("%f ", hiddenWeights[i][j]);
+			printf("%f ", aLayers[0].neurons[j].weights[i]);
 		}
 		printf("]\n");
 	}
@@ -155,26 +148,29 @@ void train(
 		printf("[ ");
 		for (size_t j = 0; j < nOutputs; j++)
 		{
-			printf("%f ", outputWeights[i][j]);
+			//printf("%f ", outputWeights[i][j]);
+			printf("%f ", aLayers[1].neurons[j].weights[i]);
 		}
 		printf("]\n");
 	}
 	printf("\nFinal Hidden Biases\n");
 	for (size_t i = 0; i < nHiddenNodes; i++)
 	{
-		printf("%f\n", hiddenLayerBias[i]);
+		//printf("%f\n", hiddenLayerBias[i]);
+		printf("%f\n", aLayers[0].neurons[i].bias);
 	}
 	printf("\nFinal Output Biases\n");
 	for (size_t i = 0; i < nOutputs; i++)
 	{
-		printf("%f\n", outputLayerBias[i]);
+		//printf("%f\n", outputLayerBias[i]);
+		printf("%f\n", aLayers[1].neurons[i].bias);
 	}
 
 	/* do one last forward pass */
 	printf("\nLast Training Session\n");
 	for (size_t x = 0; x < nTrainingSets; x++)
 	{
-		forward_pass(trainingInputs[x], hiddenLayerBias, outputLayerBias, hiddenWeights, outputWeights, hiddenLayer, outputLayer);
+		forward_pass(trainingInputs[x], aLayers, hiddenLayer, outputLayer);
 
 		double percentage = round(outputLayer[0]) == 0.0f ? (1.0f - outputLayer[0]) * 100.0f : outputLayer[0] * 100.0f;
 

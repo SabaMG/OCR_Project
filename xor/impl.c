@@ -1,12 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "impl.h"
-
-// This function generate a random number between 1 and 0
-double getRandom()
-{
-	return ((double)rand()) / ((double)RAND_MAX);
-}
+#include "utils.h"
 
 // This function print the layer l
 void print_layer(Layer l[], size_t size)
