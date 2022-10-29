@@ -34,6 +34,28 @@ Clean all object and executable files with `make clean`.
 
 
 ## Sudoku Solver
+The sudoku solver uses a backtracking algorithm to test all possible possibilities 
+
+until the solution is found. 
+
+It takes as input a file containing an incomplete sudoku grid, 
+
+and returns a new ".result" file containing the resolved grid.
+
+
+### Instalation
+
+1. Compile the project in `./solver` with command `make`.
+2. Run the program with `./solver` 
+
+### Usage
+* Global usage: `./solver grid_00`
+  - Here `grid_00` is the file containing the incomplete sudoku grid.
+  - Return `grid_00.result` the file containing the solved grid.
+
+### Uninstallation
+
+Clean all object and executable files and .result file with `make clean`.
 
 ## XOR Neural Network
 
