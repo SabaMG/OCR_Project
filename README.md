@@ -10,6 +10,29 @@ OCR *(Optical Character Recognition)* software solving a sudoku grid.
 
 ## Grid Recognition
 
+Program able to recognize the sudoku grid and cut its 81 boxes into 81 sub-pictures in order for the neural network to process digit per digit.
+
+It requests 2 pictures to process: the original picture of the sudoku and the same picture but with the sobel/Canny edge filter applied.
+
+The sub-pictures of the grid are stored in the `/boxes` directory. They are nammed after `box_ij.jpg` with `i` and `j` their coordinates (the upper left box of the sudoku has the 0,0 coordinates).
+
+
+### Installation
+
+1. Compile the project in `/GridReco` with the command `make`.
+
+2. Run the program with `./main linesEdges.jpg lines.jpg`.
+
+
+### Usage
+
+* Global usage: `./main linesEdges.jpg lines.jpg`.
+
+### Uninstallation
+
+Clean all object and executable files with `make clean`.
+
+
 ## Sudoku Solver
 
 ## XOR Neural Network
