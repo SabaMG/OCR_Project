@@ -12,7 +12,7 @@
 int main(int argc, char *argv[]){
     
     //To display the grid -> 1
-    int display = 0;
+    int display = 1;
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture *background;
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
 
         //Displays
         SDL_RenderPresent(renderer);
-        SDL_Delay(1000);
+        SDL_Delay(5000);
 
         //Cleaning
         SDL_DestroyTexture(background);
