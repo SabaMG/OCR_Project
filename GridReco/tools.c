@@ -135,8 +135,8 @@ void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
             SDL_Rect case_;
             case_.x = listOfX[i];
             case_.y = listOfY[j];
-            case_.w = listOfX[i+1]-listOfX[i];
-            case_.h = listOfY[j+1]-listOfY[j];
+            case_.w = listOfX[i+1]-listOfX[i];//@Lucas
+            case_.h = listOfY[j+1]-listOfY[j];//
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
             SDL_UnlockSurface(resultSurf);
