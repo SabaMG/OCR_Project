@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
     IMG_Init(IMG_INIT_JPG);
 
     SDL_Surface* imgOrigin = IMG_Load(argv[1]);
-    imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_ARGB32, 0);
+    imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_BGRA32, 0);
     int W = imgOrigin->w;
     int H = imgOrigin->h;
     //int nbRhos = diagLen(W, H)/2;
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
     //int* Acc = houghAccumulator(imgOrigin->pixels, &(imgOrigin->w),
     // &(imgOrigin->h), &nbRhos, &nbThetas);
     int maxRho = diagLen(W,H);
-    int maxTheta = 180;
+    int maxTheta = 360;
     int* Acc = FinalAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
     /*Uint32* dataPic = accToPic(Acc, &tmp2, &tmp1);
     SDL_Surface* houghImg = SDL_CreateRGBSurfaceFrom(dataPic, tmp2, tmp1, 32, tmp2*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
@@ -33,12 +33,12 @@ int main(int argc, char *argv[]){
 
     int rho = -1;
     int theta = -1;
-    for(int round = 0; round < 3; round++){
+    for(int round = 0; round < 10; round++){
         maxInAccu(Acc, &maxRho, &maxTheta, &rho, &theta);
         double a = cos(RAD(theta));
         double b = sin(RAD(theta));
         double x0 = (a*(double)rho);
-        double y0 = /*H -*/ (b*(double)rho);
+        double y0 = /*H -*/ (b*(double)rho) - H;
         int x1 = (int)(x0 + 1000 * (-b));
         int y1 = -(int)(y0 + 1000 * a);
         int x2 = (int)(x0 - 1000 * (-b));

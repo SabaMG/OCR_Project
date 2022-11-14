@@ -121,6 +121,11 @@ void displayOneLine(Uint32* pixels, int rho, int theta, int* w, int* h){
     }
 }
 
+void putPixel(Uint32* pixels, int x, int y, int w){
+    pixels[(y)*w + x] = (0x00 << 24) | (0x00 << 16) |
+                        (0xff << 8) | (0xff);
+}
+
 void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h){
     int x, y, dx, dy;
     double e;
@@ -139,12 +144,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int x = x1; x < x2; x++){
                 //printf("%i,%i\n", x, y);
                 if (x < w && x > 0 && y > 0 && y < h){
-                    pixels[(h-y)*w + x] = (0xff << 24) | (0xff << 16) |
-                        (0x00 << 8) | (0x00);
+                    putPixel(pixels, x, h-y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e <= 0){
+                if (e < 0){
                     y -= 1;
                     e = e + e_01;
                 }
@@ -158,12 +162,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int x = x1; x < x2; x++){
                 //printf("%i,%i\n", x, y);
                 if (x < w && x > 0 && y > 0 && y < h){
-                    pixels[(h-y)*w + x] = (0xff << 24) | (0xff << 16) |
-                        (0x00 << 8) | (0x00);
+                    putPixel(pixels, x, h-y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e >= 0){
+                if (e > 0){
                     y += 1;
                     e = e + e_01;
                 }
@@ -181,12 +184,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int y = y1; y < y2; y++){
                 //printf("%i,%i\n", x, y);
                 if (y < h && y > 0 && x > 0 && x < h){
-                    pixels[(h-y)*w + x] = (0xff << 24) | (0xff << 16) |
-                        (0x00 << 8) | (0x00);
+                    putPixel(pixels, x, h-y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e <= 0){
+                if (e < 0){
                     x -= 1;
                     e = e + e_01;
                 }
@@ -200,12 +202,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int y = y1; y < y2; y++){
                 //printf("%i,%i\n", x, y);
                 if (y < h && y > 0 && x > 0 && x < h){
-                    pixels[(h-y)*w + x] = (0xff << 24) | (0xff << 16) |
-                        (0x00 << 8) | (0x00);
-                    printf("%i,%i\n", x, y);
+                    putPixel(pixels, x, h-y, w);
+                    //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e >= 0){
+                if (e > 0){
                     x += 1;
                     e = e + e_01;
                 }
