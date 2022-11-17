@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
    
     int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
     int maxTheta = 180; //theta values : [0, maxTheta]
-    int nbLines = 3; //number of lines to print
+    int nbLines = 20; //number of lines to print
     
     //Create and Fill the hough accumulator
     int* Acc = HoughAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
