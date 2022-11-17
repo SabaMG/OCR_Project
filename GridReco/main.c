@@ -8,6 +8,7 @@
 #include <SDL2/SDL_image.h>
 
 #include "tools.h"
+#include "center_number.h"
 
 #define RAD(A)  (M_PI*((double)(A))/180.0)
 
