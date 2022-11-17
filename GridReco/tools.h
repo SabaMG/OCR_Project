@@ -25,3 +25,5 @@ int* AnotherAccu(Uint32* pixels, int* w, int* h);
 void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h);
 int* FinalAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta);
 Uint32* listToPic(int* listIndex, int length, int w);
+
+#endif

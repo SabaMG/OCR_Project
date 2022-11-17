@@ -1,6 +1,7 @@
 #include "tools.h"
-#include <math.h>
 #include "center_number.h"
+
+#include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
