@@ -93,6 +93,29 @@ int* houghAccumulator(Uint32* pixels, int* w, int* h, int* _nbRhos, int* _nbThet
     return Acc;
 }
 
+int inPic(int x, int y, int w, int h){
+    return ((x >= 0 && x < w) && (y >= 0 && y < h));
+}
+
+void clearAround(int* Accu, int x, int y, int w, int h, int range){
+    int from_x = x - range;
+    int to_x = x + range;
+    int from_y = y - range;
+    int to_y = y + range;
+
+    //printf("Clear %i,%i\n", x, y);
+    //printf("from %i,%i to %i,%i\n", from_x, from_y, to_x, to_y);
+    for(int i = from_x; i < to_x; i++){
+        for (int j = from_y; j < to_y; j++)
+        {
+            if(inPic(i, j, w, h)){
+                Accu[j*w + i] = 0;
+            }
+        }
+        
+    }
+}
+
 void maxInAccu(int* Accu, int* nbRhos, int* nbThetas, int* _rho, int* _theta){
     int res[] = {-1, -1};
     int max = 0;
@@ -105,15 +128,16 @@ void maxInAccu(int* Accu, int* nbRhos, int* nbThetas, int* _rho, int* _theta){
         }
     }
     }
-    Accu[res[1] * *nbRhos + res[0]] *= -1;
+    //Accu[res[1] * *nbRhos + res[0]] *= -1;
     *_rho = res[0];
     *_theta = res[1];
+    clearAround(Accu, res[0], res[1], *nbRhos, *nbThetas, 15);
 }
 
 void displayOneLine(Uint32* pixels, int rho, int theta, int* w, int* h){
     for(int x = 0; x < *w; x++){
         int y = ((-cos(RAD(theta))*x + rho)/sin(RAD(theta)));
-        printf("GEEH : %i,%i -> %i,%i / %i\n", rho, theta, x, y, *h);
+        //printf("GEEH : %i,%i -> %i,%i / %i\n", rho, theta, x, y, *h);
         if (y > 0 && y < *h){
             pixels[y**w + x] = (0xff << 24) | (0xff << 16) |
              (0x00 << 8) | (0x00);
@@ -133,9 +157,9 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
     dy = abs(y2 - y1);
     dx = abs(x2 - x1);
     if(dx > dy){
-        printf("1st\n");
+        //printf("1st\n");
         if (y2 < y1){
-            printf("inverting\n");
+            //printf("inverting\n");
 
             y = y1;
             e = 0.5*dx;
@@ -144,11 +168,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int x = x1; x < x2; x++){
                 //printf("%i,%i\n", x, y);
                 if (x < w && x > 0 && y > 0 && y < h){
-                    putPixel(pixels, x, h-y, w);
+                    putPixel(pixels, x, y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e < 0){
+                if (e <= 0){
                     y -= 1;
                     e = e + e_01;
                 }
@@ -162,20 +186,20 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int x = x1; x < x2; x++){
                 //printf("%i,%i\n", x, y);
                 if (x < w && x > 0 && y > 0 && y < h){
-                    putPixel(pixels, x, h-y, w);
+                    putPixel(pixels, x, y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e > 0){
+                if (e >= 0){
                     y += 1;
                     e = e + e_01;
                 }
             }
         }
     }else{
-        printf("2nd\n");
+        //printf("2nd\n");
         if (x2 < x1){
-            printf("inverting\n");
+            //printf("inverting\n");
 
             x = x1;
             e = 0.5*dy;
@@ -184,11 +208,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int y = y1; y < y2; y++){
                 //printf("%i,%i\n", x, y);
                 if (y < h && y > 0 && x > 0 && x < h){
-                    putPixel(pixels, x, h-y, w);
+                    putPixel(pixels, x, y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e < 0){
+                if (e <= 0){
                     x -= 1;
                     e = e + e_01;
                 }
@@ -202,11 +226,11 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             for(int y = y1; y < y2; y++){
                 //printf("%i,%i\n", x, y);
                 if (y < h && y > 0 && x > 0 && x < h){
-                    putPixel(pixels, x, h-y, w);
+                    putPixel(pixels, x, y, w);
                     //printf("%i,%i\n", x, y);
                 }
                 e = e + e_10;
-                if (e > 0){
+                if (e >= 0){
                     x += 1;
                     e = e + e_01;
                 }
@@ -240,14 +264,27 @@ int* FinalAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
         if((pixels[y*W+x]&0xffffff) != 0xffffff) continue;
         for (int theta = 0; theta < maxTheta; theta++)
         {
-            int rho = x*(cos(RAD(theta))) + y*(sin(RAD(theta)));
+            int rho = (double)x*(cos(RAD(theta))) + (double)y*(sin(RAD(theta)));
             if (rho < 0)
-                rho = x*(cos(RAD(theta)+M_PI)) + y*(sin(RAD(theta)+M_PI));
+                rho = (double)x*(cos(RAD(theta)+M_PI)) + (double)y*(sin(RAD(theta)+M_PI));
             Accu[theta*nbRhos + rho] += 1;
         }
     }
     }
     return Accu;
+}
+
+Uint32* listToPic(int* listIndex, int length, int w){
+    Uint32* res = malloc(length*w*sizeof(Uint32));
+    memset(res, 0, length*w*sizeof(Uint32));
+
+    for(int i = 0; i < length; i++){
+        int tmp = listIndex[i];
+        for(int j = 0; j < tmp; j++){
+            putPixel(res, i, w-j-1, length);
+        }
+    }
+    return res;
 }
 
 Uint32* accToPic(int* Acc, int* w, int* h){

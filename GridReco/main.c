@@ -20,30 +20,60 @@ int main(int argc, char *argv[]){
     imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_BGRA32, 0);
     int W = imgOrigin->w;
     int H = imgOrigin->h;
-    //int nbRhos = diagLen(W, H)/2;
+    //int nbRhos = diagLen(W, H);
     //int nbThetas = 360;
     //int* Acc = houghAccumulator(imgOrigin->pixels, &(imgOrigin->w),
     // &(imgOrigin->h), &nbRhos, &nbThetas);
     int maxRho = diagLen(W,H);
-    int maxTheta = 360;
+    int maxTheta = 180;
+    //int* Acc = houghtransform(imgOrigin->pixels, &(imgOrigin->w),
+    // &(imgOrigin->h), &maxRho, &maxTheta);
     int* Acc = FinalAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
     /*Uint32* dataPic = accToPic(Acc, &tmp2, &tmp1);
     SDL_Surface* houghImg = SDL_CreateRGBSurfaceFrom(dataPic, tmp2, tmp1, 32, tmp2*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
     IMG_SaveJPG(houghImg, argv[2], 100);*/
 
+    int L_w[W];
+    int L_h[H];
+    for (int i = 0; i < W; i++){
+        L_w[i] = 0;    
+    }
+    for (int i = 0; i < H; i++){
+        L_h[i] = 0;    
+    }
+    PixelOnColsAndLines(imgOrigin->pixels, L_w, L_h, W, H);
+    Uint32* dataPic = listToPic(L_w, W, H);
+    SDL_Surface* PicList = SDL_CreateRGBSurfaceFrom(dataPic, W, H, 32, H*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
+    IMG_SaveJPG(PicList, "PicList_W.jpg" , 100);
+    free(dataPic);
+    Uint32* dataPic2 = listToPic(L_h, H, W);
+    SDL_Surface* PicList2 = SDL_CreateRGBSurfaceFrom(dataPic2, H, W, 32, W*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
+    IMG_SaveJPG(PicList2, "PicList_H.jpg" , 100);
+    free(dataPic2);
+
     int rho = -1;
     int theta = -1;
-    for(int round = 0; round < 10; round++){
+    for(int round = 0; round < 5; round++){
         maxInAccu(Acc, &maxRho, &maxTheta, &rho, &theta);
+        if (theta > 135)
+            rho *= -1;
         double a = cos(RAD(theta));
         double b = sin(RAD(theta));
         double x0 = (a*(double)rho);
-        double y0 = /*H -*/ (b*(double)rho) - H;
+        double y0 = (b*(double)rho);
         int x1 = (int)(x0 + 1000 * (-b));
-        int y1 = -(int)(y0 + 1000 * a);
+        int y1 = (int)(y0 + 1000 * a);
         int x2 = (int)(x0 - 1000 * (-b));
-        int y2 = -(int)(y0 - 1000* a);
+        int y2 = (int)(y0 - 1000* a);
         printf("r,t: %i,%i -> %i \n", rho, theta, Acc[theta*maxRho + rho]);
+        /*for(int i = rho-5; i < rho + 5; i++){
+            for(int j = theta-5; j < theta+5; j++){
+                printf("##%i,%i -> %i && %i && %i && %i :", i, j, (i > 0),(i < maxRho),
+                (j > 0), (j < maxTheta));
+                if (((i > 0) && (i < maxRho)) && ((j > 0) && (j < maxTheta)))
+                    printf("%i\n",Acc[j * maxRho + j]);
+            }
+        }*/
         printf("x0,y0: %f, %f\n", x0, y0);
         printf("x1,y1: %i, %i\n", x1, y1);
         printf("x2,y2: %i, %i\n", x2, y2);
