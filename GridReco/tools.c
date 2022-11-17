@@ -510,7 +510,3 @@ void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
         }
     }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> resize_boxes
