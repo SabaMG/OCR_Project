@@ -1,4 +1,5 @@
 #include "tools.h"
+#include "center_number.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
@@ -86,6 +87,16 @@ void PixelOnColsAndLines(Uint32* pixels, int linesX[], int linesY[],
     }
 }
 
+// Min function between two numbers
+int min(int x, int y)
+{
+    if(x < y)
+    {
+        return x;
+    }
+    return y;
+}
+
 //Puts the indexs of the 10 max of list[] in dest[] (with threshold)
 void Sort10MaxsIndexs(int list[], size_t len, size_t dest[]){
     for (size_t round = 0; round < 10; round++){
@@ -133,19 +144,31 @@ void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
     for (size_t j = 0; j < 9; j++){
         for (size_t i = 0; i < 9; i++){
             SDL_Rect case_;
+            int min_val = min(listOfX[i + 1] - listOfX[i], listOfY[i + 1] - listOfY[i]);
             case_.x = listOfX[i];
             case_.y = listOfY[j];
-            case_.w = listOfX[i+1]-listOfX[i];//@Lucas
-            case_.h = listOfY[j+1]-listOfY[j];//
+            case_.w = min_val;
+            case_.h = min_val;
+            
+            // Center case
+            ajuste_case(newImg, &case_);
+
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
             SDL_UnlockSurface(resultSurf);
             if (SDL_BlitSurface(newImg, &case_, resultSurf, NULL) == 0)
             {
+
+                //make zoom of the surface to reich 28x28 pixels
+                float z =  28 / (float)(resultSurf->w);
+                resultSurf = resize(resultSurf, z);
+
                 pathToSave[iIndex] = '0' + i;
                 pathToSave[jIndex] = '0' + j;
+
                 IMG_SaveJPG(resultSurf, pathToSave, 100);
             }
         }
     }
 }
+

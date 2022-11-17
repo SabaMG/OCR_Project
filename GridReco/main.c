@@ -8,11 +8,12 @@
 #include <SDL2/SDL_image.h>
 
 #include "tools.h"
+#include "center_number.h"
 
 int main(int argc, char *argv[]){
     
     //To display the grid -> 1
-    int display = 1;
+    int display = 0;
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture *background;

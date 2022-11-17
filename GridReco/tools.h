@@ -16,5 +16,12 @@ void DisplayLines(Uint32* pixels, size_t listX[], size_t listY[],
  size_t ImgW, size_t ImgH);
 void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
  char* pathToSave, size_t iIndex, size_t jIndex);
+void resize_boxe(SDL_Rect* case_);
+void remove_lines(SDL_Rect* case_);
+void setPixel32(SDL_Surface* surface, int x, int y, Uint32 color);
+Uint32 getPixel(SDL_Surface* surface, int x, int y);
+SDL_Surface* resize(SDL_Surface* source, float zoom);
+void display(char* name, SDL_Surface* surf);
+int min(int x, int y);
 
 #endif

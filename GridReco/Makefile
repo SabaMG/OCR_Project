@@ -1,5 +1,5 @@
 all:
-	gcc -Wall -Wextra main.c tools.c -o main -lm -lSDL2 -lSDL2_image
+	gcc -Wall -Wextra main.c tools.c center_number.c -o main -lm -lSDL2 -lSDL2_image
 
 clean:
 	rm main
