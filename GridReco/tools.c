@@ -7,6 +7,18 @@
 
 #define RAD(A)  (M_PI*((double)(A))/180.0)
 
+// Min function between two numbers
+int min(int x, int y)
+{
+    return (x < y) ? x : y;
+}
+
+// Max function between two numbers
+int max(int x, int y)
+{
+    return (x > y) ? x : y;
+}
+
 //returns the INDEX of the max in _list
 size_t maxList(int _list[], size_t len){
     size_t max_index = 0;
@@ -62,51 +74,19 @@ void HoughAngle(SDL_Surface* img, int Hough_lines[][91], size_t w_){
     }
 }
 
-int* houghAccumulator(Uint32* pixels, int* w, int* h, int* _nbRhos, int* _nbThetas){
-    int max_rho = diagLen(*w, *h);
-    //printf("DiagLength = %i\n", max_rho);
-    int nbRhos = 2*max_rho;
-    *_nbRhos = nbRhos;
-    int max_theta = 360;
-    int nbThetas = max_theta;
-    *_nbThetas = nbThetas;
-    int W = *w;
-    int H = *h;
 
-    int* Acc = malloc(nbRhos*nbThetas*sizeof(int));
-    memset(Acc, 0, nbRhos*nbThetas*sizeof(int));
-    for(int x = 0; x < W; x++){
-    for(int y = 0; y < H; y++){
-        if((pixels[y*W+x] & 0xff) == 0xff){
-            for(int theta = 0; theta < max_theta; theta++){
-                //int rho = (int)((((double)x)*cos(theta)
-                // + ((double)y)*sin(theta))+.5);
-                int rho = floor((((double)(x - nbRhos/2))*cos(RAD(theta))
-                 + ((double)(y - nbThetas/2))*sin(RAD(theta)))+.5);
-                if(rho < -max_rho || rho > max_rho) continue;
-                int rho_idx = rho + max_rho;
-                //Acc[theta * nbRhos + rho_idx] += 1;
-                //printf("%i, %i\n", rho_idx, theta);
-                Acc[rho_idx * nbThetas + theta] += 1;
-            }
-        }
-    }
-    }
-    return Acc;
-}
-
+//Test if (x,y) coordinates are in the picture
 int inPic(int x, int y, int w, int h){
     return ((x >= 0 && x < w) && (y >= 0 && y < h));
 }
 
+//clears all pixels (sets to 0) in 'range' around (x,y)
 void clearAround(int* Accu, int x, int y, int w, int h, int range){
     int from_x = x - range;
     int to_x = x + range;
     int from_y = y - range;
     int to_y = y + range;
 
-    //printf("Clear %i,%i\n", x, y);
-    //printf("from %i,%i to %i,%i\n", from_x, from_y, to_x, to_y);
     for(int i = from_x; i < to_x; i++){
         for (int j = from_y; j < to_y; j++)
         {
@@ -118,40 +98,31 @@ void clearAround(int* Accu, int x, int y, int w, int h, int range){
     }
 }
 
-void maxInAccu(int* Accu, int* nbRhos, int* nbThetas, int* _rho, int* _theta){
+//Fills 'rho' and 'theta' with the coordinates of the max in the accumulator
+void maxInAccu(int* Accu, int nbRhos, int nbThetas, int* _rho, int* _theta){
     int res[] = {-1, -1};
     int max = 0;
-    for(int rho = 0; rho < *nbRhos; rho++){
-    for(int theta = 0; theta < *nbThetas; theta++){
-        if (Accu[theta * *nbRhos + rho] > max){
-            max = Accu[theta * *nbRhos + rho];
+    for(int rho = 0; rho < nbRhos; rho++){
+    for(int theta = 0; theta < nbThetas; theta++){
+        if (Accu[theta * nbRhos + rho] > max){
+            max = Accu[theta * nbRhos + rho];
             res[0] = rho;
             res[1] = theta;
         }
     }
     }
-    //Accu[res[1] * *nbRhos + res[0]] *= -1;
-    *_rho = res[0];
+    *_rho = res[0] - nbRhos/2;
     *_theta = res[1];
-    clearAround(Accu, res[0], res[1], *nbRhos, *nbThetas, 15);
+    clearAround(Accu, res[0], res[1], nbRhos, nbThetas, 15);
 }
 
-void displayOneLine(Uint32* pixels, int rho, int theta, int* w, int* h){
-    for(int x = 0; x < *w; x++){
-        int y = ((-cos(RAD(theta))*x + rho)/sin(RAD(theta)));
-        //printf("GEEH : %i,%i -> %i,%i / %i\n", rho, theta, x, y, *h);
-        if (y > 0 && y < *h){
-            pixels[y**w + x] = (0xff << 24) | (0xff << 16) |
-             (0x00 << 8) | (0x00);
-        }  
-    }
-}
-
+//put a BLUE pixel
 void putPixel(Uint32* pixels, int x, int y, int w){
     pixels[(y)*w + x] = (0x00 << 24) | (0x00 << 16) |
                         (0xff << 8) | (0xff);
 }
 
+//Sub-function to draw a line
 void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h){
     int x, y, dx, dy;
     double e;
@@ -169,9 +140,9 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             e_01 = dx;
             for(int x = x1; x < x2; x++){
                 //printf("%i,%i\n", x, y);
-                if (x < w && x > 0 && y > 0 && y < h){
+                if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i\n", x, y);
+                    //printf("%i,%i // %i,%i\n", x, y, w, h);
                 }
                 e = e + e_10;
                 if (e <= 0){
@@ -187,9 +158,9 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             //printf("%i,%i\n", x1, x2);
             for(int x = x1; x < x2; x++){
                 //printf("%i,%i\n", x, y);
-                if (x < w && x > 0 && y > 0 && y < h){
+                if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i\n", x, y);
+                    //printf("%i,%i // %i,%i\n", x, y, w, h);
                 }
                 e = e + e_10;
                 if (e >= 0){
@@ -209,9 +180,9 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             e_01 = dy;
             for(int y = y1; y < y2; y++){
                 //printf("%i,%i\n", x, y);
-                if (y < h && y > 0 && x > 0 && x < h){
+                if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i\n", x, y);
+                    //printf("%i,%i // %i,%i\n", x, y, w, h);
                 }
                 e = e + e_10;
                 if (e <= 0){
@@ -227,9 +198,9 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
             //printf("%i,%i\n", y1, y2);
             for(int y = y1; y < y2; y++){
                 //printf("%i,%i\n", x, y);
-                if (y < h && y > 0 && x > 0 && x < h){
+                if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i\n", x, y);
+                    //printf("%i,%i // %i,%i\n", x, y, w, h);
                 }
                 e = e + e_10;
                 if (e >= 0){
@@ -241,6 +212,7 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
     }
 }
 
+//Draw a line
 void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h){
     if (abs(y2 - y1) < abs(x2 - x1)){
         if (x1 > x2)
@@ -255,8 +227,9 @@ void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h)
     }
 }
 
-int* FinalAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
-    int nbRhos = maxRho;
+//Hough accumulator
+int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
+    int nbRhos = 2*maxRho;
     int nbThetas = maxTheta;
     int* Accu = malloc(nbRhos*nbThetas*sizeof(int));
     memset(Accu, 0, nbRhos*nbThetas*sizeof(int));
@@ -267,8 +240,7 @@ int* FinalAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
         for (int theta = 0; theta < maxTheta; theta++)
         {
             int rho = (double)x*(cos(RAD(theta))) + (double)y*(sin(RAD(theta)));
-            if (rho < 0)
-                rho = (double)x*(cos(RAD(theta)+M_PI)) + (double)y*(sin(RAD(theta)+M_PI));
+            rho += maxRho;
             Accu[theta*nbRhos + rho] += 1;
         }
     }
@@ -276,6 +248,45 @@ int* FinalAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
     return Accu;
 }
 
+//Computes coordinates and draw the corresponding lines
+void PrintLines(SDL_Surface* img, int nbLines, int* Acc, int maxRho, int maxTheta){
+    int nbRhos = 2*maxRho;//rho : [-maxRho, maxRho]
+    int nbThetas = maxTheta;//theta : [0, theta]
+    int W = img->w;//Width of the edge picture
+    int H = img->h;//Height of the edge picture
+
+    int baseLength = maxRho;//influencing the length of the lines drawn
+
+    int rho = -1;//value to be fill by MaxInAccu()
+    int theta = -1;//value to be fill by MaxInAccu()
+    for(int round = 0; round < nbLines; round++){
+        
+        //Modifies 'rho' and 'theta' with the max coordinates
+        maxInAccu(Acc, nbRhos, nbThetas, &rho, &theta);
+
+        //Computing coordinates from (rho, theta) couple
+        double a = cos(RAD(theta));
+        double b = sin(RAD(theta));
+        double x0 = (a*(double)rho);
+        double y0 = (b*(double)rho);
+        int x1 = (int)(x0 + baseLength * (-b));
+        int y1 = (int)(y0 + baseLength * a);
+        int x2 = (int)(x0 - baseLength * (-b));
+        int y2 = (int)(y0 - baseLength * a);
+
+        //Debug purposes
+        printf("=== Ligne %i :\n", round+1);
+        printf("r,t: %i,%i -> %i \n", rho, theta, Acc[theta*maxRho + rho]);
+        printf("x0,y0: %f, %f\n", x0, y0);
+        printf("x1,y1: %i, %i\n", x1, y1);
+        printf("x2,y2: %i, %i\n\n", x2, y2);
+
+        //Draw the line between (x1,y1) and (x2,y2)
+        BresenhamLine(img->pixels, x1, y1, x2, y2, W, H);
+    }
+}
+
+//Converts a list to a picture
 Uint32* listToPic(int* listIndex, int length, int w){
     Uint32* res = malloc(length*w*sizeof(Uint32));
     memset(res, 0, length*w*sizeof(Uint32));
@@ -289,6 +300,7 @@ Uint32* listToPic(int* listIndex, int length, int w){
     return res;
 }
 
+//Converts accumulator to picture
 Uint32* accToPic(int* Acc, int* w, int* h){
     Uint32* res = malloc(*w * *h * sizeof(Uint32));
     memset(res, 0, *w**h*sizeof(Uint32));
@@ -314,89 +326,6 @@ Uint32* accToPic(int* Acc, int* w, int* h){
     }
     return res;
 }
-
-int* AnotherAccu(Uint32* pixels, int* w, int* h){
-    int max_theta = 180;
-    int max_rho = diagLen(*w, *h);
-    int* res = malloc(max_theta*max_rho*sizeof(int));
-    memset(res, 0, max_rho*max_theta*sizeof(int));
-
-    for(int x = 0; x < *w; x++){
-    for(int y = 0; y < *h; y++){
-        if((pixels[y**w + x]&0xff) == 0xff){
-            for(int theta = 0; theta < max_theta; theta++){
-                int rho = x*cos(RAD(theta)) + y*sin(RAD(theta));
-                if(rho < 0 || rho > max_rho) continue;
-                res[rho*max_theta + theta] += 1;
-            }
-        }
-    }
-    }
-    return res;
-}
-
-int* houghtransform(Uint32 *pixels, int *w, int *h, int* _rho, int* _theta){
-	int rho = 0;
-	int theta = 0;
-	int W = *w;
-    int H = *h;
-	int max_rho = *_rho;//diagLen(*w, *h)/2;
-	int max_theta = *_theta;//360;
-	int y = 0;
-	int x = 0;
-
-	int* hMat = malloc(max_theta*max_rho*sizeof(int));
-	memset(hMat, 0, max_theta*max_rho*sizeof(int));
-
-	for(rho = 0; rho < max_rho; rho++){
-	for(theta = 0; theta < max_theta; theta++){
-		double C = cos(RAD(theta));
-		double S = sin(RAD(theta));
-        
-        int nbpix = 0;
-
-		if (theta<45 || (theta>135 && theta<225) || theta>315){
-		for(y = 0; y < H; y++){
-			double dx = W/2.0 + (rho - (H/2.0-y)*S)/C;
-			if (dx<0 || dx>=W) continue;
-			x = (int)(dx+.5);
-			if (x == W) continue;
-            if ((pixels[y**w+x]&0xff) == 0xff)
-			    nbpix++;
-		}
-		}else{
-		for(x = 0; x < W; x++) {
-			double dy = H/2.0 - (rho - (x - W/2.0)*C)/S;
-			if ( dy < 0 || dy >= H ) continue;
-			y = (int)(dy+.5);
-			if (y == H) continue;
-			if ((pixels[y**w+x]&0xff) == 0xff)
-                nbpix++;  
-		}
-		}
-        hMat[max_theta * y + x] = nbpix;
-	}
-	}
-	return hMat;
-}
-//A-FAIRE -> Conversion polaire vers cartesien
-/**
-for y in range(accumulator.shape[0]):
-for x in range(accumulator.shape[1]):
-    if accumulator[y][x] > t_count:
-    rho = rhos[y]
-    theta = thetas[x]
-    a = np.cos(np.deg2rad(theta))
-    b = np.sin(np.deg2rad(theta))
-    x0 = (a * rho) + edge_width_half
-    y0 = (b * rho) + edge_height_half
-    x1 = int(x0 + 1000 * (-b))
-    y1 = int(y0 + 1000 * (a))
-    x2 = int(x0 - 1000 * (-b))
-    y2 = int(y0 - 1000 * (a))
-    subplot3.plot([theta], [rho], marker='o', color="yellow")
-    subplot4.add_line(mlines.Line2D([x1, x2], [y1, y2]))
-**/
 
 //returns the second dimension index of the max
 size_t MaxIndex2DArray(int table[][91], size_t w, size_t h){
@@ -425,16 +354,6 @@ void PixelOnColsAndLines(Uint32* pixels, int linesX[], int linesY[],
             }
         }
     }
-}
-
-// Min function between two numbers
-int min(int x, int y)
-{
-    if(x < y)
-    {
-        return x;
-    }
-    return y;
 }
 
 //Puts the indexs of the 10 max of list[] in dest[] (with threshold)

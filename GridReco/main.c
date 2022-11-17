@@ -14,27 +14,29 @@
 
 int main(int argc, char *argv[]){
 
-    SDL_Init(SDL_INIT_VIDEO);
-    IMG_Init(IMG_INIT_JPG);
+    SDL_Init(SDL_INIT_VIDEO);//SDL Init
+    IMG_Init(IMG_INIT_JPG);//SDL_IMG Init
 
-    SDL_Surface* imgOrigin = IMG_Load(argv[1]);
+    SDL_Surface* imgOrigin = IMG_Load(argv[1]);//Load edge picture
     imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_BGRA32, 0);
-    int W = imgOrigin->w;
-    int H = imgOrigin->h;
-    //int nbRhos = diagLen(W, H);
-    //int nbThetas = 360;
-    //int* Acc = houghAccumulator(imgOrigin->pixels, &(imgOrigin->w),
-    // &(imgOrigin->h), &nbRhos, &nbThetas);
-    int maxRho = diagLen(W,H);
-    int maxTheta = 180;
-    //int* Acc = houghtransform(imgOrigin->pixels, &(imgOrigin->w),
-    // &(imgOrigin->h), &maxRho, &maxTheta);
-    int* Acc = FinalAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
-    /*Uint32* dataPic = accToPic(Acc, &tmp2, &tmp1);
-    SDL_Surface* houghImg = SDL_CreateRGBSurfaceFrom(dataPic, tmp2, tmp1, 32, tmp2*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
-    IMG_SaveJPG(houghImg, argv[2], 100);*/
+    int W = imgOrigin->w;//Width of the edge picture
+    int H = imgOrigin->h;//Height of the edge picture
+   
+    int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
+    int maxTheta = 180; //theta values : [0, maxTheta]
+    int nbLines = 3; //number of lines to print
+    
+    //Create and Fill the hough accumulator
+    int* Acc = HoughAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
 
-    int L_w[W];
+    //Compute and print the lines
+    PrintLines(imgOrigin, nbLines, Acc, maxRho, maxTheta);
+
+
+
+
+    ////Pour travailler sur les listes de pics
+    /*int L_w[W];
     int L_h[H];
     for (int i = 0; i < W; i++){
         L_w[i] = 0;    
@@ -50,86 +52,29 @@ int main(int argc, char *argv[]){
     Uint32* dataPic2 = listToPic(L_h, H, W);
     SDL_Surface* PicList2 = SDL_CreateRGBSurfaceFrom(dataPic2, H, W, 32, W*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
     IMG_SaveJPG(PicList2, "PicList_H.jpg" , 100);
-    free(dataPic2);
+    free(dataPic2);*/
 
-    int rho = -1;
-    int theta = -1;
-    for(int round = 0; round < 5; round++){
-        maxInAccu(Acc, &maxRho, &maxTheta, &rho, &theta);
-        if (theta > 135)
-            rho *= -1;
-        double a = cos(RAD(theta));
-        double b = sin(RAD(theta));
-        double x0 = (a*(double)rho);
-        double y0 = (b*(double)rho);
-        int x1 = (int)(x0 + 1000 * (-b));
-        int y1 = (int)(y0 + 1000 * a);
-        int x2 = (int)(x0 - 1000 * (-b));
-        int y2 = (int)(y0 - 1000* a);
-        printf("r,t: %i,%i -> %i \n", rho, theta, Acc[theta*maxRho + rho]);
-        /*for(int i = rho-5; i < rho + 5; i++){
-            for(int j = theta-5; j < theta+5; j++){
-                printf("##%i,%i -> %i && %i && %i && %i :", i, j, (i > 0),(i < maxRho),
-                (j > 0), (j < maxTheta));
-                if (((i > 0) && (i < maxRho)) && ((j > 0) && (j < maxTheta)))
-                    printf("%i\n",Acc[j * maxRho + j]);
-            }
-        }*/
-        printf("x0,y0: %f, %f\n", x0, y0);
-        printf("x1,y1: %i, %i\n", x1, y1);
-        printf("x2,y2: %i, %i\n", x2, y2);
-        BresenhamLine(imgOrigin->pixels, x1, y1, x2, y2, W, H);
-    }
-    ////TEST BresenhamLine
-    //unary
-    /*int x1 = -254;
-    int y1 = -1021;
-    int x2 = 396;
-    int y2 = 869;
-    BresenhamLine(imgOrigin->pixels, x1, y1, x2, y2, W, H);*/
-    //global
-    /*int x1 = 0;
-    int y1 = 0;
-    int x2 = W;
-    int y2 = H;
-    BresenhamLine(imgOrigin->pixels, x1, y1, x2, y2, W, H);
-    x1 = 0;
-    y1 = H;
-    x2 = W;
-    y2 = 0;
-    BresenhamLine(imgOrigin->pixels, x1, y1, x2, y2, W, H);
-    x1 = W/2;
-    y1 = H;
-    x2 = W/2;
-    y2 = 0;
-    BresenhamLine(imgOrigin->pixels, x1, y1, x2, y2, W, H);
-    x1 = 0;
-    y1 = H/2;
-    x2 = W;
-    y2 = H/2;
-    BresenhamLine(imgOrigin->pixels, x1, y1, x2, y2, W, H);*/
-
+    
+    //Saving picture with drawn lines
     IMG_SaveJPG(imgOrigin, argv[2], 100);
     
-    /*for(int theta = 0; theta < maxTheta; theta++){
-    for(int rho = 0; rho < maxRho; rho++){
-        if (Acc[theta*maxRho+rho] == 0)
-            printf("  ,");
-        else
-            printf("%2i,", Acc[theta*maxRho+rho]);
-    }
-    printf("\n");
-    }*/
-
-    //Uint32* dataPic = accToPic(Acc, &maxRho, &maxTheta);
-    //SDL_Surface* houghImg = SDL_CreateRGBSurfaceFrom(dataPic, nbRhos, nbThetas, 32, nbRhos*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
-    //IMG_SaveJPG(houghImg, argv[2], 100);
-    //free(dataPic);
-    //SDL_FreeSurface(houghImg);
-
+    //Cleaning
     free(Acc);
     SDL_FreeSurface(imgOrigin);
+    
+    
     return EXIT_SUCCESS;
+
+
+
+    ///##################################
+    ///##############FIN#################
+    ///##################################
+
+
+
+
+
 
 
 
