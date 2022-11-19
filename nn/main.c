@@ -1,10 +1,5 @@
 /* 
- * Main file for the ocr neural network
- *
- * TODO
- * add implementation
- * do training with test
- * load training files
+ * ocr
  */
 
 #include <stdlib.h>
@@ -20,18 +15,24 @@
 
 #include "impl.h"
 #include "file.h"
+#include "neural_network.h"
 
-#define DEFAULT_EPOCHS_NUMBER 5;
+// Network stuff
+#define N_LAYERS 3
+#define N_NEURONS_INPUT 784
+#define N_NEURONS_HIDDEN_1 32
+#define N_NEURONS_OUTPUT 10
+#define DEFAULT_EPOCHS 5
+#define DEFAULT_LEARNING_RATE 0.1
 
 int build_image_folder_paths(int path_length, char *training_folder_path, char* a_paths[]) {
 	// Try to open training directory
 	DIR* training_dir = opendir(training_folder_path);
 	if (!training_dir) {
-		if (ENOENT == errno) {
+		if (ENOENT == errno)
 			errx(EXIT_FAILURE, "Directory '%s' does not exist.", training_folder_path);
-		} else {
+		else
 			errx(EXIT_FAILURE, "Failed to open '%s' directory.", training_folder_path);
-		}
 	}
 
 	// Get training_folder_path length
@@ -49,11 +50,10 @@ int build_image_folder_paths(int path_length, char *training_folder_path, char* 
 		free(str_i);
 		// Check if folder at new path exists
 		if (!path) {
-			if (ENOENT == errno) {
+			if (ENOENT == errno)
 				errx(EXIT_FAILURE, "build_image_folder_paths: Directory '%s' does not exist.", path);
-			} else {
+			else
 				errx(EXIT_FAILURE, "build_image_folder_paths: Failed to open '%s' directory.", path);
-			}
 		}
 		//printf("build_image_folder_paths: Path for '%zu' successfully added.\n", i);
 		a_paths[i] = path;
@@ -73,11 +73,8 @@ int get_next_image_path(char **image_path, int *path_length, char *dir_path, int
 	str_curr_number[1] = '\0';
 
 	int can_path = 0;
-	//char *image_path = NULL;
-	//char image_path[*path_length + 25];
 	while (next_index < IMAGES_NUMBER && can_path == 0) {
 		// Build next test image path
-		//char *image_path = (char *)malloc(*path_length + 25);
 		*image_path = (char *)malloc(*path_length + 25);
 		strcat(*image_path, dir_path);
 		strcat(*image_path, "/");
@@ -108,62 +105,109 @@ int get_next_image_path(char **image_path, int *path_length, char *dir_path, int
 	return 0;
 }
 
-int training(int e, int path_length, char* image_folder_paths[], int current_indexes[]) {
+int training(int e, int path_length, char* image_folder_paths[], int current_indexes[], Layer network[]) {
 	// Get random seed
 	srand(time(NULL));
 
 	char *path = NULL;
 	char **image_path = &path;
 
+	Uint32 pixel;
+	Uint8 r, g, b, v = 0;
+
+	double learning_rate = 0.4;
+
+	// Array that will contain grey scale values
+	double training_inputs[784];
+	double expected_outputs[10];
+
 	// Run training for a number of epochs
 	for (int i = 0; i < e; i++) {
-		int r = (int)(rand() % 10); // Get a number between 0 and 9
+		int r_int = 0;
+		r_int = (int)(rand() % 10); // Get a number between 0 and 9
 
 		// Get random image path
-		if (get_next_image_path(image_path, &path_length, image_folder_paths[r], current_indexes, r) != 0)
+		if (get_next_image_path(image_path, &path_length, image_folder_paths[r_int], current_indexes, r_int) != 0)
 			errx(EXIT_FAILURE, "Error in get_next_image_path");
 
-		//Loading the image as a surface
-		SDL_Surface *img = IMG_Load(*image_path);
-		if (img == NULL)
+		// Loading the image as a surface
+		SDL_Surface *surface = IMG_Load(*image_path);
+		if (surface == NULL)
 			errx(EXIT_FAILURE, "training: Error when load image '%s'.\n", *image_path);
-		printf("training: Load image '%s'.\n", *image_path);
+		//printf("training: Load image '%s'.\n", *image_path);
 
-		//Standardizes the formats
-		img = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_ARGB8888, 0);
-		SDL_FreeSurface(img);
+		// Standardizes the formats
+		// Not very useful here but ok
+		surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
+
+		//printf("w = %i, h = %i\n", surface->w, surface->h);
+		// Loop through pixels
+		Uint32* pixels = surface->pixels;
+		for (int y = 0; y < surface->h; y++) {
+			for (int x = 0; x < surface->w; x++) {
+				pixel = pixels[y * surface->w + x];
+				r = pixel >> 16 & 0xFF;
+				g = pixel >> 8 & 0xFF;
+				b = pixel & 0xFF;
+				v = (r + g + b) / 3;
+				training_inputs[y * surface->w + x] = (double)v;
+
+			}
+		}
+
+		// Build expected_outputs array
+		for (size_t i = 0; i < 10; i++) {
+			expected_outputs[i] = 0;
+		}
+		expected_outputs[r_int] = 1;
+		//printf("Expected number: %i\n", r_int);
+
+		// Feed neurons
+		feed_forward_pass(network, training_inputs);
+
+		// Brief evaluation of the output layer
+		int best = 0;
+		//printf("output layer values: [ ");
+		for (size_t q = 0; q < 10; q++) {
+			//printf("%f ", network[2].neurons[q].value);
+			if (network[2].neurons[best].value < network[2].neurons[q].value)
+				best = q;
+		}
+		//printf("]\n");
+		//printf("Ouput number: %i\n", best);
+
+		if (best == r_int) { // :)
+			printf("\033[0;32m");
+			printf("Expected: %i\tPredicted: %i\n", r_int, best);
+			printf("\033[0m");
+		}
+		else { // :(
+			printf("\033[0;31m");
+			printf("Expected: %i\tPredicted: %i\t(%s)\n", r_int, best, *image_path);
+			printf("\033[0m");
+		}
+
+		// Do backpropagation
+		backpropagation_pass(network, expected_outputs);
+
+		// Update neurons
+		update_network(network, learning_rate);
+
+		SDL_FreeSurface(surface);
 	}
 
 	return 0;
 }
 
 int main(int argc, char **argv) {
-	/*
-	// Create a Neural Network struct in memory
-	// (The nn is a array of layers)
-	// 3 layers: input, hidden, output
-	size_t n_layers = 2;
-	// input: 784 = 28 * 28 neurons
-	size_t n_inputs_neurons = 784;
-	// hidden: 784 = 28 * 28 neurons
-	size_t n_hidden_neurons = 32;
-	// output: 10 (one for each number)
-	size_t n_output_neurons = 10;
 
-	size_t a_inputs_neurons[] = {n_inputs_neurons, n_hidden_neurons};
-	size_t a_hidden_neurons[] = {n_hidden_neurons, n_output_neurons};
+	int epochs = DEFAULT_EPOCHS;
+	double learning_rate = DEFAULT_LEARNING_RATE;
 
-	// Creates layers array struct
-	Layer NN[n_layers];
-	// Initialize the nn
-	generate_network(NN, n_layers, a_hidden_neurons, a_inputs_neurons);
-	print_layer(NN, n_layers);
-	save_weights("save1.txt", NN, n_layers);
-	*/
-	char *training_folder_path;
 	// Parsing arguments
 	int d_flag = 0;
-	char *e_value = NULL;
+	char *training_folder_path;
+	char *network_path = NULL;
 	char *arg;
 
 	int i = 1;
@@ -172,42 +216,62 @@ int main(int argc, char **argv) {
 		if (strcmp(arg, "-d") == 0) {
 			d_flag = 1;
 			i++;
-			if (i < argc) {
+			if (i < argc)
 				training_folder_path = argv[i];
-			}
-			else {
+			else
 				errx(EXIT_FAILURE, "Option '-d' requires an argument.");
-			}
+		}
+		else if (strcmp(arg, "-l") == 0) {
+			i++;
+			if (i < argc)
+				network_path = argv[i];
+			else
+				errx(EXIT_FAILURE, "Option '-l' requires an argument.");
 		}
 		else if (strcmp(arg, "-e") == 0) {
 			i++;
 			if (i < argc)
-				e_value = argv[i];
+				epochs = atoi(argv[i]);
 			else
 				errx(EXIT_FAILURE, "Option -e requires an argument.");
 		}
-		else {
-			errx(EXIT_FAILURE, "Unknown option '%s'.", arg);
+		else if (strcmp(arg, "-r") == 0) {
+			i++;
+			if (i < argc)
+				learning_rate = atoi(argv[i]);
+			else
+				errx(EXIT_FAILURE, "Option -r requires an argument.");
 		}
+		else
+			errx(EXIT_FAILURE, "Unknown option '%s'.", arg);
 		i++;
 	}	
+
+	// Create network
+	size_t N_NEURONS_ARRAY[] = {N_NEURONS_INPUT, N_NEURONS_HIDDEN_1, N_NEURONS_OUTPUT};
+
+	Layer network[N_LAYERS];
+	generate_network(network, N_LAYERS, N_NEURONS_ARRAY);
+
+
+	//print_layer(network, n_layers);
 
 	if (d_flag) {
 		// Array contening all 10 image folder paths
 		int path_length = 0;
-		while (training_folder_path[path_length] != 0) {
+		while (training_folder_path[path_length] != 0)
 			path_length++;
-		}
 
 		char* image_folder_paths[10]; 
 		int current_indexes[10] = {0};
 		build_image_folder_paths(path_length, training_folder_path, image_folder_paths);
 
-		int e = DEFAULT_EPOCHS_NUMBER;
-		if (e_value != NULL) {
-			e = atoi(e_value);
-		}
-		training(e, path_length, image_folder_paths, current_indexes);
+		if (network_path != NULL)
+			load_weights(network_path, network);
+
+		training(epochs, path_length, image_folder_paths, current_indexes, network);
+
+		save_weights("network.save", network, N_LAYERS);
 	}
 
 	return EXIT_SUCCESS;

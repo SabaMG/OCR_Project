@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "utils.h"
 #include "impl.h"
 
@@ -12,12 +13,15 @@ double sigmoid(double x) {
 }
 
 /* return the derivative of sigmoid(x) */
+/*
 double dSigmoid(double x) {
 	return x * (1 - x);
 }
+*/
 
 /* return a random number between 0 and 1
 	used for initializing weights */
 double getRandom() {
-	return ((double)rand()) / ((double)RAND_MAX);
+	//srand(time(NULL));
+	return ((double)rand()) / ((double)RAND_MAX) * 2 - 1;
 }

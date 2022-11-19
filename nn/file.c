@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <unistd.h>
+#include <errno.h>
 #include <err.h>
 #include "impl.h"
 
@@ -72,14 +75,29 @@ void load_weights(char *path, Layer l[])
 void save_weights(char *path, Layer l[], size_t nb_layer)
 {
     // open stream write in stream
-    FILE* stream;
-    stream = fopen(path, "w");
-
+    FILE* stream = NULL;
+    //stream = fopen(path, "w");
+	int len = 0;
+	int i = 1;
+	char *save_path;
+	do {
+		char *n = (char *)malloc((int)(log10(i)) + 1);
+		n[(int)(log10(i) + 1) - 1] = 0;
+		sprintf(n, "%i", i);
+		len = 21 + strlen(n);
+		save_path = (char *)malloc(len);
+		save_path[len - 1] = 0;
+		strcat(save_path, "./saves/network_");
+		strcat(save_path, n);
+		strcat(save_path, ".save");
+		free(n);
+		i++;
+	}
+	while (access(save_path, F_OK) == 0  && i < 100);
     // check if file can be open
+	stream = fopen(save_path, "w");
     if(stream == NULL)
-    {
-        errx(1, "file can't be open");
-    }
+        errx(EXIT_FAILURE, "save_weights: Failed to write in '%s'.\n", save_path);
 
     for(size_t i = 0; i < nb_layer; ++i)
     {
