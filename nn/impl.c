@@ -33,8 +33,9 @@ void free_network(Layer l[], size_t size) {
 }
 
 // This function generate a neural network with rand values
-void generate_network(Layer l[], size_t layers, size_t sizes_neurons[]) {
+void generate_network(Layer l[], size_t layers, size_t sizes_neurons[], size_t sizes_inputs[]) {
 
+	//int o = 0;
 	// Generate layer i 
 	for(size_t i = 0; i < layers; ++i) {
 		l[i].size = sizes_neurons[i];
@@ -50,13 +51,21 @@ void generate_network(Layer l[], size_t layers, size_t sizes_neurons[]) {
 				n.size = sizes_neurons[i + 1];
 			else
 				n.size = 0;
+		//	n.size = sizes_inputs[i];
 			n.weights = calloc(n.size, sizeof(double));
 			n.begin = n.weights;
 			n.end = n.begin + n.size;
 
-			// generate weights k of neuron j
-			for (double* k = n.begin; k < n.end; ++k)
+    		// generate weights k of neuron j
+			//o = 0;
+			for (double* k = n.begin; k < n.end; ++k) {
 				*k = getRandom();
+			//	*k = (0.5*(rand()/(double)(RAND_MAX)));
+			/*
+				if (o%2) *k = -*k;
+				o++;
+				*/
+			}
 
 			n.bias = getRandom(); // init bias
 			n.value = 0; // init value

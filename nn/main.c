@@ -105,7 +105,10 @@ int get_next_image_path(char **image_path, int *path_length, char *dir_path, int
 	return 0;
 }
 
-int training(int e, int path_length, char* image_folder_paths[], int current_indexes[], Layer network[]) {
+int training(int v_flag, int e, double learning_rate, int path_length, char* image_folder_paths[], int current_indexes[], Layer network[]) {
+	// TESTING
+	int good = 0;
+	int bad = 0;
 	// Get random seed
 	srand(time(NULL));
 
@@ -114,8 +117,6 @@ int training(int e, int path_length, char* image_folder_paths[], int current_ind
 
 	Uint32 pixel;
 	Uint8 r, g, b, v = 0;
-
-	double learning_rate = 0.4;
 
 	// Array that will contain grey scale values
 	double training_inputs[784];
@@ -164,6 +165,7 @@ int training(int e, int path_length, char* image_folder_paths[], int current_ind
 
 		// Feed neurons
 		feed_forward_pass(network, training_inputs);
+		//feed_forward_pass2(network, training_inputs);
 
 		// Brief evaluation of the output layer
 		int best = 0;
@@ -177,24 +179,36 @@ int training(int e, int path_length, char* image_folder_paths[], int current_ind
 		//printf("Ouput number: %i\n", best);
 
 		if (best == r_int) { // :)
-			printf("\033[0;32m");
-			printf("Expected: %i\tPredicted: %i\n", r_int, best);
-			printf("\033[0m");
+			if (v_flag) {
+				printf("\033[0;32m");
+				printf("Expected: %i\tPredicted: %i\n", r_int, best);
+				printf("\033[0m");
+			}
+			good++;
 		}
 		else { // :(
-			printf("\033[0;31m");
-			printf("Expected: %i\tPredicted: %i\t(%s)\n", r_int, best, *image_path);
-			printf("\033[0m");
+			if (v_flag) {
+				printf("\033[0;31m");
+				printf("Expected: %i\tPredicted: %i\t(%s)\n", r_int, best, *image_path);
+				printf("\033[0m");
+			}
+			bad++;
 		}
+
+		//backpropagation_pass2(network, expected_outputs, learning_rate);
 
 		// Do backpropagation
 		backpropagation_pass(network, expected_outputs);
 
 		// Update neurons
 		update_network(network, learning_rate);
+		
 
 		SDL_FreeSurface(surface);
 	}
+
+	printf("\n");
+	printf("Corrects: %i (%.2f%%) \t Incorrects: %i (%.2f%%)\t (%i rounds)\n", good, ((float)good / (float)e) * 100, bad, ((float)bad / (float)e) * 100, e);
 
 	return 0;
 }
@@ -206,6 +220,7 @@ int main(int argc, char **argv) {
 
 	// Parsing arguments
 	int d_flag = 0;
+	int v_flag = 0;
 	char *training_folder_path;
 	char *network_path = NULL;
 	char *arg;
@@ -220,6 +235,10 @@ int main(int argc, char **argv) {
 				training_folder_path = argv[i];
 			else
 				errx(EXIT_FAILURE, "Option '-d' requires an argument.");
+		}
+		else if (strcmp(arg, "-v") == 0) {
+			v_flag = 1;
+			i++;
 		}
 		else if (strcmp(arg, "-l") == 0) {
 			i++;
@@ -238,7 +257,7 @@ int main(int argc, char **argv) {
 		else if (strcmp(arg, "-r") == 0) {
 			i++;
 			if (i < argc)
-				learning_rate = atoi(argv[i]);
+				learning_rate = atof(argv[i]);
 			else
 				errx(EXIT_FAILURE, "Option -r requires an argument.");
 		}
@@ -249,9 +268,10 @@ int main(int argc, char **argv) {
 
 	// Create network
 	size_t N_NEURONS_ARRAY[] = {N_NEURONS_INPUT, N_NEURONS_HIDDEN_1, N_NEURONS_OUTPUT};
+	size_t sizes_inputs[] = {784, 784, 32};
 
 	Layer network[N_LAYERS];
-	generate_network(network, N_LAYERS, N_NEURONS_ARRAY);
+	generate_network(network, N_LAYERS, N_NEURONS_ARRAY, sizes_inputs);
 
 
 	//print_layer(network, n_layers);
@@ -269,7 +289,7 @@ int main(int argc, char **argv) {
 		if (network_path != NULL)
 			load_weights(network_path, network);
 
-		training(epochs, path_length, image_folder_paths, current_indexes, network);
+		training(v_flag, epochs, learning_rate, path_length, image_folder_paths, current_indexes, network);
 
 		save_weights("network.save", network, N_LAYERS);
 	}

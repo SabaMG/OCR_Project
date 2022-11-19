@@ -13,11 +13,9 @@ double sigmoid(double x) {
 }
 
 /* return the derivative of sigmoid(x) */
-/*
 double dSigmoid(double x) {
 	return x * (1 - x);
 }
-*/
 
 /* return a random number between 0 and 1
 	used for initializing weights */
