@@ -14,11 +14,14 @@
 
 int main(int argc, char *argv[]){
 
+    if (argc != 3)
+	    errx(1, "Expected: ./main [picture] [edgeFiltered] [savePath]");
+
     SDL_Init(SDL_INIT_VIDEO);//SDL Init
     IMG_Init(IMG_INIT_JPG);//SDL_IMG Init
 
-    SDL_Surface* imgOrigin = IMG_Load(argv[1]);//Load edge picture
-    imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_BGRA32, 0);
+    SDL_Surface* imgOrigin = IMG_Load(argv[2]);//Load edge picture
+    imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_ARGB8888, 0);
     int W = imgOrigin->w;//Width of the edge picture
     int H = imgOrigin->h;//Height of the edge picture
    
@@ -29,11 +32,30 @@ int main(int argc, char *argv[]){
     //Create and Fill the hough accumulator
     int* Acc = HoughAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
 
+    int* H_lines = calloc(4*nbLines/2, sizeof(int));
+    size_t H_len = 4*nbLines/2;
+    int* V_lines = calloc(4*nbLines/2, sizeof(int));
+    size_t V_len = 4*nbLines/2;
     //Compute and print the lines
-    PrintLines(imgOrigin, nbLines, Acc, maxRho, maxTheta);
+    int AngleToRotate = PrintLines(imgOrigin, nbLines, Acc, maxRho, maxTheta, H_lines, V_lines);
+    printf("Angle To Rotate: %i\n", AngleToRotate);
+
+    struct Point* intersXY = ComputeInters(H_lines, H_len, V_lines, V_len, nbLines);
 
 
+    //Sets the directory to put the boxes into
+    struct stat st;
+    if (stat("./boxes", &st) == 0)
+        printf("/boxes is present\n");
+    else{
+        if (mkdir("./boxes", 0700) == -1)
+            errx(1, "Unable to create ./boxes");
+        printf("/boxes has been created\n");
+    }
 
+    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
+     '0', '0', '.', 'j', 'p', 'g', 0};
+    CutGrid(argv[1], intersXY, filename_, 10, 11, nbLines);
 
     ////Pour travailler sur les listes de pics
     /*int L_w[W];
@@ -56,9 +78,11 @@ int main(int argc, char *argv[]){
 
     
     //Saving picture with drawn lines
-    IMG_SaveJPG(imgOrigin, argv[2], 100);
+    IMG_SaveJPG(imgOrigin, argv[3], 100);
     
     //Cleaning
+    free(H_lines);
+    free(V_lines);
     free(Acc);
     SDL_FreeSurface(imgOrigin);
     
@@ -167,17 +191,17 @@ int main(int argc, char *argv[]){
     }
     
     //Sets the directory to put the boxes into
-    struct stat st;
+    /*struct stat st;
     if (stat("./boxes", &st) == 0)
         printf("/boxes is present\n");
     else{
         if (mkdir("./boxes", 0700) == -1)
             errx(1, "Unable to create ./boxes");
         printf("/boxes has been created\n");
-    }
+    }*/
     //Path to save the sudoku boxes
-    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
-     '0', '0', '.', 'j', 'p', 'g', 0};
+    /*char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
+     '0', '0', '.', 'j', 'p', 'g', 0};*/
     //Cuting and saving them
     CutAndSaveBoxes(argv[2], coord_X_list, coord_Y_list, filename_, 10, 11);
 

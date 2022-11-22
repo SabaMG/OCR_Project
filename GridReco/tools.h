@@ -21,6 +21,17 @@ Uint32* accToPic(int* Acc, int* w, int* h);
 void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h);
 int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta);
 Uint32* listToPic(int* listIndex, int length, int w);
-void PrintLines(SDL_Surface* img, int nbLines, int* Acc, int maxRho, int maxTheta);
+int PrintLines(SDL_Surface* img, int nbLines, int* Acc, int maxRho, int maxTheta, int* H_lines, int* V_lines);
+int GetIntersection(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, int* X, int* Y);
+struct Point* ComputeInters(int* H_lines, size_t H_len, int* V_lines, size_t V_len, int nbLines);
+void CutGrid(char* imgPath, struct Point* inters, char* pathToSave,
+ size_t iIndex, size_t jIndex, size_t nbLines);
+
+
+struct Point
+{
+    int x;
+    int y;
+};
 
 #endif

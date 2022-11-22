@@ -2,10 +2,14 @@
 #include "center_number.h"
 
 #include <math.h>
+#include <err.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
 #define RAD(A)  (M_PI*((double)(A))/180.0)
+#define INIT_POINTSTRUCT(X, Y) \
+{ .x=X, .y=Y }
+
 
 // Min function between two numbers
 int min(int x, int y)
@@ -17,6 +21,65 @@ int min(int x, int y)
 int max(int x, int y)
 {
     return (x > y) ? x : y;
+}
+
+size_t Point_minX_index(struct Point* list, size_t start, size_t end){
+    int min = list[start].x;
+    size_t min_index = start;
+    for(size_t i = start; i < end; i++){
+        if(list[i].x < min){
+            min = list[i].x;
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
+size_t Point_minY_index(struct Point* list, size_t start, size_t end){
+    int min = list[start].y;
+    size_t min_index = start;
+    for(size_t i = start; i < end; i++){
+        if(list[i].y < min){
+            min = list[i].y;
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
+void Point_swap(struct Point* list, size_t i, size_t j){
+    struct Point tmp = list[i];
+    list[i] = list[j];
+    list[j] = tmp;
+}
+
+void Point_inSort_x(struct Point* list, size_t start, size_t end){
+    while (start < end - 1)
+    {
+        size_t ind = Point_minX_index(list, start, end);
+        Point_swap(list, start, ind);
+        start++;
+    }
+    
+}
+
+void Point_inSort_y(struct Point* list, size_t start, size_t end){
+    while (start < end - 1)
+    {
+        size_t ind = Point_minY_index(list, start, end);
+        Point_swap(list, start, ind);
+        start++;
+    }
+    
+}
+
+void Point_sortInters(struct Point* list, size_t length, int nbLines){
+    Point_inSort_y(list, 0, length);
+    for (size_t line = 0; line < (size_t)nbLines/2; line++)
+    {
+        size_t start = line*nbLines/2;
+        Point_inSort_x(list, start, start + nbLines / 2);
+    }
 }
 
 //returns the INDEX of the max in _list
@@ -118,8 +181,10 @@ void maxInAccu(int* Accu, int nbRhos, int nbThetas, int* _rho, int* _theta){
 
 //put a BLUE pixel
 void putPixel(Uint32* pixels, int x, int y, int w){
-    pixels[(y)*w + x] = (0x00 << 24) | (0x00 << 16) |
-                        (0xff << 8) | (0xff);
+    if ((pixels[(y)*w + x]& 0xffffffff) != 0xffff0000)
+        pixels[(y)*w + x] = 0xffff0000;
+    else
+        pixels[(y)*w + x] = 0xff << 24 | 0x00 << 16 | 0xff << 8 | 0x00;
 }
 
 //Sub-function to draw a line
@@ -142,7 +207,7 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
                 //printf("%i,%i\n", x, y);
                 if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i // %i,%i\n", x, y, w, h);
+                    //printf("%i,%i /\n", x, y);
                 }
                 e = e + e_10;
                 if (e <= 0){
@@ -160,7 +225,7 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
                 //printf("%i,%i\n", x, y);
                 if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i // %i,%i\n", x, y, w, h);
+                    //printf("%i,%i /\n", x, y);
                 }
                 e = e + e_10;
                 if (e >= 0){
@@ -182,7 +247,7 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
                 //printf("%i,%i\n", x, y);
                 if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i // %i,%i\n", x, y, w, h);
+                    //printf("%i,%i /\n", x, y);
                 }
                 e = e + e_10;
                 if (e <= 0){
@@ -200,7 +265,7 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
                 //printf("%i,%i\n", x, y);
                 if (inPic(x, y, w, h)){
                     putPixel(pixels, x, y, w);
-                    //printf("%i,%i // %i,%i\n", x, y, w, h);
+                    //printf("%i,%i /\n", x, y);
                 }
                 e = e + e_10;
                 if (e >= 0){
@@ -249,11 +314,13 @@ int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
 }
 
 //Computes coordinates and draw the corresponding lines
-void PrintLines(SDL_Surface* img, int nbLines, int* Acc, int maxRho, int maxTheta){
+int PrintLines(SDL_Surface* img, int nbLines, int* Acc, int maxRho, int maxTheta, int* H_lines, int* V_lines){
     int nbRhos = 2*maxRho;//rho : [-maxRho, maxRho]
     int nbThetas = maxTheta;//theta : [0, theta]
     int W = img->w;//Width of the edge picture
     int H = img->h;//Height of the edge picture
+    int i_H = 0;
+    int i_V = 0;
 
     int baseLength = maxRho;//influencing the length of the lines drawn
 
@@ -274,15 +341,137 @@ void PrintLines(SDL_Surface* img, int nbLines, int* Acc, int maxRho, int maxThet
         int x2 = (int)(x0 - baseLength * (-b));
         int y2 = (int)(y0 - baseLength * a);
 
+        if(theta <= 60 && theta >=-60){
+            //printf("OUI %i\n", theta);
+            H_lines[i_H] = x1;
+            H_lines[i_H+1] = y1;
+            H_lines[i_H+2] = x2;
+            H_lines[i_H+3] = y2;
+            i_H += 4;
+        }else{
+            V_lines[i_V] = x1;
+            V_lines[i_V+1] = y1;
+            V_lines[i_V+2] = x2;
+            V_lines[i_V+3] = y2;
+            i_V += 4;
+        }
+
         //Debug purposes
         printf("=== Ligne %i :\n", round+1);
         printf("r,t: %i,%i -> %i \n", rho, theta, Acc[theta*maxRho + rho]);
-        printf("x0,y0: %f, %f\n", x0, y0);
+        //printf("x0,y0: %f, %f\n", x0, y0);
         printf("x1,y1: %i, %i\n", x1, y1);
         printf("x2,y2: %i, %i\n\n", x2, y2);
 
         //Draw the line between (x1,y1) and (x2,y2)
         BresenhamLine(img->pixels, x1, y1, x2, y2, W, H);
+    }
+    int angle = 0;
+    if (nbLines > 0){
+        if(theta > 90)
+            angle = min(180-theta, theta-90);
+        else
+            angle = min(90-theta, theta);
+    }
+    return angle;
+}
+
+int GetIntersection(int x1_, int y1_, int x2_, int y2_, int x3_, int y3_, int x4_, int y4_, int* X, int* Y){
+    if ((x1_ == x2_ && y1_ == y2_) || (x3_ == x4_ && y3_ == y4_)){
+        return 0;
+    }
+
+    long long int x1 = x1_;
+    long long int x2 = x2_;
+    long long int x3 = x3_;
+    long long int x4 = x4_;
+    long long int y1 = y1_;
+    long long int y2 = y2_;
+    long long int y3 = y3_;
+    long long int y4 = y4_;
+
+    double denominator = ((x1 - x2)*(y3 - y4)-(y1 - y2)*(x3 - x4));
+
+    // Lines are parallel
+	if (denominator == 0)
+		return 0;
+
+    long long int numerator_x = (((x1*y2 - y1*x2)*(x3-x4))-((x1-x2)*(x3*y4 - y3*x4)));
+    long long int numerator_y = ((x1*y2 - y1*x2)*(y3-y4)-(y1-y2)*(x3*y4 - y3*x4));
+    *X = numerator_x / denominator;
+	*Y = numerator_y / denominator;
+
+
+    /*printf("denominator : %f\n", denominator);
+    printf("numerator x : %lld\n", numerator_x);
+    printf("numerator y : %lld\n", numerator_y);*/
+	return 1;
+}
+
+struct Point* ComputeInters(int* H_lines, size_t H_len, int* V_lines, size_t V_len, int nbLines){
+
+    struct Point* inters = calloc(nbLines/2 * nbLines/2, sizeof(struct Point));
+    size_t inters_len = nbLines/2 * nbLines/2;
+    int index = 0;
+    for(size_t i = 0; i < H_len; i+= 4){
+        for(size_t j = 0; j < V_len; j += 4){
+            int X = 0;
+            int Y = 0;
+            if(GetIntersection(H_lines[i], H_lines[i+1], H_lines[i+2], H_lines[i+3],
+                V_lines[j], V_lines[j+1], V_lines[j+2], V_lines[j+3], &X, &Y)){
+                    struct Point t = INIT_POINTSTRUCT(X, Y);
+                    inters[index] = t;
+            }
+            index++;
+        }
+    }
+    Point_sortInters(inters, inters_len, nbLines);
+    return inters;
+}
+
+void CutGrid(char* imgPath, struct Point* inters, char* pathToSave,
+ size_t iIndex, size_t jIndex, size_t nbLines){
+    //Load the original picture (without sobel filter)
+    SDL_Surface *newImg = IMG_Load(imgPath);
+    if (newImg == NULL)
+	    err(1, "Surface errors found");
+
+    /*for(size_t i = 0; i < nbLines/2 * nbLines/2; i++){
+        printf("%zu: x=%4i y=%4i\n", i, inters[i].x, inters[i].y);
+    }*/
+
+    size_t nbRows = nbLines/2;
+
+    for (size_t i = 0; i < nbRows - 1; i++){
+        for (size_t j = 0; j < nbRows - 1; j++){
+            SDL_Rect case_;
+
+            case_.x = inters[j*nbRows + i].x;
+            case_.y = inters[j*nbRows + i].y;
+            case_.w = abs(case_.x - inters[(j + 1)*nbRows + (i+1)].x);
+            case_.h = abs(case_.y - inters[(j + 1)*nbRows + (i+1)].y);
+
+            // Center case
+            ajuste_case(newImg, &case_);
+
+            SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
+             case_.h, 32, 0, 0, 0, 0);
+            SDL_UnlockSurface(resultSurf); //SegFault
+            if (SDL_BlitSurface(newImg, &case_, resultSurf, NULL) == 0)
+            {
+
+                printf("case: x=%4i y=%4i\n", case_.x, case_.y);
+
+                //make zoom of the surface to reich 28x28 pixels
+                float z =  28 / (float)(resultSurf->w);
+                resultSurf = resize(resultSurf, z);
+
+                pathToSave[iIndex] = '0' + i;
+                pathToSave[jIndex] = '0' + j;
+
+                IMG_SaveJPG(resultSurf, pathToSave, 100);
+            }
+        }
     }
 }
 
