@@ -84,7 +84,7 @@ void save_weights(char *path, Layer l[], size_t nb_layer)
 		char *n = (char *)malloc((int)(log10(i)) + 1);
 		n[(int)(log10(i) + 1) - 1] = 0;
 		sprintf(n, "%i", i);
-		len = 21 + strlen(n);
+		len = 22 + strlen(n);
 		save_path = (char *)malloc(len);
 		save_path[len - 1] = 0;
 		strcat(save_path, "./saves/network_");
@@ -93,7 +93,7 @@ void save_weights(char *path, Layer l[], size_t nb_layer)
 		free(n);
 		i++;
 	}
-	while (access(save_path, F_OK) == 0  && i < 100);
+	while (access(save_path, F_OK) == 0  && i < 300);
     // check if file can be open
 	stream = fopen(save_path, "w");
     if(stream == NULL)

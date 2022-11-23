@@ -7,3 +7,4 @@
 double sigmoid(double x);
 double dSigmoid(double x);
 double getRandom();
+void shuffle(int a[], size_t n);

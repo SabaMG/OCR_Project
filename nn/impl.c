@@ -57,20 +57,19 @@ void generate_network(Layer l[], size_t layers, size_t sizes_neurons[], size_t s
 			n.end = n.begin + n.size;
 
     		// generate weights k of neuron j
-			//o = 0;
 			for (double* k = n.begin; k < n.end; ++k) {
 				*k = getRandom();
 			//	*k = (0.5*(rand()/(double)(RAND_MAX)));
-			/*
-				if (o%2) *k = -*k;
-				o++;
-				*/
+				//if (o%2)
+				//	*k = -*k;
+
+				//o++;
 			}
 
 			n.bias = getRandom(); // init bias
 			n.value = 0; // init value
 			n.delta = 0; // init delta
-			// make link between layer i and neuron j
+						 // make link between layer i and neuron j
 			*p++ = n;
 		}
 	}

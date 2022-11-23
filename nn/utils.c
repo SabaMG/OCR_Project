@@ -23,3 +23,18 @@ double getRandom() {
 	//srand(time(NULL));
 	return ((double)rand()) / ((double)RAND_MAX) * 2 - 1;
 }
+
+/* shuffle int array
+   based on Ben Pfaff's Writings: https://benpfaff.org/writings/clc/shuffle.html */ 
+void shuffle(int array[], size_t n) {
+	srand(time(NULL));
+	if (n > 1) {
+		size_t i;
+		for (i = 0; i < n - 1; i++) {
+			size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
+			int t = array[j];
+			array[j] = array[i];
+			array[i] = t;
+		}
+	}
+}

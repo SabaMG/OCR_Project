@@ -1,3 +1,8 @@
+rm -rf ./saves
+mkdir saves
+make clean
+make
+./main -d ~/Desktop/training_hand -e 5500
 counter=1
 until [ $counter -gt 250 ]
 do
@@ -7,4 +12,3 @@ do
 	echo "==="
 	((counter++))
 done
-

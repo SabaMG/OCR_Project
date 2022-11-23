@@ -9,10 +9,12 @@
 #include <err.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#include "utils.h"
 #include "impl.h"
 #include "file.h"
 #include "neural_network.h"
@@ -65,8 +67,22 @@ int build_image_folder_paths(int path_length, char *training_folder_path, char* 
 
 int IMAGES_NUMBER = 60000;
 
-int get_next_image_path(char **image_path, int *path_length, char *dir_path, int current_indexes[], int curr_number) {
-
+int get_next_image_path(char **image_path, int *path_length, char *dir_path, int current_indexes[], int curr_number, int e) {
+	/*
+	   char str_curr_number[2];
+	   str_curr_number[0] = (char)('0' + curr_number);
+	   str_curr_number[1] = '\0';
+	 *image_path = (char *)malloc(*path_length + 25);
+	 strcat(*image_path, dir_path);
+	 strcat(*image_path, "/");
+	 strcat(*image_path, str_curr_number);
+	 strcat(*image_path, "_");
+	 char *str_i = (char *)malloc(10);
+	 sprintf(str_i, "%i", e); 
+	 strcat(*image_path, str_i);
+	 strcat(*image_path, ".png");
+	 free(str_i);
+	 */
 	int next_index = current_indexes[curr_number];
 	char str_curr_number[2];
 	str_curr_number[0] = (char)('0' + curr_number);
@@ -122,93 +138,106 @@ int training(int v_flag, int e, double learning_rate, int path_length, char* ima
 	double training_inputs[784];
 	double expected_outputs[10];
 
+	//int training_inputs_order[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 	// Run training for a number of epochs
 	for (int i = 0; i < e; i++) {
 		int r_int = 0;
 		r_int = (int)(rand() % 10); // Get a number between 0 and 9
 
-		// Get random image path
-		if (get_next_image_path(image_path, &path_length, image_folder_paths[r_int], current_indexes, r_int) != 0)
-			errx(EXIT_FAILURE, "Error in get_next_image_path");
+		// Shuffle training set order
+		//shuffle(training_inputs_order, 10);
 
-		// Loading the image as a surface
-		SDL_Surface *surface = IMG_Load(*image_path);
-		if (surface == NULL)
-			errx(EXIT_FAILURE, "training: Error when load image '%s'.\n", *image_path);
-		//printf("training: Load image '%s'.\n", *image_path);
+		/*
+		for (int j = 0; j < 10; j++) {
+			r_int = training_inputs_order[j];
+			*/
 
-		// Standardizes the formats
-		// Not very useful here but ok
-		surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
+			// Get random image path
+			if (get_next_image_path(image_path, &path_length, image_folder_paths[r_int], current_indexes, r_int, i) != 0)
+				errx(EXIT_FAILURE, "Error in get_next_image_path");
 
-		//printf("w = %i, h = %i\n", surface->w, surface->h);
-		// Loop through pixels
-		Uint32* pixels = surface->pixels;
-		for (int y = 0; y < surface->h; y++) {
-			for (int x = 0; x < surface->w; x++) {
-				pixel = pixels[y * surface->w + x];
-				r = pixel >> 16 & 0xFF;
-				g = pixel >> 8 & 0xFF;
-				b = pixel & 0xFF;
-				v = (r + g + b) / 3;
-				training_inputs[y * surface->w + x] = (double)v;
+			// Loading the image as a surface
+			SDL_Surface *surface = IMG_Load(*image_path);
+			if (surface == NULL)
+				errx(EXIT_FAILURE, "training: Error when load image '%s'.\n", *image_path);
+			//printf("training: Load image '%s'.\n", *image_path);
 
+			// Standardizes the formats
+			// Not very useful here but ok
+			surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
+
+			//printf("w = %i, h = %i\n", surface->w, surface->h);
+			// Loop through pixels
+			Uint32* pixels = surface->pixels;
+			for (int y = 0; y < surface->h; y++) {
+				for (int x = 0; x < surface->w; x++) {
+					pixel = pixels[y * surface->w + x];
+					r = pixel >> 16 & 0xFF;
+					g = pixel >> 8 & 0xFF;
+					b = pixel & 0xFF;
+					v = (r + g + b) / 3;
+					training_inputs[y * surface->w + x] = tanh((double)v);
+					//training_inputs[y * surface->w + x] = (double)v;
+				}
 			}
-		}
 
-		// Build expected_outputs array
-		for (size_t i = 0; i < 10; i++) {
-			expected_outputs[i] = 0;
-		}
-		expected_outputs[r_int] = 1;
-		//printf("Expected number: %i\n", r_int);
-
-		// Feed neurons
-		feed_forward_pass(network, training_inputs);
-		//feed_forward_pass2(network, training_inputs);
-
-		// Brief evaluation of the output layer
-		int best = 0;
-		//printf("output layer values: [ ");
-		for (size_t q = 0; q < 10; q++) {
-			//printf("%f ", network[2].neurons[q].value);
-			if (network[2].neurons[best].value < network[2].neurons[q].value)
-				best = q;
-		}
-		//printf("]\n");
-		//printf("Ouput number: %i\n", best);
-
-		if (best == r_int) { // :)
-			if (v_flag) {
-				printf("\033[0;32m");
-				printf("Expected: %i\tPredicted: %i\n", r_int, best);
-				printf("\033[0m");
+			// Build expected_outputs array
+			for (size_t i = 0; i < 10; i++) {
+				expected_outputs[i] = 0;
 			}
-			good++;
-		}
-		else { // :(
-			if (v_flag) {
-				printf("\033[0;31m");
-				printf("Expected: %i\tPredicted: %i\t(%s)\n", r_int, best, *image_path);
-				printf("\033[0m");
+			expected_outputs[r_int] = 1;
+			//printf("Expected number: %i\n", r_int);
+
+			// Feed neurons
+			feed_forward_pass(network, training_inputs);
+			//feed_forward_pass2(network, training_inputs);
+
+			// Brief evaluation of the output layer
+			int best = 0;
+			//printf("output layer values: [ ");
+			for (size_t q = 0; q < 10; q++) {
+				//printf("%f ", network[2].neurons[q].value);
+				if (network[2].neurons[best].value < network[2].neurons[q].value)
+					best = q;
 			}
-			bad++;
+			//printf("]\n");
+			//printf("Ouput number: %i\n", best);
+
+			/*
+			if (best == r_int) { // :)
+				if (v_flag) {
+					printf("\033[0;32m");
+					printf("Expected: %i\tPredicted: %i\n", r_int, best);
+					printf("\033[0m");
+				}
+				good++;
+			}
+			else { // :(
+				if (v_flag) {
+					printf("\033[0;31m");
+					printf("Expected: %i\tPredicted: %i\t(%s)\n", r_int, best, *image_path);
+					printf("\033[0m");
+				}
+				bad++;
+			}
+			*/
+
+			//backpropagation_pass2(network, expected_outputs, learning_rate);
+
+			// Do backpropagation
+			backpropagation_pass(network, expected_outputs);
+
+			// Update neurons
+			update_network(network, learning_rate);
+
+
+			SDL_FreeSurface(surface);
 		}
-
-		//backpropagation_pass2(network, expected_outputs, learning_rate);
-
-		// Do backpropagation
-		backpropagation_pass(network, expected_outputs);
-
-		// Update neurons
-		update_network(network, learning_rate);
-		
-
-		SDL_FreeSurface(surface);
+	/*
+		printf("\n");
 	}
-
-	printf("\n");
-	printf("Corrects: %i (%.2f%%) \t Incorrects: %i (%.2f%%)\t (%i rounds)\n", good, ((float)good / (float)e) * 100, bad, ((float)bad / (float)e) * 100, e);
+	*/
+	//printf("Corrects: %i (%.2f%%) \t Incorrects: %i (%.2f%%)\t (%i epochs)\n", good, ((float)good / (float)e) * 100, bad, ((float)bad / (float)e) * 100, e);
 
 	return 0;
 }
