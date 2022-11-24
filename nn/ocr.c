@@ -1,8 +1,13 @@
-#include <stdio.h>
-#include <math.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
-#include "utils.h"
-#include "impl.h"
+#include "network.h"
+
+/* return sigmoid(x)
+	https://en.wikipedia.org/wiki/Sigmoid_function */
+double sigmoid(double x) {
+	return 1 / (1 + exp(-x));
+}
 
 // Softmax function
 void softmax(size_t layer_size, Neuron neurons[])
@@ -18,7 +23,7 @@ void softmax(size_t layer_size, Neuron neurons[])
 
 // Forward pass
 // The output layer is updated after pass
-void feed_forward_pass(Layer network[], double inputs[]) {
+void feed_forward(Layer network[], double inputs[]) {
 
 	// Put inputs in neurons value
 	// network[0] is the input layer
@@ -51,7 +56,7 @@ void feed_forward_pass(Layer network[], double inputs[]) {
 // Backpropagation pass
 // Calculate the gradient of the loss function
 // Works because the number of neurons in the precedent layer > number of neurons of the current layer
-void backpropagation_pass(Layer network[], double expected_output[]) {
+void backpropagation(Layer network[], double expected_output[]) {
 
 	for (size_t i = 0; i < network[2].size; i++) {
 		double n_value = network[2].neurons[i].value;
@@ -79,4 +84,32 @@ void update_network(Layer network[], double learning_rate) {
 		for (size_t j = 0; j < network[i + 1].size; j++)
 			network[i].neurons[j].bias -= learning_rate * network[i].neurons[j].delta;
 	}
+}
+int ocr(Layer *network, SDL_Surface *surface) {
+	double *inputs = (double *)malloc(784 * sizeof(double));
+	Uint32* pixels = surface->pixels;
+	Uint32 pixel;
+	Uint8 r, g, b, v = 0;
+	for (int y = 0; y < surface->h; y++) {
+		for (int x = 0; x < surface->w; x++) {
+			pixel = pixels[y * surface->w + x];
+			r = pixel >> 16 & 0xFF;
+			g = pixel >> 8 & 0xFF;
+			b = pixel & 0xFF;
+			v = (r + g + b) / 3;
+			inputs[y * surface->w + x] = (double)v;
+		}
+	}
+	
+	feed_forward(network, inputs);
+
+	int best = 0;
+	for (size_t k = 0; k < 10; k++) {
+		if (network[2].neurons[best].value < network[2].neurons[k].value)
+			best = k;
+	}
+
+	free(inputs);
+	SDL_FreeSurface(surface);
+	return best;
 }
