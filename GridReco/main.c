@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[]){
 
-    if (argc != 3)
+    if (argc != 4)
 	    errx(1, "Expected: ./main [picture] [edgeFiltered] [savePath]");
 
     SDL_Init(SDL_INIT_VIDEO);//SDL Init
@@ -38,6 +38,8 @@ int main(int argc, char *argv[]){
     size_t V_len = 4*nbLines/2;
     //Compute and print the lines
     int AngleToRotate = PrintLines(imgOrigin, nbLines, Acc, maxRho, maxTheta, H_lines, V_lines);
+    //Saving picture with drawn lines
+    IMG_SaveJPG(imgOrigin, argv[3], 100);
     printf("Angle To Rotate: %i\n", AngleToRotate);
 
     struct Point* intersXY = ComputeInters(H_lines, H_len, V_lines, V_len, nbLines);
@@ -77,8 +79,6 @@ int main(int argc, char *argv[]){
     free(dataPic2);*/
 
     
-    //Saving picture with drawn lines
-    IMG_SaveJPG(imgOrigin, argv[3], 100);
     
     //Cleaning
     free(H_lines);
