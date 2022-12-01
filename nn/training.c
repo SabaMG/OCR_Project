@@ -13,8 +13,9 @@
 #include "ocr.h"
 #include "network.h"
 
-void shuffle_samples(double ***samples, int *number_of_files) {
-	printf("shuffle_samples: START SHUFFLE\n");
+void shuffle_samples(double ***samples, int *number_of_files, int v_flag) {
+	if(v_flag)
+		printf("shuffle_samples: START SHUFFLE\n");
 	int n = 0;
 	for (size_t i = 0; i < 10; i++) {
 		n = number_of_files[i];
@@ -28,12 +29,14 @@ void shuffle_samples(double ***samples, int *number_of_files) {
 			}
 		}
 	}
-	printf("shuffle_samples: FINISH SHUFFLE\n");
+	if(v_flag)
+		printf("shuffle_samples: FINISH SHUFFLE\n");
 }
 
 // Evaluate network
-int evaluate(Layer network[], double ***samples, double results[][10], int *current_indexes, size_t n_sample) {
-	printf("evaluate: START EVALUATION\n");
+int evaluate(Layer network[], double ***samples, double results[][10], int *current_indexes, size_t n_sample, int v_flag) {
+	if(v_flag)
+		printf("evaluate: START EVALUATION\n");
 	srand(time(NULL));
 	int r_int = 0;
 	int error = 0;
@@ -60,8 +63,10 @@ int evaluate(Layer network[], double ***samples, double results[][10], int *curr
 		if (best != r_int)
 			error++;
 	}
-	printf("evaluate: FINISH EVALUATION\n");
-	printf("evaluate: Reset current_indexes\n");
+	if (v_flag) {
+		printf("evaluate: FINISH EVALUATION\n");
+		printf("evaluate: Reset current_indexes\n");
+	}
 	for (size_t i = 0; i < 10; i++)
 		current_indexes[i] = 0;
 
@@ -69,15 +74,15 @@ int evaluate(Layer network[], double ***samples, double results[][10], int *curr
 }
 
 // Train network
-float train(Layer network[], double ***samples, double results[][10], int *number_of_files, int *current_indexes, double learning_rate, size_t total) {
-	shuffle_samples(samples, number_of_files);
+float train(Layer network[], double ***samples, double results[][10], int *number_of_files, int *current_indexes, double learning_rate, size_t total, int v_flag) {
+	shuffle_samples(samples, number_of_files, v_flag);
 	srand(time(NULL));
 	int r_int = 0;
 
 	//for (int i = 0; i < 2000; i++) {
 	//	printf("i = %i\n", i);
-	for (size_t j = 0; j < total; j++) {
-		printf("\rtrain: %zu/%zu", j, total);
+	for (size_t j = 1; j < total; j++) {
+		printf("\rtrain: %.2f%% (%zu/%zu)", ((float)j / total) * 100, j, total);
 		fflush(stdout);
 		r_int = (int)(rand() % 10);
 		if (current_indexes[r_int] < number_of_files[r_int]) {
@@ -91,11 +96,12 @@ float train(Layer network[], double ***samples, double results[][10], int *numbe
 	printf("\n");
 
 	// Reset current_indexes
-	printf("train: Reset current_indexes array\n");
+	if (v_flag)
+		printf("train: Reset current_indexes array\n");
 	for (size_t i = 0; i < 10; i++)
 		current_indexes[i] = 0;
 
-	return evaluate(network, samples, results, current_indexes, 100); // TODO: put 100 in variable
+	return evaluate(network, samples, results, current_indexes, 100, v_flag); // TODO: put 100 in variable
 																	  //return 0.f;
 }
 
@@ -111,7 +117,7 @@ void free_samples(double ***samples, int *number_of_files) {
 	printf("free_samples: FINISH FREE MEMORY\n");
 }
 
-void training(Layer *network, char *training_folder_path, double learning_rate) {
+void training(Layer *network, char *training_folder_path, double learning_rate, int v_flag) {
 	// Build each 10 image folder path
 	int path_length = 0;
 	while (training_folder_path[path_length] != 0)
@@ -128,7 +134,8 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 			strcat(path, "/");
 			strcat(path, entry->d_name);
 			image_folder_paths[k] = path;
-			printf("training: Path for '%s' successfully added.\n", entry->d_name);
+			if (v_flag)
+				printf("training: Path for '%s' successfully added.\n", entry->d_name);
 			k++;
 		}
 	}
@@ -147,12 +154,14 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 				total++;
 			}	
 		}
-		printf("training: %i files in folder '%s'\n", number_of_files[i], image_folder_paths[i]);
+		if (v_flag)
+			printf("training: %i files in folder '%s'\n", number_of_files[i], image_folder_paths[i]);
 		closedir(dirp);
 	}
 	printf("training: %i files in total\n", total);
 
-	printf("training: START ALLOCATE MEMORY\n");
+	if (v_flag)
+		printf("training: START ALLOCATE MEMORY\n");
 	double ***samples = (double ***)malloc(10 * sizeof(double **));
 	for (size_t i = 0; i < 10; i++) {
 		double **folder = (double **)malloc(number_of_files[i] * sizeof(double *));
@@ -162,12 +171,15 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 			folder[j] = image;
 		}
 	}
-	printf("training: FINISH ALLOCATE MEMORY\n");
+	if(v_flag)
+		printf("training: FINISH ALLOCATE MEMORY\n");
 
-	printf("training: START CREATE SAMPLES\n");
+	if(v_flag)
+		printf("training: START CREATE SAMPLES\n");
 	Uint32 pixel;
 	Uint8 r, g, b, v = 0;
 	size_t j = 0;
+	float counter = 0;
 	char *image_path = NULL;
 	for (size_t i = 0; i < 10; i++) {
 		DIR * dirp;
@@ -182,7 +194,7 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 					strcat(image_path, image_folder_paths[i]);
 					strcat(image_path, "/");
 					strcat(image_path, entry->d_name);
-					printf("\rProcess image '%s'", image_path);
+					printf("\rProcessing images: %.2f%% (%s)", (counter / total) * 100, image_path);
 					fflush(stdout);
 
 					//printf("learning: Process image %s\n", image_path);
@@ -206,6 +218,7 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 					}
 					SDL_FreeSurface(surface);
 					j++;
+					counter++;
 					free(image_path);
 				}
 			}
@@ -214,7 +227,8 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 		closedir(dirp);
 	}
 	printf("\n");
-	printf("training: FINISH CREATE SAMPLES\n");
+	if(v_flag)
+		printf("training: FINISH CREATE SAMPLES\n");
 
 	// Build results arrays
 	double results[10][10];
@@ -229,34 +243,35 @@ void training(Layer *network, char *training_folder_path, double learning_rate) 
 
 	int current_indexes[10] = {0};
 	clock_t chrono = clock();
-	int error = evaluate(network, samples, results, current_indexes, 100);
+	int error = evaluate(network, samples, results, current_indexes, 100, v_flag);
 	int bestError = error;
-	int goal = 10;
+	int goal = 5;
 	printf("training: START LEARNING\n");
+	/*
 	printf("----------------------------------------------------------\n");
 	printf("\tEpoch 0: %i / %i\n", (100 - error), 100);
 	printf("----------------------------------------------------------\n");
+	*/
 	int epoch = 0;
 	while (error > goal)
 	{
 		epoch++;
-		error = train(network, samples, results, number_of_files, current_indexes, learning_rate, total);
+		error = train(network, samples, results, number_of_files, current_indexes, learning_rate, total, v_flag);
 		error = error < goal ? goal : error;
 		//printf("STATUS : %d%%\n", (int) ((1 - error) / (1 - goal) * 100));
 		printf("----------------------------------------------------------\n");
-		printf("\033[0;34m");
+		//printf("\033[0;34m");
+		//printf("\033[0m");
+		if (error < bestError) {
+			bestError = error;
+			save_weights("network.save", network, 3);
+			printf("\033[0;32m");
+		}
+		else
+			printf("\033[0;31m");
 		printf("\tEpoch %i: %i / %i\n", epoch, (100 - error), 100);
 		printf("\033[0m");
 		printf("----------------------------------------------------------\n");
-		if (error < bestError)
-		{
-			bestError = error;
-			printf("BETTER\n");
-			//   saveNetwork("network.save", n);
-		}
-		else {
-			printf("WORSE\n");
-		}
 	}
 	printf("  - Time : %.6f seconds\n", (clock() - chrono) / 1000000.0F);
 	printf("training: DONE TRAINING\n");

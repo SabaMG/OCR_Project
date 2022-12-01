@@ -85,6 +85,7 @@ void update_network(Layer network[], double learning_rate) {
 			network[i].neurons[j].bias -= learning_rate * network[i].neurons[j].delta;
 	}
 }
+
 int ocr(Layer *network, SDL_Surface *surface) {
 	double *inputs = (double *)malloc(784 * sizeof(double));
 	Uint32* pixels = surface->pixels;

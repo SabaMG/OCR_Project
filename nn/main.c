@@ -87,13 +87,10 @@ int main(int argc, char **argv) {
 	generate_network(network, N_LAYERS, N_NEURONS_ARRAY, sizes_inputs);
 
 	if (d_flag) {
-		/*
 		if (network_path != NULL)
 			load_weights(network_path, network);
 
-		save_weights("network.save", network, N_LAYERS);
-		*/
-		training(network, training_folder_path, learning_rate);
+		training(network, training_folder_path, learning_rate, v_flag);
 	}
 
 	return EXIT_SUCCESS;
