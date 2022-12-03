@@ -110,3 +110,48 @@ void make_grid_empty(SDL_Surface* empty_grid,
     TTF_CloseFont(font);
     TTF_Quit();
 }
+
+// This function make the final surface grid with grid_image:
+// - in black init values
+// - in green solution values
+void make_grid(SDL_Surface* grid_image,
+    int grid[][SIZE], int result[][SIZE], int coor[][2],
+    char* font_path, int font_size)
+{
+    // Init green colors
+    SDL_Color green = {0, 126, 0, 255};
+
+    // Init ttf
+    TTF_Init();
+    
+    // Create font variable with font arial.ttf and size font_size
+    TTF_Font* font = TTF_OpenFont(font_path, font_size);
+    if(font == NULL)
+    {
+	printf("font null : %s\n", TTF_GetError());
+    }
+
+    // write number on grid_image surface
+    for(size_t i = 0; i < SIZE; ++i)
+    {
+	for(size_t j = 0; j < SIZE; ++j)
+	{
+	    char str[] = {result[i][j] + 48, 0};
+	    SDL_Surface* numb;
+
+	    // result value (green)
+	    if(grid[i][j] == 0)
+	    {
+		// make number surface
+		numb = create_number(str, green, font);
+		// write number surface on grid_image surface
+		size_t c = j * SIZE + i;
+	        write_on_grid(grid_image, numb, coor[c][0], coor[c][1]);
+	    }
+	}
+    }
+
+    // close font and quit ttf
+    TTF_CloseFont(font);
+    TTF_Quit();
+}
