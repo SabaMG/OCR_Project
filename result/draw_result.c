@@ -9,8 +9,6 @@
 
 #include "draw_result.h"
 
-#define GRID_SIZE 534
-
 void collect_boxes_coor(int width, int heigth, int coor[][2], size_t nb_cell)
 {
     int d_w = width / (int)nb_cell;
@@ -32,26 +30,13 @@ void collect_boxes_coor(int width, int heigth, int coor[][2], size_t nb_cell)
 
 // This function create a surface
 // And write in this surface the char number with size font size and color
-SDL_Surface* create_number(char* number, int font_size, SDL_Color color, char* font_path)
+SDL_Surface* create_number(char* number, SDL_Color color, TTF_Font* font)
 {
-    // Init ttf
-    TTF_Init();
-    
-    // Create font variable with font arial.ttf and size font_size
-    TTF_Font* font = TTF_OpenFont(font_path, font_size);
-    if(font == NULL)
-    {
-	printf("font null : %s\n", TTF_GetError());
-    }
-
     // Create surface with number of color color
     SDL_Surface* number_surface = TTF_RenderText_Solid(font, number, color);
     if(number_surface == NULL)
 	printf("surface null\n");
 
-    // close font and quit ttf
-    TTF_CloseFont(font);
-    TTF_Quit();
 
     return number_surface;
 }
@@ -72,4 +57,56 @@ void write_on_grid(SDL_Surface* grid, SDL_Surface* number, int x, int y)
 
     // Free surface number
     SDL_FreeSurface(number);
+}
+
+// This function make the final surface grid with empty_grid:
+// - in black init values
+// - in green solution values
+void make_grid_empty(SDL_Surface* empty_grid,
+    int grid[][SIZE], int result[][SIZE], int coor[][2],
+    char* font_path, int font_size)
+{
+    // Init green and black colors
+    SDL_Color black = {0, 0, 0, 255};
+    SDL_Color green = {0, 126, 0, 255};
+
+    // Init ttf
+    TTF_Init();
+    
+    // Create font variable with font arial.ttf and size font_size
+    TTF_Font* font = TTF_OpenFont(font_path, font_size);
+    if(font == NULL)
+    {
+	printf("font null : %s\n", TTF_GetError());
+    }
+
+    // write number on empty_grid surface
+    for(size_t i = 0; i < SIZE; ++i)
+    {
+	for(size_t j = 0; j < SIZE; ++j)
+	{
+	    char str[] = {result[i][j] + 48, 0};
+	    SDL_Surface* numb;
+
+	    // result value (green)
+	    if(grid[i][j] == 0)
+	    {
+		// make number surface
+		numb = create_number(str, green, font);
+	    }
+	    // init value (black)
+	    else
+	    {
+		// make number surface
+		numb = create_number(str, black, font);
+	    }
+	    // write number surface on empty_grid surface
+	    size_t c = j * SIZE + i;
+	    write_on_grid(empty_grid, numb, coor[c][0], coor[c][1]);
+	}
+    }
+
+    // close font and quit ttf
+    TTF_CloseFont(font);
+    TTF_Quit();
 }
