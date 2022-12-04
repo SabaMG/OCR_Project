@@ -2,13 +2,15 @@
 
 // Structure of the graphical user interface.
 typedef struct UserInterface {
+	//GtkBuilder* builder;
     GtkWindow* window;
 	GtkHeaderBar* header_bar;
 	GtkImage* main_image;
 	GtkButton* resolve_button;
+	GtkDialog* nn_dialog;
 } UserInterface;
 
-gboolean choose_file_dialog(GtkWidget *widget, gpointer user_data) {
+gboolean on_open_button(GtkWidget *widget, gpointer user_data) {
 	UserInterface *ui = user_data;
 	GtkWidget *dialog;
 	GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
@@ -46,6 +48,22 @@ gboolean choose_file_dialog(GtkWidget *widget, gpointer user_data) {
 	return FALSE;
 }
 
+gboolean on_nn_menu_button(GtkWidget* width, gpointer user_data) {
+	UserInterface *ui = user_data;
+	//GtkDialog* nn_dialog = GTK_DIALOG(gtk_builder_get_object(ui->builder, "neural_network_dialog"));
+	gtk_widget_show(GTK_WIDGET(ui->nn_dialog));
+	//gint res = gtk_dialog_run (GTK_DIALOG(nn_dialog));
+	g_signal_connect_swapped (ui->nn_dialog,
+			"response",
+			//G_CALLBACK (gtk_widget_destroy),
+			G_CALLBACK(gtk_widget_hide),
+			ui->nn_dialog);
+	//g_print("%i\n", res);
+	g_signal_connect_swapped(ui->nn_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), ui->nn_dialog);
+	//g_signal_connect(nn_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete(GTK_WIDGET(nn_dialog))), NULL);
+	return FALSE;
+}
+
 int main (int argc, char **argv) {
 	gtk_init(NULL, NULL);
 
@@ -65,18 +83,25 @@ int main (int argc, char **argv) {
 	GtkButton* quit_button = GTK_BUTTON(gtk_builder_get_object(builder, "quit_button"));
 	GtkButton* open_button = GTK_BUTTON(gtk_builder_get_object(builder, "open_button"));
 	GtkButton* resolve_button = GTK_BUTTON(gtk_builder_get_object(builder, "resolve_button"));
+	GtkModelButton* nn_menu_button = GTK_MODEL_BUTTON(gtk_builder_get_object(builder, "neural_network_menu_button"));
+	GtkDialog* nn_dialog = GTK_DIALOG(gtk_builder_get_object(builder, "neural_network_dialog"));
+	//gtk_widget_set_parent(GTK_WIDGET(nn_dialog), GTK_WIDGET(window));
 
 	// Create "UserInterface" structure
 	UserInterface ui = {
+		//builder,
 		window,
 		header_bar,
 		main_image,
-		resolve_button
+		resolve_button,
+		nn_dialog,
 	};
 
 	// Connects signal handlers
 	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(open_button, "clicked", G_CALLBACK(choose_file_dialog), &ui);
+	g_signal_connect(open_button, "clicked", G_CALLBACK(on_open_button), &ui);
+	g_signal_connect(nn_menu_button, "clicked", G_CALLBACK(on_nn_menu_button), &ui);
+	//g_signal_connect(nn_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete(GTK_WIDGET(nn_dialog))), NULL);
 
 	gtk_window_set_title(GTK_WINDOW(window), "Sudoku Solver");
 

@@ -12,7 +12,7 @@
     <property name="can-focus">False</property>
     <property name="constrain-to">none</property>
     <child>
-      <object class="GtkBox" id="mneu-box">
+      <object class="GtkBox" id="menu-box">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="margin-start">10</property>
@@ -22,11 +22,11 @@
         <property name="orientation">vertical</property>
         <property name="spacing">5</property>
         <child>
-          <object class="GtkButton" id="preferences-button">
-            <property name="label" translatable="yes">Preferences</property>
+          <object class="GtkModelButton" id="neural_network_menu_button">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="text" translatable="yes">Neural Network</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -35,11 +35,9 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="user-manual-button">
-            <property name="label" translatable="yes">User Manual</property>
+          <object class="GtkSeparator">
             <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
+            <property name="can-focus">False</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -48,11 +46,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="about-button">
-            <property name="label" translatable="yes">About</property>
+          <object class="GtkModelButton" id="preferences_menu_button">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="text" translatable="yes">Preferences</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -60,14 +58,43 @@
             <property name="position">2</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkModelButton" id="user_manual_menu_button">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="text" translatable="yes">User Manual</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton" id="about_menu_button">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="text" translatable="yes">About</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">4</property>
+          </packing>
+        </child>
       </object>
     </child>
   </object>
   <object class="GtkWindow" id="main_window">
-    <property name="width-request">1000</property>
-    <property name="height-request">700</property>
+    <property name="width-request">800</property>
+    <property name="height-request">500</property>
     <property name="visible">True</property>
     <property name="can-focus">False</property>
+    <property name="window-position">center</property>
+    <property name="default-width">900</property>
+    <property name="default-height">600</property>
     <child>
       <object class="GtkImage" id="main_image">
         <property name="visible">True</property>
@@ -154,6 +181,45 @@
             <property name="pack-type">end</property>
             <property name="position">4</property>
           </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkDialog" id="neural_network_dialog">
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Neural Network</property>
+    <property name="modal">True</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="default-width">600</property>
+    <property name="default-height">400</property>
+    <property name="destroy-with-parent">True</property>
+    <property name="type-hint">dialog</property>
+    <property name="transient-for">main_window</property>
+    <property name="attached-to">main_window</property>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can-focus">False</property>
+            <property name="layout-style">spread</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </object>
     </child>
