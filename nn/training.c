@@ -149,10 +149,10 @@ void training(Layer *network, char *training_folder_path, double learning_rate, 
 		struct dirent * entry;
 		dirp = opendir(image_folder_paths[i]);
 		while ((entry = readdir(dirp)) != NULL) {
-			if (entry->d_type == DT_REG) {
+			//if (entry->d_type == DT_REG) {
 				number_of_files[i]++;
 				total++;
-			}	
+			//}	
 		}
 		if (v_flag)
 			printf("training: %i files in folder '%s'\n", number_of_files[i], image_folder_paths[i]);
@@ -187,7 +187,7 @@ void training(Layer *network, char *training_folder_path, double learning_rate, 
 		dirp = opendir(image_folder_paths[i]);
 		j = 0;
 		while ((entry = readdir(dirp)) != NULL) {
-			if (entry->d_type == DT_REG && strlen(entry->d_name) > 2) {
+			//if (entry->d_type == DT_REG && strlen(entry->d_name) > 2) {
 				if ('g' == entry->d_name[strlen(entry->d_name) - 1]) {
 					// Build image path;
 					image_path = (char *)calloc(path_length + 25, sizeof(char));
@@ -221,7 +221,7 @@ void training(Layer *network, char *training_folder_path, double learning_rate, 
 					counter++;
 					free(image_path);
 				}
-			}
+			//}
 		}
 		free(image_folder_paths[i]);
 		closedir(dirp);

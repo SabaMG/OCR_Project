@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
 
 		training(network, training_folder_path, learning_rate, v_flag);
 	}
+	free_network(network, 3);
 
 	return EXIT_SUCCESS;
 }

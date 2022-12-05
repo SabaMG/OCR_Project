@@ -1,18 +1,19 @@
 # Makefile
 
 CC = gcc
-CFLAGS = `pkg-config --cflags gtk+-3.0` -Wall -O3
-LDLIBS = `pkg-config --libs gtk+-3.0`
+CPPFLAGS = -MMD
+CFLAGS = `pkg-config --cflags gtk+-3.0`  -Wall -Wextra -std=c99 -O0 -g -fsanitize=address
+LDFLAGS = `pkg-config --libs gtk+-3.0` -lSDL2 -lSDL2_image -lm -fsanitize=address
 
-EXE = main
+SRC = main.c network.c
+OBJ = ${SRC:.c=.o}
+DEP = ${OBJ:.o=.d}
 
-all: $(EXE)
+all: main
 
-$(foreach f, $(EXE), $(eval $(f):))
-
-.PHONY: clean
+main: ${OBJ}
 
 clean:
-	${RM} $(EXE)
+	${RM} ${OBJ} ${DEP} main
 
 # END
