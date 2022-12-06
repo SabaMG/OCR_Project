@@ -79,7 +79,7 @@ int file_exists(const char *filename) {
 }
 
 // This function save weight in path file
-int save_weights(char *path, Layer l[], size_t nb_layer) {
+int save_weights(char *path, Layer l[], size_t nb_layer, char **res_path) {
     // open stream write in stream
     FILE* stream = NULL;
     //stream = fopen(path, "w");
@@ -103,7 +103,6 @@ int save_weights(char *path, Layer l[], size_t nb_layer) {
     if(stream == NULL)
 		return 1;
         //errx(EXIT_FAILURE, "save_weights: Failed to write in '%s'.\n", save_path);
-
     for(size_t i = 0; i < nb_layer; ++i) {
         fputc('[', stream);
         size_t nb_neuron = l[i].size;
@@ -133,7 +132,9 @@ int save_weights(char *path, Layer l[], size_t nb_layer) {
         fputc(']', stream);
     }
 	//printf("Network saved in '%s'\n", save_path);
-	free(save_path);
+	//return res_path
+	*res_path = save_path;
+	//free(save_path);
 	return 0;
 }
 

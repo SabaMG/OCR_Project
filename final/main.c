@@ -5,42 +5,17 @@
 #include <unistd.h>
 #include <gtk/gtk.h>
 
-#include "network.h"
+#include "src/utils/utils.h"
+#include "src/network/network.h"
+#include "src/network/training.h"
 
 #define N_LAYERS 3
 #define N_NEURONS_INPUT 784
 #define N_NEURONS_HIDDEN_1 32
 #define N_NEURONS_OUTPUT 10
 
-// Structure of the graphical user interface.
-typedef struct UserInterface {
-    GtkWindow* window;
-	GtkHeaderBar* header_bar;
-	GtkImage* main_image;
-	GtkLabel* current_nn_main_path_label;
-	GtkButton* resolve_button;
-	GtkDialog* nn_dialog;
-	GtkDialog* about_dialog;
-	GdkPixbuf* image_pixbuf;
-	GtkLabel* current_nn_path_label;
-	GtkButton* nn_load_btn;
-	GtkInfoBar* nn_info_bar;
-	GtkLabel* nn_info_bar_label;
-	GtkFileChooserButton* nn_file_chooser_btn;
-} UserInterface;
-
-typedef struct NetworkData {
-	Layer* network;
-	char *network_to_load_path;
-	size_t layers;
-	size_t *sizes_neurons;
-	size_t *sizes_inputs;
-} NetworkData;
-
-typedef struct ProgramData {
-	UserInterface ui;
-	NetworkData net;
-} ProgramData;
+#define DEFAULT_EPOCHS 20
+#define DEFAULT_LR 0.1
 
 void init_ocr(const char *network_path, Layer *network, GtkLabel* main_nn_path_label, GtkLabel* nn_nn_path_label) {
 	int err = load_weights(network_path, network);
@@ -53,9 +28,8 @@ void init_ocr(const char *network_path, Layer *network, GtkLabel* main_nn_path_l
 		strcat(text, "/");
 		strcat(text, network_path);
 	}
-	else {
+	else
 		printf("init_ocr: Failed to get cwd.\n");
-	}
 	gtk_label_set_label(main_nn_path_label, text);
 	gtk_label_set_label(nn_nn_path_label, text);
 }
@@ -110,12 +84,20 @@ gboolean on_nn_export_btn(GtkWidget* widget, gpointer user_data) {
 	(void)widget;
 	ProgramData *data = user_data;
 	char *path = "./networks/exported_network_";
-	int err = save_weights(path, data->net.network, data->net.layers);
+	char *save_path;
+	int err = save_weights(path, data->net.network, data->net.layers, &save_path);
 	if (err == 1)
 		errx(1, "on_nn_export_btn: Failed to export network.\n");
-	gtk_widget_hide(GTK_WIDGET(data->ui.nn_info_bar));
-	gtk_label_set_text(data->ui.nn_info_bar_label, "Network successfully exported.");
+
+	char res_path[PATH_MAX] = {0};
+	strcat(res_path, "Network successfully exported at:  ");
+	strcat(res_path, save_path);
+	free(save_path);
+
+	gtk_label_set_text(data->ui.nn_info_bar_label, res_path);
+
 	gtk_info_bar_set_message_type(data->ui.nn_info_bar, GTK_MESSAGE_INFO);
+	gtk_widget_hide(GTK_WIDGET(data->ui.nn_info_bar));
 	gtk_widget_show(GTK_WIDGET(data->ui.nn_info_bar));
 	return FALSE;
 }
@@ -140,6 +122,9 @@ gboolean on_nn_generate_btn(GtkWidget* widget, gpointer user_data) {
 	gtk_label_set_text(data->ui.nn_info_bar_label, "Network successfully generated (3 layers).");
 	gtk_info_bar_set_message_type(data->ui.nn_info_bar, GTK_MESSAGE_INFO);
 	gtk_widget_show(GTK_WIDGET(data->ui.nn_info_bar));
+
+	gtk_label_set_label(data->ui.current_nn_path_label, "Internal Network");
+	gtk_label_set_label(data->ui.current_nn_main_path_label, "Internal Network");
 
 	return FALSE;
 }
@@ -171,28 +156,77 @@ gboolean on_nn_load_btn(GtkWidget* widget, gpointer user_data) {
 gboolean on_nn_load_file_set(GtkWidget* widget, gpointer user_data) {
 	ProgramData *data = user_data;
 	char *filename;
-	GtkFileChooser *chooser = GTK_FILE_CHOOSER (widget);
-	filename = gtk_file_chooser_get_filename (chooser);
+	GtkFileChooser *chooser = GTK_FILE_CHOOSER(widget);
+	filename = gtk_file_chooser_get_filename(chooser);
 	data->net.network_to_load_path =  filename;
 	gtk_widget_set_sensitive(GTK_WIDGET(data->ui.nn_load_btn), TRUE);
 	return FALSE;
 }
 
-gboolean on_nn_menu_button(GtkWidget* widget, gpointer user_data) {
-	(void)widget;
+gboolean on_train_file_set(GtkWidget* widget, gpointer user_data) {
 	ProgramData *data = user_data;
-	gtk_widget_show(GTK_WIDGET(data->ui.nn_dialog));
-	g_signal_connect_swapped (data->ui.nn_dialog, "response", G_CALLBACK(gtk_widget_hide), data->ui.nn_dialog);
-	g_signal_connect_swapped(data->ui.nn_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), data->ui.nn_dialog);
+	char *foldername;
+	GtkFileChooser *chooser = GTK_FILE_CHOOSER(widget);
+	foldername = gtk_file_chooser_get_filename(chooser);
+	data->net.dataset_path = foldername;
 	return FALSE;
 }
 
-gboolean on_about_menu_button(GtkWidget* widget, gpointer user_data) {
-	(void)widget;
+gpointer launch_training(gpointer user_data) {
 	ProgramData *data = user_data;
-	gtk_widget_show(GTK_WIDGET(data->ui.about_dialog));
-	g_signal_connect_swapped (data->ui.about_dialog, "response", G_CALLBACK(gtk_widget_hide), data->ui.about_dialog);
-	g_signal_connect_swapped(data->ui.about_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), data->ui.about_dialog);
+
+	/*
+	for(int i = 0; i < 500000; i++) {
+		if (data->net.is_training == 0 || !gtk_widget_get_visible(GTK_WIDGET(data->ui.nn_dialog))) {
+			data->net.is_training = 0;
+			data->net.training_retval = 0; // Stop before to finish
+			g_print("not finished\n");
+			g_thread_exit(NULL);
+		}
+		g_print("training: %i\n", i);
+	}
+	*/
+
+	training(data->net.network, data->net.dataset_path, data->net.epochs, data->net.learning_rate, 1, user_data);
+
+	g_print("finished\n");
+	data->net.is_training = 0;
+	data->net.training_retval = 1; // Stop normally
+	g_thread_exit(NULL);
+	return NULL;
+}
+
+gboolean update_ui_when_training(gpointer user_data) {
+	ProgramData *data = user_data;
+	if (data->net.is_training == 0) {
+		gtk_button_set_label(data->ui.nn_train_btn, "Launch Training");
+		return FALSE;
+	}
+	return TRUE;
+}
+
+gboolean on_nn_train_btn(GtkWidget* widget, gpointer user_data) {
+	ProgramData *data = user_data;
+	if (data->net.is_training) {
+		g_print("Stop Training\n");
+		gtk_button_set_label(GTK_BUTTON(widget), "Launch Training");
+		data->net.is_training = 0;
+	}
+	else {
+		if (data->net.dataset_path == NULL) {
+			gtk_info_bar_set_message_type(data->ui.nn_info_bar, GTK_MESSAGE_WARNING);
+			gtk_widget_hide(GTK_WIDGET(data->ui.nn_info_bar));
+			gtk_label_set_text(data->ui.nn_info_bar_label, "Please select a valid dataset.");
+			gtk_widget_show(GTK_WIDGET(data->ui.nn_info_bar));
+		}
+		else {
+			g_print("Start Training\n");
+			gtk_button_set_label(GTK_BUTTON(widget), "Stop Training");
+			data->net.is_training = 1;
+			g_thread_new(NULL, launch_training, user_data);
+			g_timeout_add(500, update_ui_when_training, user_data);
+		}
+	}
 	return FALSE;
 }
 
@@ -223,7 +257,7 @@ int main () {
 	// Loads the UI description and builds the UI
 	GtkBuilder* builder = gtk_builder_new();
 	GError* error = NULL;
-	if (gtk_builder_add_from_file(builder, "./ui.glade", &error) == 0) {
+	if (gtk_builder_add_from_file(builder, "./src/ui/ui.glade", &error) == 0) {
 		g_printerr("Error loading file: %s\n", error->message);
 		g_clear_error(&error);
 		return 1;
@@ -252,6 +286,12 @@ int main () {
 	GtkInfoBar* nn_info_bar = GTK_INFO_BAR(gtk_builder_get_object(builder, "nn_info_bar"));
 	GtkLabel* nn_info_bar_label = GTK_LABEL(gtk_builder_get_object(builder, "nn_info_bar_label"));
 	GtkFileChooserButton* nn_file_chooser_btn = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(builder, "nn_file_chooser_btn"));
+	// ====== Training NN =======
+	GtkButton* nn_train_btn = GTK_BUTTON(gtk_builder_get_object(builder, "nn_train_btn"));
+	GtkFileChooserButton* train_file_chooser_btn = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(builder, "train_file_chooser_btn"));
+	GtkSpinButton* epochs_spin_btn = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "epochs_spin_btn"));
+	GtkSpinButton* lr_spin_btn = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "lr_spin_btn"));
+	GtkTextView* train_logs_text_view = GTK_TEXT_VIEW(gtk_builder_get_object(builder, "train_logs_text_view"));
 
 	// Close Info bar
 	gtk_widget_hide(GTK_WIDGET(nn_info_bar));
@@ -276,13 +316,13 @@ int main () {
 			.current_nn_main_path_label = current_nn_main_path_label,
 			.resolve_button = resolve_button,
 			.nn_dialog = nn_dialog,
-			.about_dialog = about_dialog,
 			.image_pixbuf = NULL,
 			.current_nn_path_label = current_nn_path_label,
 			.nn_load_btn = nn_load_btn,
 			.nn_info_bar = nn_info_bar,
 			.nn_info_bar_label = nn_info_bar_label,
 			.nn_file_chooser_btn = nn_file_chooser_btn,
+			.nn_train_btn = nn_train_btn,
 		},
 		.net = {
 			.network = network,
@@ -290,6 +330,11 @@ int main () {
 			.layers = N_LAYERS,
 			.sizes_neurons = N_NEURONS_ARRAY,
 			.sizes_inputs = sizes_inputs,
+			.epochs = DEFAULT_EPOCHS,
+			.learning_rate = DEFAULT_LR,
+			.dataset_path = NULL,
+			.is_training = 0,
+			.training_retval = -1,
 		}
 	};
 
@@ -297,15 +342,21 @@ int main () {
 	// Connects signal handlers
 	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(open_button, "clicked", G_CALLBACK(on_open_button), &data);
-	g_signal_connect(nn_menu_button, "clicked", G_CALLBACK(on_nn_menu_button), &data);
-	g_signal_connect(about_menu_button, "clicked", G_CALLBACK(on_about_menu_button), &data);
+	g_signal_connect_swapped(nn_menu_button, "clicked", G_CALLBACK(gtk_widget_show), nn_dialog);
+	g_signal_connect_swapped(about_menu_button, "clicked", G_CALLBACK(gtk_widget_show), about_dialog);
 	g_signal_connect(G_OBJECT(window), "configure-event", G_CALLBACK(on_configure_window), &data);
+	g_signal_connect_swapped (about_dialog, "response", G_CALLBACK(gtk_widget_hide), about_dialog);
+	g_signal_connect_swapped(about_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), about_dialog);
 	// ====== Neural Network ======
 	g_signal_connect(nn_generate_btn, "clicked", G_CALLBACK(on_nn_generate_btn), &data);
 	g_signal_connect(nn_load_btn, "clicked", G_CALLBACK(on_nn_load_btn), &data);
 	g_signal_connect(nn_export_btn, "clicked", G_CALLBACK(on_nn_export_btn), &data);
 	g_signal_connect(nn_info_bar, "response", G_CALLBACK(gtk_widget_hide), NULL);
 	g_signal_connect(nn_file_chooser_btn, "file-set", G_CALLBACK(on_nn_load_file_set), &data);
+	g_signal_connect(train_file_chooser_btn, "file-set", G_CALLBACK(on_train_file_set), &data);
+	g_signal_connect(nn_train_btn, "clicked", G_CALLBACK(on_nn_train_btn), &data);
+	g_signal_connect_swapped(nn_dialog, "response", G_CALLBACK(gtk_widget_hide), nn_dialog);
+	g_signal_connect_swapped(nn_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), nn_dialog);
 
 	gtk_window_set_title(GTK_WINDOW(window), "Sudoku Solver");
 

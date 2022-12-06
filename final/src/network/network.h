@@ -24,7 +24,7 @@ typedef struct neuron Neuron;
 
 int load_weights(const char *path, Layer l[]);
 
-int save_weights(char *path, Layer l[], size_t nb_layer);
+int save_weights(char *path, Layer l[], size_t nb_layer, char **res_path);
 
 double getRandom();
 
