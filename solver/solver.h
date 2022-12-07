@@ -19,3 +19,4 @@ void copy_array(int original[][SIZE], int copy [][SIZE]);
 int backtracking_algo(int original[][SIZE],
 		      int grid[][SIZE],
 		      int order[][2], size_t order_i);
+void solve(int grid[][SIZE], int result[][SIZE]);
