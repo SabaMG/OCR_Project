@@ -1,6 +1,5 @@
 all:
-	gcc -Wall -Wextra -g -fsanitize=address sobel.c -o sobel -lm -lSDL2 -lSDL2_image
+	gcc -Wall -Wextra -g -fsanitize=address main.c sobel.c -o main -lm -lSDL2 -lSDL2_image
 
 clean:
-	rm sobel
-	rm sobel.o
+	rm main
