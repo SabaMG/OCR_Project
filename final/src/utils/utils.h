@@ -2,6 +2,8 @@
 
 //#include <gtk/gtk.h>
 //#include "stdlib.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "../network/network.h"
 
 // Structure of the graphical user interface.
@@ -19,6 +21,8 @@ typedef struct UserInterface {
 	GtkLabel* nn_info_bar_label;
 	GtkFileChooserButton* nn_file_chooser_btn;
 	GtkButton* nn_train_btn;
+	GtkLabel* main_info_label;
+	GtkProgressBar* main_progress_bar;
 } UserInterface;
 
 typedef struct NetworkData {
@@ -34,8 +38,24 @@ typedef struct NetworkData {
 	int training_retval;
 } NetworkData;
 
+typedef struct ImageData {
+	char *progress_bar_text;
+	double progress_bar_fraction;
+	char *opened_image_path;
+	int is_resolving;
+	int resolving_retval;
+	int has_to_update_image;
+	int has_to_update_progress_bar;
+	SDL_Surface* original_surface;
+	SDL_Surface* current_surface;
+} ImageData;
+
 typedef struct ProgramData {
 	UserInterface ui;
 	NetworkData net;
+	ImageData img;
 } ProgramData;
 
+SDL_Surface *copy_surface(SDL_Surface *source);
+
+GdkPixbuf * gtk_image_new_from_sdl_surface (SDL_Surface *surface);

@@ -4,6 +4,8 @@
 #include <err.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include "src/utils/utils.h"
 #include "src/network/network.h"
@@ -61,8 +63,11 @@ gboolean on_open_button(GtkWidget *widget, gpointer user_data) {
 		GError *err = NULL;
 
 		//gtk_image_set_from_file(ui->main_image, filename);
+		// Update image path for resolution
+		data->img.opened_image_path = filename;
+		// Update pixbuf
 		gint width = gtk_widget_get_allocated_width(GTK_WIDGET(data->ui.window));
-		GdkPixbuf* image = gdk_pixbuf_new_from_file_at_scale (filename, width - 300, width - 300, TRUE, &err);
+		GdkPixbuf* image = gdk_pixbuf_new_from_file_at_scale (filename, width - 500, width - 500, TRUE, &err);
 		//ui->main_image = GTK_IMAGE(gtk_image_new_from_file(filename));
 		//GdkPixbuf* image = gdk_pixbuf_new_from_file_at_scale (filename, 600, 600, TRUE, &err);
 		data->ui.image_pixbuf= image;
@@ -70,6 +75,9 @@ gboolean on_open_button(GtkWidget *widget, gpointer user_data) {
 		if (err != NULL) {
 			g_print("%s\n", err->message);
 		}
+
+		// hide info text
+		gtk_widget_hide(GTK_WIDGET(data->ui.main_info_label));
 
 		gtk_widget_set_opacity(GTK_WIDGET(data->ui.main_image), 1.f);
 		gtk_image_set_from_pixbuf(data->ui.main_image, image);
@@ -175,21 +183,9 @@ gboolean on_train_file_set(GtkWidget* widget, gpointer user_data) {
 gpointer launch_training(gpointer user_data) {
 	ProgramData *data = user_data;
 
-	/*
-	for(int i = 0; i < 500000; i++) {
-		if (data->net.is_training == 0 || !gtk_widget_get_visible(GTK_WIDGET(data->ui.nn_dialog))) {
-			data->net.is_training = 0;
-			data->net.training_retval = 0; // Stop before to finish
-			g_print("not finished\n");
-			g_thread_exit(NULL);
-		}
-		g_print("training: %i\n", i);
-	}
-	*/
-
 	training(data->net.network, data->net.dataset_path, data->net.epochs, data->net.learning_rate, 1, user_data);
 
-	g_print("finished\n");
+	//g_print("finished\n");
 	data->net.is_training = 0;
 	data->net.training_retval = 1; // Stop normally
 	g_thread_exit(NULL);
@@ -241,12 +237,168 @@ gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_d
 		gint old_width = gdk_pixbuf_get_width(data->ui.image_pixbuf);
 		gint old_height = gdk_pixbuf_get_height(data->ui.image_pixbuf);
 		gfloat ratio = (float)old_height / (float)old_width;
-		gfloat new_height = (width - 300) * ratio;
-		if ((width - 300) != old_width) {
+		gfloat new_height = (width - 500) * ratio;
+		if ((width - 500) != old_width) {
 			if (new_height < height - 200) {
-				gtk_image_set_from_pixbuf(data->ui.main_image, gdk_pixbuf_scale_simple(data->ui.image_pixbuf, width - 300, (width - 300) * ratio, GDK_INTERP_BILINEAR));
+				gtk_image_set_from_pixbuf(data->ui.main_image, gdk_pixbuf_scale_simple(data->ui.image_pixbuf, width - 500, (width - 500) * ratio, GDK_INTERP_BILINEAR));
 			}
 		}
+	}
+	return FALSE;
+}
+
+gboolean on_epochs_spin_btn(GtkWidget* widget, gpointer user_data) {
+	ProgramData* data = user_data;
+	data->net.epochs = (int)gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+	return FALSE;
+}
+
+gboolean on_lr_spin_btn(GtkWidget* widget, gpointer user_data) {
+	ProgramData* data = user_data;
+	data->net.learning_rate = (float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+	return FALSE;
+}
+
+gpointer fail_resolution(char *message, gpointer user_data) {
+	ProgramData *data = user_data;
+	// Free Stuff
+	if (data->img.original_surface != NULL) {
+		SDL_FreeSurface(data->img.original_surface);
+		SDL_FreeSurface(data->img.current_surface);
+		data->img.original_surface = NULL;
+		data->img.current_surface = NULL;
+	}
+
+	g_print("fail_resolution(): %s\n", message);
+	data->img.is_resolving = 0;
+	data->img.resolving_retval = 0; // error or cancel
+	g_print("fail_resolution(): STOP PROCESS | EXIT THREAD\n");
+	g_thread_exit(NULL);
+	return NULL;
+}
+
+gboolean update_ui_when_resolving(gpointer user_data) {
+	ProgramData *data = user_data;
+	//g_print("Updating UI when resolving...\n");
+
+	if (data->img.has_to_update_image == 1 && data->img.current_surface != NULL) {
+		g_print("Updating main image\n");
+		GdkPixbuf *pixbuf = gtk_image_new_from_sdl_surface(data->img.current_surface);
+
+		// rescale pixbuf
+		gint original_width = gdk_pixbuf_get_width(data->ui.image_pixbuf);
+		gint original_height = gdk_pixbuf_get_height(data->ui.image_pixbuf);
+		gtk_image_set_from_pixbuf(data->ui.main_image, gdk_pixbuf_scale_simple(pixbuf, original_width, original_height, GDK_INTERP_BILINEAR));
+
+		//gtk_image_set_from_pixbuf(data->ui.main_image, pixbuf);
+		// TODO: free pixbuf ??
+		data->img.has_to_update_image = 0;
+		//g_print("Set has to update image to 0\n");
+	}
+	if (data->img.has_to_update_progress_bar == 1) {
+		g_print("Updating progress barr\n");
+		gtk_progress_bar_set_text(data->ui.main_progress_bar, data->img.progress_bar_text);
+		gtk_progress_bar_set_fraction(data->ui.main_progress_bar, data->img.progress_bar_fraction);
+		data->img.has_to_update_progress_bar = 0;
+	}
+	if (data->img.is_resolving == 0) {
+		gtk_widget_hide(GTK_WIDGET(data->ui.main_progress_bar));
+		gtk_button_set_label(data->ui.resolve_button, "Resolve");
+		return FALSE;
+	}
+	return TRUE;
+}
+
+gpointer launch_resolution(gpointer user_data) {
+	ProgramData *data = user_data;
+	if (data->img.opened_image_path == NULL)
+		return fail_resolution("fail to find opened image path", user_data);
+
+	data->img.progress_bar_text = "Loading Surface";
+	data->img.progress_bar_fraction += 0.3;
+	data->img.has_to_update_progress_bar = 1;
+
+	SDL_Surface* tmp_surf = IMG_Load(data->img.opened_image_path);
+	if (tmp_surf == NULL)
+		return fail_resolution("fail to load image", user_data);
+
+	sleep(2);
+
+	data->img.progress_bar_text = "Converting Surface Format";
+	data->img.progress_bar_fraction += 0.3;
+	data->img.has_to_update_progress_bar = 1;
+
+	tmp_surf = SDL_ConvertSurfaceFormat(tmp_surf, SDL_PIXELFORMAT_ARGB8888, 0);
+	if (tmp_surf == NULL)
+		return fail_resolution("fail to convert image", user_data);
+
+	data->img.original_surface = tmp_surf;
+	// Copy original_surface to current_surface
+	data->img.current_surface = copy_surface(data->img.original_surface);
+	data->img.has_to_update_image = 1;
+	g_print("Set has to update image to 1\n");
+
+	sleep(2);
+
+	data->img.progress_bar_text = "Gauss Filter";
+	data->img.progress_bar_fraction += 0.3;
+	data->img.has_to_update_progress_bar = 1;
+
+	// Simulate computation
+	/*
+	for(int i = 0; i < 500000; i++) {
+		if (data->img.is_resolving == 0) {
+			data->img.is_resolving = 0;
+			data->img.resolving_retval = 0; // Stop before to finish
+			g_print("Cancel\n");
+			g_thread_exit(NULL);
+		}
+		//g_print("resolving: %i\n", i);
+	}
+	*/
+	while(1) {
+		if (data->img.is_resolving == 0) {
+			data->img.is_resolving = 0;
+			data->img.resolving_retval = 0; // Stop before to finish
+			g_print("Cancel\n");
+			g_thread_exit(NULL);
+		}
+	}
+
+	g_print("Finished resolution\n");
+
+	// Free Stuff
+	g_print("launch_resolution(): Start freeing...\n");
+	if (data->img.original_surface != NULL)
+		SDL_FreeSurface(data->img.original_surface);
+	if (data->img.current_surface != NULL)
+		SDL_FreeSurface(data->img.current_surface);
+
+	g_print("launch_resolution(): Finish freeing...\n");
+	data->img.original_surface = NULL;
+	data->img.current_surface = NULL;
+
+	data->img.is_resolving = 0;
+	data->img.resolving_retval = 1; // Stop normally
+	g_thread_exit(NULL);
+	return NULL;
+}
+
+gboolean on_resolve_button(GtkWidget* widget, gpointer user_data) {
+	ProgramData *data = user_data;
+	if (data->img.is_resolving) {
+		g_print("Stop Resolving\n");
+		gtk_button_set_label(GTK_BUTTON(widget), "Resolve");
+		gtk_widget_hide(GTK_WIDGET(data->ui.main_progress_bar));
+		data->img.is_resolving = 0;
+	}
+	else {
+		g_print("Start Resolving\n");
+		gtk_button_set_label(GTK_BUTTON(widget), "Cancel");
+		gtk_widget_show(GTK_WIDGET(data->ui.main_progress_bar));
+		data->img.is_resolving = 1;
+		g_thread_new(NULL, launch_resolution, user_data);
+		g_timeout_add(5, update_ui_when_resolving, user_data);
 	}
 	return FALSE;
 }
@@ -269,6 +421,8 @@ int main () {
 	GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_builder_get_object(builder, "header_bar"));
 	GtkImage* main_image = GTK_IMAGE(gtk_builder_get_object(builder, "main_image"));
 	GtkLabel* current_nn_main_path_label = GTK_LABEL(gtk_builder_get_object(builder, "current_nn_main_path_label"));
+	GtkLabel* main_info_label = GTK_LABEL(gtk_builder_get_object(builder, "main_info_label"));
+	GtkProgressBar* main_progress_bar = GTK_PROGRESS_BAR(gtk_builder_get_object(builder, "main_progress_bar"));
 	// ====== Header Bar ======
 	GtkButton* quit_button = GTK_BUTTON(gtk_builder_get_object(builder, "quit_button"));
 	GtkButton* open_button = GTK_BUTTON(gtk_builder_get_object(builder, "open_button"));
@@ -295,6 +449,9 @@ int main () {
 
 	// Close Info bar
 	gtk_widget_hide(GTK_WIDGET(nn_info_bar));
+	// Hide progress bar and set fraction to 0
+	gtk_widget_hide(GTK_WIDGET(main_progress_bar));
+	gtk_progress_bar_set_fraction(main_progress_bar, 0.f);
 
 	// Generate network
 	size_t N_NEURONS_ARRAY[] = {N_NEURONS_INPUT, N_NEURONS_HIDDEN_1, N_NEURONS_OUTPUT};
@@ -323,6 +480,8 @@ int main () {
 			.nn_info_bar_label = nn_info_bar_label,
 			.nn_file_chooser_btn = nn_file_chooser_btn,
 			.nn_train_btn = nn_train_btn,
+			.main_info_label = main_info_label,
+			.main_progress_bar = main_progress_bar,
 		},
 		.net = {
 			.network = network,
@@ -335,6 +494,17 @@ int main () {
 			.dataset_path = NULL,
 			.is_training = 0,
 			.training_retval = -1,
+		},
+		.img = {
+			.progress_bar_text = NULL,
+			.progress_bar_fraction = 0.f,
+			.opened_image_path = NULL,
+			.is_resolving = 0,
+			.resolving_retval = 0,
+			.has_to_update_image = 0,
+			.has_to_update_progress_bar = 0,
+			.original_surface = NULL,
+			.current_surface = NULL,
 		}
 	};
 
@@ -342,6 +512,7 @@ int main () {
 	// Connects signal handlers
 	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(open_button, "clicked", G_CALLBACK(on_open_button), &data);
+	g_signal_connect(resolve_button, "clicked", G_CALLBACK(on_resolve_button), &data);
 	g_signal_connect_swapped(nn_menu_button, "clicked", G_CALLBACK(gtk_widget_show), nn_dialog);
 	g_signal_connect_swapped(about_menu_button, "clicked", G_CALLBACK(gtk_widget_show), about_dialog);
 	g_signal_connect(G_OBJECT(window), "configure-event", G_CALLBACK(on_configure_window), &data);
@@ -357,12 +528,19 @@ int main () {
 	g_signal_connect(nn_train_btn, "clicked", G_CALLBACK(on_nn_train_btn), &data);
 	g_signal_connect_swapped(nn_dialog, "response", G_CALLBACK(gtk_widget_hide), nn_dialog);
 	g_signal_connect_swapped(nn_dialog, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), nn_dialog);
+	g_signal_connect(epochs_spin_btn, "value-changed", G_CALLBACK(on_epochs_spin_btn), &data);
+	g_signal_connect(lr_spin_btn, "value-changed", G_CALLBACK(on_lr_spin_btn), &data);
 
 	gtk_window_set_title(GTK_WINDOW(window), "Sudoku Solver");
 
 	// Runs the main loop
 	gtk_main();
-	free_network(network, data.net.layers);
 
+	// Free Stuff
+	free_network(network, data.net.layers);
+	if (data.img.original_surface != NULL)
+		SDL_FreeSurface(data.img.original_surface);
+	if (data.img.current_surface != NULL)
+		SDL_FreeSurface(data.img.current_surface);
 	return 0;
 }

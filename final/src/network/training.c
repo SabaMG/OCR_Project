@@ -260,6 +260,7 @@ void training(Layer *network, char *training_folder_path, int epochs, double lea
 	while (e <= epochs) {
 
 		if (data->net.is_training == 0 || !gtk_widget_get_visible(GTK_WIDGET(data->ui.nn_dialog))) {
+			printf("stop training !!\n");
 			// Stop training because of button clicked
 			data->net.is_training = 0;
 			data->net.training_retval = 0; // Stop before to finish
