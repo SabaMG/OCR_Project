@@ -22,27 +22,60 @@ int main(int argc, char *argv[]){
 
     SDL_Surface* imgOrigin = IMG_Load(argv[2]);//Load edge picture
     imgOrigin = SDL_ConvertSurfaceFormat(imgOrigin, SDL_PIXELFORMAT_ARGB8888, 0);
+    if(SDL_LockSurface(imgOrigin) != 0)
+        printf("Unable to lock the surface");
     int W = imgOrigin->w;//Width of the edge picture
     int H = imgOrigin->h;//Height of the edge picture
    
     int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
     int maxTheta = 180; //theta values : [0, maxTheta]
-    int nbLines = 20; //number of lines to print
+    int nbLines = 24; //number of lines to print
     
     //Create and Fill the hough accumulator
     int* Acc = HoughAccu(imgOrigin->pixels, W, H, maxRho, maxTheta);
 
-    int* H_lines = calloc(4*nbLines/2, sizeof(int));
-    size_t H_len = 4*nbLines/2;
-    int* V_lines = calloc(4*nbLines/2, sizeof(int));
-    size_t V_len = 4*nbLines/2;
+    /*printf("##la fameuse : \n");
+    for(size_t tht = 0; tht < maxTheta; tht++)
+        printf("%i %zu: %i |", 147+maxRho, tht, Acc[tht*maxRho*2 + 147 + maxRho]);
+    printf("\n");*/
+
+    //##################
+    //######Part 2######
+    //##################
+    size_t H_len = nbLines;
+    struct Line* H_lines = calloc(H_len, sizeof(struct Line));
+    size_t V_len = nbLines;
+    struct Line* V_lines = calloc(V_len, sizeof(struct Line));
+
+
     //Compute and print the lines
-    int AngleToRotate = PrintLines(imgOrigin, nbLines, Acc, maxRho, maxTheta, H_lines, V_lines);
+    int AngleToRotate = ComputeLines(nbLines, Acc, maxRho, maxTheta,
+     H_lines, &H_len, V_lines, &V_len);
+    printf("Angle To Rotate: %i\n\n", AngleToRotate);
+    if (AngleToRotate != 0 /*&& !notRotated*/)
+        return AngleToRotate;
+    
+    int removed = 0;
+    printf("H_lines to remove: %zu\n", H_len - 10);
+    removed += RemoveNoise(H_lines, &H_len, H_len - 10);
+    printf("\nV_lines to remove: %zu\n", V_len - 10);
+    removed += RemoveNoise(V_lines, &V_len, V_len - 10);
+    printf("\n## %i elements removed\n", removed);
+    
+
+    if (H_len < 10)
+        errx(1, "Not enough H_lines: %zu\n", H_len);
+    if (V_len < 10)
+        errx(1, "Not enough V_lines: %zu\n", V_len);
+
+    PrintLines(imgOrigin, H_lines, H_len, W, H);
+    PrintLines(imgOrigin, V_lines, V_len, W, H);
     //Saving picture with drawn lines
     IMG_SaveJPG(imgOrigin, argv[3], 100);
-    printf("Angle To Rotate: %i\n", AngleToRotate);
+    SDL_FreeSurface(imgOrigin);
 
-    struct Point* intersXY = ComputeInters(H_lines, H_len, V_lines, V_len, nbLines);
+    //Get intersections
+    struct Point* intersXY = ComputeInters(H_lines, V_lines);
 
 
     //Sets the directory to put the boxes into
@@ -57,34 +90,15 @@ int main(int argc, char *argv[]){
 
     char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
      '0', '0', '.', 'j', 'p', 'g', 0};
-    CutGrid(argv[1], intersXY, filename_, 10, 11, nbLines);
-
-    ////Pour travailler sur les listes de pics
-    /*int L_w[W];
-    int L_h[H];
-    for (int i = 0; i < W; i++){
-        L_w[i] = 0;    
-    }
-    for (int i = 0; i < H; i++){
-        L_h[i] = 0;    
-    }
-    PixelOnColsAndLines(imgOrigin->pixels, L_w, L_h, W, H);
-    Uint32* dataPic = listToPic(L_w, W, H);
-    SDL_Surface* PicList = SDL_CreateRGBSurfaceFrom(dataPic, W, H, 32, H*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
-    IMG_SaveJPG(PicList, "PicList_W.jpg" , 100);
-    free(dataPic);
-    Uint32* dataPic2 = listToPic(L_h, H, W);
-    SDL_Surface* PicList2 = SDL_CreateRGBSurfaceFrom(dataPic2, H, W, 32, W*32/8, 0xff0000, 0x00ff00, 0x0000ff, 0);
-    IMG_SaveJPG(PicList2, "PicList_H.jpg" , 100);
-    free(dataPic2);*/
-
     
+    CutGrid(argv[1], intersXY, filename_, 10, 11);
+
     
     //Cleaning
     free(H_lines);
     free(V_lines);
     free(Acc);
-    SDL_FreeSurface(imgOrigin);
+    free(intersXY);
     
     
     return EXIT_SUCCESS;
@@ -104,7 +118,7 @@ int main(int argc, char *argv[]){
 
 
 
-
+    /*
     //To display the grid -> 1
     int display = 0;
     SDL_Window* window;
@@ -133,7 +147,7 @@ int main(int argc, char *argv[]){
     printf("Diagonal_length: %zu\n", diag_length);
 
     //Init Hough array[rho][theta]
-    /*int Hough_lines[diag_length][91];
+    int Hough_lines[diag_length][91];
     for (size_t i = 0; i < diag_length; i++)
     {
         for (size_t j = 0; j < 91; j++)
@@ -147,7 +161,7 @@ int main(int argc, char *argv[]){
     HoughAngle(img, Hough_lines, diag_length);
 
     //Rotation angle = theta coordinate of max value
-    int angle = MaxIndex2DArray(Hough_lines, diag_length, 91);*/
+    int angle = MaxIndex2DArray(Hough_lines, diag_length, 91);
     int angle = 0;
     printf("Angle: %i\n", angle);
 
@@ -191,19 +205,19 @@ int main(int argc, char *argv[]){
     }
     
     //Sets the directory to put the boxes into
-    /*struct stat st;
+    struct stat st;
     if (stat("./boxes", &st) == 0)
         printf("/boxes is present\n");
     else{
         if (mkdir("./boxes", 0700) == -1)
             errx(1, "Unable to create ./boxes");
         printf("/boxes has been created\n");
-    }*/
+    }
     //Path to save the sudoku boxes
-    /*char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
-     '0', '0', '.', 'j', 'p', 'g', 0};*/
+    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
+     '0', '0', '.', 'j', 'p', 'g', 0};
     //Cuting and saving them
-    CutAndSaveBoxes(argv[2], coord_X_list, coord_Y_list, filename_, 10, 11);
+    //CutAndSaveBoxes(argv[2], coord_X_list, coord_Y_list, filename_, 10, 11);
 
     //Rendering if display is true
     if (display){
@@ -245,11 +259,11 @@ int main(int argc, char *argv[]){
         SDL_DestroyWindow(window);
     }
 
-    SDL_FreeSurface(img);
+    //SDL_FreeSurface(img);
 
     //Cleaning up
     IMG_Quit();
     SDL_Quit();
-    return 0;
+    return 0;*/
 
 }
