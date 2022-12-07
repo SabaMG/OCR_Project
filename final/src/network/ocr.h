@@ -1,9 +1,15 @@
 #pragma once
 
+#include <stdio.h>
+
+#include <gtk/gtk.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
 #include "network.h"
+
+void ocr_init(const char *network_path, Layer *network, GtkLabel* main_nn_path_label, GtkLabel* nn_nn_path_label);
 
 double sigmoid(double x);
 

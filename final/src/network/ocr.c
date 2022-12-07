@@ -1,7 +1,31 @@
+#include <err.h>
+
+#include <gtk/gtk.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
 #include "network.h"
+
+// Initialize ocr: load default network + set ui
+void ocr_init(const char *network_path, Layer *network, GtkLabel* main_nn_path_label, GtkLabel* nn_nn_path_label) {
+	int err = load_weights(network_path, network);
+
+	if (err == 1)
+		errx(1, "init_ocr: Failed to init ocr.\n");
+
+	char cwd[PATH_MAX];
+	char text[PATH_MAX] = {0};
+
+	if (getcwd(cwd, sizeof(cwd)) != NULL) {
+		strcat(text, cwd);
+		strcat(text, "/");
+		strcat(text, network_path);
+	}
+	else
+		printf("init_ocr: Failed to get cwd.\n");
+	gtk_label_set_text(main_nn_path_label, text);
+	gtk_label_set_text(nn_nn_path_label, text);
+}
 
 /* return sigmoid(x)
 	https://en.wikipedia.org/wiki/Sigmoid_function */
