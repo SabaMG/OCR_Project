@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
     int AngleToRotate = ComputeLines(nbLines, Acc, maxRho, maxTheta,
      H_lines, &H_len, V_lines, &V_len);
     printf("Angle To Rotate: %i\n\n", AngleToRotate);
-    if (AngleToRotate != 0 /*&& !notRotated*/)
+    if (abs(AngleToRotate) > 3 /*&& !notRotated*/)
         return AngleToRotate;
     
     int removed = 0;
