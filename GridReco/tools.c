@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <err.h>
+#include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
@@ -524,13 +525,8 @@ struct Point* ComputeInters(struct Line* H_lines, struct Line* V_lines){
     return inters;
 }
 
-void CutGrid(char* imgPath, struct Point* inters, char* pathToSave,
- size_t iIndex, size_t jIndex){
-
-    //Load the original picture (without sobel filter)
-    SDL_Surface *newImg = IMG_Load(imgPath);
-    if (newImg == NULL)
-	    err(1, "Surface errors found");
+void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
+ int case_coor[81][2], SDL_Surface boxesArray[81], size_t iIndex, size_t jIndex){
 
     /*for(size_t i = 0; i < NB_LINES/2 * NB_LINES/2; i++){
         printf("%zu: x=%4i y=%4i\n", i, inters[i].x, inters[i].y);
@@ -540,20 +536,23 @@ void CutGrid(char* imgPath, struct Point* inters, char* pathToSave,
 
     for (size_t i = 0; i < nbRows - 1; i++){
         for (size_t j = 0; j < nbRows - 1; j++){
+            
+            
             SDL_Rect case_;
-
             case_.x = inters[j*nbRows + i].x;
             case_.y = inters[j*nbRows + i].y;
-            case_.w = abs(case_.x - inters[(j + 1)*nbRows + (i+1)].x);
-            case_.h = abs(case_.y - inters[(j + 1)*nbRows + (i+1)].y);
+            int min_val = min(abs(case_.x - inters[(j + 1)*nbRows + (i+1)].x),
+             abs(case_.y - inters[(j + 1)*nbRows + (i+1)].y));
+            case_.w = min_val;
+            case_.h = min_val;
 
             // Center case
-            //ajuste_case(newImg, &case_);
+            //ajuste_case(originImg, &case_);
 
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
             SDL_UnlockSurface(resultSurf); //SegFault
-            if (SDL_BlitSurface(newImg, &case_, resultSurf, NULL) == 0)
+            if (SDL_BlitSurface(originImg, &case_, resultSurf, NULL) == 0)
             {
 
                 //printf("case %zu: x=%4i y=%4i => w=%4i h=%4i\n", i*(nbRows-1)+j, case_.x, case_.y, case_.w, case_.h);
@@ -570,13 +569,18 @@ void CutGrid(char* imgPath, struct Point* inters, char* pathToSave,
                 pathToSave[iIndex] = '0' + i;
                 pathToSave[jIndex] = '0' + j;
 
+                size_t ind = i*(nbRows-1)+j;
+                case_coor[ind][0] = case_.x;
+                case_coor[ind][1] = case_.y;
+                boxesArray[ind] = *resultSurf;
+
                 if (IMG_SaveJPG(resultSurf, pathToSave, 100) == -1)
                     printf("Unable to save the picture\n");
                 SDL_FreeSurface(resultSurf);
             }
         }
     }
-    SDL_FreeSurface(newImg);
+    SDL_FreeSurface(originImg);
 }
 
 
@@ -831,4 +835,84 @@ void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
             }
         }
     }
+}
+
+//Main fonction which complete segmentation 
+int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
+ char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]){
+
+    if(SDL_LockSurface(sobelImage) != 0)
+        printf("Unable to lock the surface");
+
+    int W = sobelImage->w;//Width of the edge picture
+    int H = sobelImage->h;//Height of the edge picture
+   
+    int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
+    int maxTheta = 180; //theta values : [0, maxTheta]
+    int nbLines = 24; //number of lines to print
+    
+
+    //Create and Fill the hough accumulator
+    int* Acc = HoughAccu(sobelImage->pixels, W, H, maxRho, maxTheta);
+
+
+    size_t H_len = nbLines;
+    struct Line* H_lines = calloc(H_len, sizeof(struct Line));
+    size_t V_len = nbLines;
+    struct Line* V_lines = calloc(V_len, sizeof(struct Line));
+
+
+    //Compute and print the lines
+    int AngleToRotate = ComputeLines(nbLines, Acc, maxRho, maxTheta,
+     H_lines, &H_len, V_lines, &V_len);
+    printf("Angle To Rotate: %i\n\n", AngleToRotate);
+    if (abs(AngleToRotate) > 5 /*&& !notRotated*/)
+        return AngleToRotate;
+
+    int removed = 0;
+    printf("H_lines to remove: %zu\n", H_len - 10);
+    removed += RemoveNoise(H_lines, &H_len, H_len - 10);
+    printf("\nV_lines to remove: %zu\n", V_len - 10);
+    removed += RemoveNoise(V_lines, &V_len, V_len - 10);
+    printf("\n## %i elements removed\n", removed);
+
+    if (H_len < 10)
+        errx(1, "Not enough H_lines: %zu\n", H_len);
+    if (V_len < 10)
+        errx(1, "Not enough V_lines: %zu\n", V_len);
+
+    //Draw detected lines
+    PrintLines(sobelImage, H_lines, H_len, W, H);
+    PrintLines(sobelImage, V_lines, V_len, W, H);
+    //Saving picture with drawn lines
+    IMG_SaveJPG(sobelImage, linesImgPath, 100);
+    SDL_FreeSurface(sobelImage);
+
+    
+    //Get intersections
+    struct Point* intersXY = ComputeInters(H_lines, V_lines);
+
+    //Sets the directory to put the boxes into
+    struct stat st;
+    if (stat("./boxes", &st) == 0)
+        printf("/boxes is present\n");
+    else{
+        if (mkdir("./boxes", 0700) == -1)
+            errx(1, "Unable to create ./boxes");
+        printf("/boxes has been created\n");
+    }
+
+    char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
+     '0', '0', '.', 'j', 'p', 'g', 0};
+    
+    CutGrid(originalImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
+
+    
+    //Cleaning
+    free(H_lines);
+    free(V_lines);
+    free(Acc);
+    free(intersXY);
+
+    return EXIT_SUCCESS;
 }

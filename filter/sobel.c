@@ -75,7 +75,7 @@ SDL_Surface *Sobel(SDL_Surface *image)
             if (pixel_value > 255) pixel_value = 255;
             if (pixel_value < 0) pixel_value = 0;
 
-	    if (pixel_value > 150)
+	    if (pixel_value > 100)
 		    pixel_value = 255;
 	    else
 		    pixel_value = 0;
