@@ -13,3 +13,4 @@ void make_counter(SDL_Surface* grid);
 int black_bro(Uint32* pixels, int curr_pixel, int* bro, int w, int size, char* visited);
 int rec(Uint32* pixels, int curr_pixel, int w, int* small, int* big, int size, char* visited);
 void collect_aire(struct box* curr_box, Uint32* pixels, int w, int size, char* visited);
+void search(Uint32* pixels, struct box* ref, int size, int w, int t_sup, int t_inf, int shift, char* visited);

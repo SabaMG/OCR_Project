@@ -13,15 +13,12 @@ Uint32 color (Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     return a << 24 | r << 16 | g << 8 | b;
 }
 
-void colored_case(Uint32* pixels, int left, int w, int h, int w_grid)
+void colored_case(Uint32* pixels, char* visited, int size)
 {
-    for (int i = 0; i < w; ++i)
+    for (int i = 0; i < size; ++i)
     {
-        for(int j = 0; j < h; ++j)
-        {
-            int coor = left + i + (j*w_grid);
-            pixels[coor] = color(0, 255, 0, 255);
-        }
+        if(visited[i])
+            pixels[i] = color(0, 255, 0, 255);
     }
 }
 
@@ -34,15 +31,22 @@ int clamp(int a, int b, int val)
     return val;
 }
 
-char* copy(char* src, int size)
+void copy(char* src, char* dest, int size)
 {
-    char* dest = calloc(size, sizeof(char));
     for(int i = 0; i < size; ++i)
     {
         dest[i] = src[i];
     }
+}
 
-    return dest;
+void copy_box(struct box* src, struct box* dest)
+{
+    dest->pos = src->pos;
+    dest->start = src->start;
+    dest->end = src->end;
+    dest->aire = src->aire;
+    dest->w = src->w;
+    dest->h = src->h;
 }
 
 int is_wigth(Uint32 pixel)
@@ -57,40 +61,55 @@ void make_counter(SDL_Surface* grid)
     
     // Collect the middle of the image and nb of pixels
     int middle = (grid->h / 2) * grid->w + grid->w / 2;
+    printf("%X\n", pixels[middle]);
     int size = grid->w*grid->h;
-
+    
+    // variable for copie
     struct box ref = {middle, 0, 0, 0, 0, 0};
     collect_aire(&ref, pixels, grid->w, size, visited);
     int t_sup = 2 * ref.aire;
     int t_inf = ref.aire/2;
+    
+    // search left
+    search(pixels, &ref, size, grid->w, t_sup, t_inf, -ref.w, visited);
+    // search right
+    search(pixels, &ref, size, grid->w, t_sup, t_inf, ref.w, visited);
+    // search top
+    search(pixels, &ref, size, grid->w, t_sup, t_inf, (grid->w * ref.h),visited);
+    // search down
+    search(pixels, &ref, size, grid->w, t_sup, t_inf, -(grid->w * ref.h),visited);
+    // search down
 
-    int middle_case = ref.start + (ref.w/2) + (grid->w * (ref.h/2));
+    free(visited);
+}
+
+void search(Uint32* pixels, struct box* ref, int size, int w, int t_sup, int t_inf, int shift, char* visited)
+{
+    int middle_case = ref->start + (ref->w/3) + (w * (ref->h/3));
     pixels[middle_case] = color(255, 0, 0, 255);
-
-    // Search top
-    size_t i = 0;
-    struct box* curr = &ref;
-
+    
+    // Search left
+    struct box* curr = malloc(sizeof(struct box));
+    copy_box(ref, curr);
+    char* cop = calloc(size, sizeof(char));
+    copy(visited, cop, size);
     while (curr->aire < t_sup && curr->aire > t_inf)
     {
-        int begin = clamp(0, size, middle_case + (grid->w * curr->h));
+        int begin = clamp(0, size, middle_case + shift);
 
-        pixels[begin] = color(255, 0, 0, 255);
+        // make a copy of visited pixels
+        copy(cop, visited, size);
 
         // Collect aire of case 
         curr->pos = begin;
-        collect_aire(curr, pixels, grid->w, size, visited);
+        collect_aire(curr, pixels, w, size, cop);
         
         // middle of current case
-        middle_case = curr->start + (curr->w/2) + (grid->w*(curr->h/2));
-        printf("middle_case = %i\n", middle_case);
-        
-        // color case
-        colored_case(pixels, curr->start, curr->w, curr->h, grid->w);
-        //pixels[middle_case] = color(255, 0, 0, 255);
+        middle_case = curr->start + (curr->w/3) + (w*(curr->h/3));
     }
-
-    free(visited);
+    colored_case(pixels, visited, size);
+    free(cop);
+    free(curr);
 }
 
 void collect_aire(struct box* curr_box, Uint32* pixels, int w, int size, char* visited)
@@ -111,6 +130,11 @@ int rec(Uint32* pixels, int curr_pixel, int w, int* left, int* right, int size, 
 {
     // Store all black bro of curr_pixel
     int* bro = calloc(8, sizeof(int));
+    if(bro == NULL)
+    {
+        printf("NOT ENOUCH MEMORY\n");
+        return 0;
+    }
     int nb_bro = black_bro(pixels, curr_pixel, bro, w, size, visited);
 
     // if no more black bro stop recusion
@@ -122,6 +146,12 @@ int rec(Uint32* pixels, int curr_pixel, int w, int* left, int* right, int size, 
 
     // give the right size of number of bro
     bro = realloc(bro, nb_bro * sizeof(int));
+    if(bro == NULL)
+    {
+        printf("NOT ENOUCH MEMORY\n");
+        return 0;
+    }
+    
     
     // call rec function for all pixel
     int all_bro = nb_bro;
