@@ -18,7 +18,7 @@ void help()
 
 int main(int argc, char** argv)
 {
-    if(argc != 3)
+    if(argc != 2)
         help();
 
     // Init sdl window and image
@@ -29,11 +29,12 @@ int main(int argc, char** argv)
     SDL_Surface* init_grid = IMG_Load(argv[1]);
     SDL_Surface* grid = SDL_ConvertSurfaceFormat(init_grid, SDL_PIXELFORMAT_ARGB8888, 0);
     SDL_FreeSurface(init_grid);
-
-    make_counter(grid);
+    
+    SDL_Surface* croped_grid = crop_grid(grid);
 
     // Save grid result
-    IMG_SaveJPG(grid, argv[2], 100);
+    IMG_SaveJPG(croped_grid, "res.jpg", 100);
+    SDL_FreeSurface(croped_grid);
     SDL_FreeSurface(grid);
 
     return EXIT_SUCCESS;

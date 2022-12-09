@@ -1,206 +1,219 @@
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 
-// SDL library
+// import SDL2 library
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-// include files
+// import file
 #include "flood_fill.h"
+#include "queue.h"
 
-Uint32 color (Uint8 r, Uint8 g, Uint8 b, Uint8 a)
-{
-    return a << 24 | r << 16 | g << 8 | b;
-}
-
-void colored_case(Uint32* pixels, char* visited, int size)
-{
-    for (int i = 0; i < size; ++i)
-    {
-        if(visited[i])
-            pixels[i] = color(0, 255, 0, 255);
-    }
-}
-
-int clamp(int a, int b, int val)
-{
-    if (val < a)
-        return a;
-    if (val > b)
-        return b;
-    return val;
-}
-
-void copy(char* src, char* dest, int size)
-{
-    for(int i = 0; i < size; ++i)
-    {
-        dest[i] = src[i];
-    }
-}
-
-void copy_box(struct box* src, struct box* dest)
-{
-    dest->pos = src->pos;
-    dest->start = src->start;
-    dest->end = src->end;
-    dest->aire = src->aire;
-    dest->w = src->w;
-    dest->h = src->h;
-}
-
-int is_wigth(Uint32 pixel)
-{
-    return pixel == 0xFFFFFFFF;
-}
-
-void make_counter(SDL_Surface* grid)
+void color_grid(SDL_Surface* grid, char* M, int size)
 {
     Uint32* pixels = grid->pixels;
-    char* visited = calloc(grid->w * grid->h, sizeof(char));
-    
-    // Collect the middle of the image and nb of pixels
-    int middle = (grid->h / 2) * grid->w + grid->w / 2;
-    printf("%X\n", pixels[middle]);
-    int size = grid->w*grid->h;
-    
-    // variable for copie
-    struct box ref = {middle, 0, 0, 0, 0, 0};
-    collect_aire(&ref, pixels, grid->w, size, visited);
-    int t_sup = 2 * ref.aire;
-    int t_inf = ref.aire/2;
-    
-    // search left
-    search(pixels, &ref, size, grid->w, t_sup, t_inf, -ref.w, visited);
-    // search right
-    search(pixels, &ref, size, grid->w, t_sup, t_inf, ref.w, visited);
-    // search top
-    search(pixels, &ref, size, grid->w, t_sup, t_inf, (grid->w * ref.h),visited);
-    // search down
-    search(pixels, &ref, size, grid->w, t_sup, t_inf, -(grid->w * ref.h),visited);
-    // search down
 
-    free(visited);
-}
-
-void search(Uint32* pixels, struct box* ref, int size, int w, int t_sup, int t_inf, int shift, char* visited)
-{
-    int middle_case = ref->start + (ref->w/3) + (w * (ref->h/3));
-    pixels[middle_case] = color(255, 0, 0, 255);
-    
-    // Search left
-    struct box* curr = malloc(sizeof(struct box));
-    copy_box(ref, curr);
-    char* cop = calloc(size, sizeof(char));
-    copy(visited, cop, size);
-    while (curr->aire < t_sup && curr->aire > t_inf)
+    for(int i = 0 ; i < size; ++i)
     {
-        int begin = clamp(0, size, middle_case + shift);
-
-        // make a copy of visited pixels
-        copy(cop, visited, size);
-
-        // Collect aire of case 
-        curr->pos = begin;
-        collect_aire(curr, pixels, w, size, cop);
-        
-        // middle of current case
-        middle_case = curr->start + (curr->w/3) + (w*(curr->h/3));
+        if(M[i] == 1)
+        {
+            pixels[i] = 0xFFFF0000;
+        }
     }
-    colored_case(pixels, visited, size);
-    free(cop);
-    free(curr);
 }
 
-void collect_aire(struct box* curr_box, Uint32* pixels, int w, int size, char* visited)
+SDL_Surface* crop_grid (SDL_Surface* grid)
 {
-    // get the aire of the box
+    Uint32* pixels = grid->pixels;
+    // middle height of image
+    int middle_h = (grid->h/2) * grid->w;
+    
+    // coor of grid
+    int start_grid = 0;
+    int width_grid = 0;
+    int height_grid = 0;
+
+    // check all pixel in the line
+    for(int i = 0; i < grid->w; ++i)
+    {
+        // check if it's a white pixel
+        if(pixels[middle_h + i] == 0xFFFFFFFF)
+        {
+            // flood fill for pixel middle_h + i
+            int start = 0;
+            int width = 0;
+            int height = 0;
+            collect_form(grid, middle_h + i,&start, &width, &height);
+
+            if(width + height > width_grid + height_grid)
+            {
+                start_grid = start;
+                width_grid = width;
+                height_grid = height;
+            }
+        }
+    }
+    // color grid
+    //color_grid(grid, M, grid->w * grid->h);
+    pixels[start_grid] = 0xFFFF0000;
+
+    // cut image with this coordinates
+    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
+
+    SDL_Rect crop_rect;
+    crop_rect.x = start_grid % grid->w - 20;
+    crop_rect.y = start_grid / grid->w - 20;
+    crop_rect.w = width_grid + 20;
+    crop_rect.h = height_grid + 20;
+    
+    SDL_BlitSurface(grid, &crop_rect, croped_grid, NULL);
+
+    return croped_grid;
+}
+
+// this function extract the data from the matrix M
+void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height)
+{
+    int size = w * h;
+
+    // huper left corner and down right corner
     int start = size;
     int end = 0;
-    int aire = rec(pixels, curr_box->pos, w, &start, &end, size, visited);
-    // save infos
-    curr_box->start = start;
-    curr_box->end = end + 1 + w;
-    curr_box->aire = aire;
-    curr_box->w = (end - start) % w;
-    curr_box->h = (end - start) / w;
-}
-
-int rec(Uint32* pixels, int curr_pixel, int w, int* left, int* right, int size, char* visited)
-{
-    // Store all black bro of curr_pixel
-    int* bro = calloc(8, sizeof(int));
-    if(bro == NULL)
+    int x_s = w;
+    int y_s = h;
+    int x_e = 0;
+    int y_e = 0;
+    for(int i = 0; i < size; ++i)
     {
-        printf("NOT ENOUCH MEMORY\n");
-        return 0;
-    }
-    int nb_bro = black_bro(pixels, curr_pixel, bro, w, size, visited);
-
-    // if no more black bro stop recusion
-    if (nb_bro == 0)
-    {
-        free(bro);
-        return 0;
-    }
-
-    // give the right size of number of bro
-    bro = realloc(bro, nb_bro * sizeof(int));
-    if(bro == NULL)
-    {
-        printf("NOT ENOUCH MEMORY\n");
-        return 0;
-    }
-    
-    
-    // call rec function for all pixel
-    int all_bro = nb_bro;
-    for(int i = 0; i < nb_bro; ++i)
-    {
-        // Collect max values
-        if(bro[i] < *left)
+        if(M[i] == 1)
         {
-            *left = bro[i];
-        }
-        else if(bro[i] > *right)
-        {
-            *right = bro[i];
-        }
-        //pixels[bro[i]] = color(0, 255, 0, 255);
-        all_bro += rec(pixels, bro[i], w, left, right, size, visited);
-    }
-
-    free(bro);
-    return all_bro;
-}
-
-int is_black(Uint32 pixel)
-{
-    return pixel == 0xFF000000;
-}
-
-int black_bro(Uint32* pixels, int curr_pixel, int* bro, int w, int size, char* visited)
-{
-    int nb = 0;
-    for(int i = -1; i < 2; ++i)
-    {
-        for (int j = -1; j < 2; ++j)
-        {
-            if (!(j == 0 && i == 0))
+            if((i % w) + (i / w) < x_s + y_s)
             {
-                int coor = curr_pixel + (i * w) + j;
-                if(coor > 0 && coor < size)
+                start = i;
+                x_s = (i % w);
+                y_s = (i / w);
+            }
+            else if((i % w) + (i / w) > x_e + y_e)
+            {
+                end = i;
+                x_e = (i % w);
+                y_e = (i / w);
+            }
+        }
+    }
+
+    // left and right bornes
+    int left = start % w;
+    int right = end % w;
+    int begin = start - left;
+    int max_i = end / w - start / w;
+    for(int i = 0; i < max_i; ++i)
+    {
+        for(int j = 0; j < w; ++j)
+        {
+            if(M[begin + (i * w + j)] == 1)
+            {
+                if(j < left)
                 {
-                    if (is_black(pixels[coor]) && visited[coor] == 0)
-                    {
-                        visited[coor] = 1;
-                        bro[nb] = coor;
-                        nb += 1;
-                    }
+                    left = j;
+                }
+                else if(j > right)
+                {
+                    right = j;
                 }
             }
         }
     }
 
-    return nb;
+    *start_pix = start;
+    *width = right - left;
+    *height = (end - start) / w;
+}
+
+// Collect all of the form in white beginning at pixel pos
+void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* height)
+{
+    // Init some variables
+    Uint32* pixels = grid->pixels;
+    Uint32 white = 0xFFFFFFFF;
+    int size = grid->w * grid->h;
+    char* M = calloc(size, sizeof(char));
+    
+    // start flood algo with begin pixel pos
+    f_fill(pixels, pos, M, grid->w, size, white);
+    
+    // collect data from M
+    extract_data(M, grid->w, grid->h, start, width, height);
+
+    free(M);
+}
+
+// This function run the flood_fill algo and write res in matrix M
+void f_fill(Uint32* pixels, int begin_pixel, char* M, int w, int size, Uint32 color)
+{
+    // create a queue
+    struct queue* q = new_queue();
+
+    // enqueue and marck first pixel
+    push(q, begin_pixel);
+    M[begin_pixel] = 1;
+
+    while(!is_empty(q))
+    {
+        int curr = pop(q);
+
+        // collect case next to curr
+        int next[4] = {};
+        int nb_next = next_to(pixels, curr, color, w, size, next);
+
+        // en queue each case no visited
+        for(int i = 0; i < nb_next; ++i)
+        {
+            // not visited
+            if(M[next[i]] == 0)
+            {
+                M[next[i]] = 1;
+                push(q, next[i]);
+            }
+        }
+    }
+
+    destroy(q);
+}
+
+// This function collect all the coordinate of case of color next to curr
+int next_to(Uint32* pixels, int curr, Uint32 color, int w, int size, int next[4])
+{
+    int i = 0;
+
+    // right case
+    if((curr % w) + 1 < w && pixels[curr + 1] == color)
+    {
+        next[i] = curr + 1;
+        i += 1;
+    }
+
+    // left case
+    if((curr % w) - 1 > 0 && pixels[curr - 1] == color)
+    {
+        next[i] = curr - 1;
+        i += 1;
+    }
+
+    // hupper case
+    if(curr - w > 0 && pixels[curr - w] == color)
+    {
+        next[i] = curr - w;
+        i += 1;
+    }
+
+    // downer case
+    if(curr + w < size && pixels[curr + w] == color)
+    {
+        next[i] = curr + w;
+        i += 1;
+    }
+
+    return i;
 }

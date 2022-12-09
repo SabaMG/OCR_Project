@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra -fsanitize=address -g
 LDFLAGS = -fsanitize=address -g
 LDLIBS = `pkg-config --libs sdl2 SDL2_image SDL2_ttf`
 
-SRC = main.c flood_fill.c
+SRC = main.c flood_fill.c queue.c
 OBJ = ${SRC:.c=.o}
 DEP = ${SRC:.c=.d}
 

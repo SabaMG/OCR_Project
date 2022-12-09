@@ -1,16 +1,9 @@
 #pragma once
 
-struct box{
-    int pos;
-    int start;
-    int end;
-    int aire;
-    int w;
-    int h;
-};
-
-void make_counter(SDL_Surface* grid);
-int black_bro(Uint32* pixels, int curr_pixel, int* bro, int w, int size, char* visited);
-int rec(Uint32* pixels, int curr_pixel, int w, int* small, int* big, int size, char* visited);
-void collect_aire(struct box* curr_box, Uint32* pixels, int w, int size, char* visited);
-void search(Uint32* pixels, struct box* ref, int size, int w, int t_sup, int t_inf, int shift, char* visited);
+SDL_Surface* crop_grid (SDL_Surface* grid);
+void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height);
+void put_color(Uint32* pixels, char* M, int size, Uint32 color);
+int pos(SDL_Surface* grid, int middle_h, int w);
+void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* height);
+void f_fill(Uint32* pixels, int begin_pixel, char* M, int w, int size, Uint32 color);
+int next_to(Uint32* pixels, int curr, Uint32 color, int w, int size, int next[4]);
