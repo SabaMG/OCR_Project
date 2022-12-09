@@ -1,10 +1,24 @@
+# Makefile
 
-all:
-	gcc -Wall -Wextra main.c tools.c center_number.c -o main -lm -lSDL2 -lSDL2_image
+CC = gcc
+CPPFLGS = -MMD
+CFLAGS = -Wall -Wextra -fsanitize=address -g
+LDFLAGS = -fsanitize=address -lm
+LDLIBS = `pkg-config --libs sdl2 SDL2_image SDL2_ttf`
 
-debug:
-	gcc -Wall -Wextra main.c tools.c center_number.c -o main -g -fsanitize=address -lm -lSDL2 -lSDL2_image
+SRC = main.c tools.c center_number.c
+OBJ = ${SRC:.c=.o}
+DEP = ${SRC:.c=.d}
+
+all: main
+
+main: ${OBJ}
+
+-include : ${DEP}
+
+.PHONY: clean
 
 clean:
-	rm main
-	rm -rf boxes
+	${RM} ${OBJ}
+	${RM} ${DEP}
+	${RM} main

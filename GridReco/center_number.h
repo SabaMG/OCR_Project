@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <SDL2/SDL.h>
 
+void ajuste_case_fill(SDL_Surface* sobel, SDL_Rect* case_);
 int average_pixel(Uint32 pixel, SDL_PixelFormat* format);
 int average_surface(SDL_Surface* s);
 void center_pixel(SDL_Surface* s, int* x, int* y, float seuil);

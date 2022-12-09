@@ -484,11 +484,13 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
             case_.y = inters[j*nbRows + i].y;
             int min_val = min(abs(case_.x - inters[(j + 1)*nbRows + (i+1)].x),
              abs(case_.y - inters[(j + 1)*nbRows + (i+1)].y));
-            case_.w = min_val;
-            case_.h = min_val;
+            case_.w = min_val - min_val/6;
+            case_.h = min_val - min_val/6;
+            case_.x += min_val/6;
+            case_.y += min_val/6;
 
             // Center case
-            //ajuste_case(originImg, &case_);
+            //ajuste_case_fill(sobel, &case_);
 
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
@@ -504,8 +506,10 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
                 }
 
                 //make zoom of the surface to reich 28x28 pixels
-                float z =  28 / (float)(resultSurf->w);
-                resultSurf = resize(resultSurf, z);
+                float z =  28 / (float)(resultSurf->w - 1);
+                SDL_Surface* sizeSurf = resize(resultSurf, z);
+                SDL_FreeSurface(resultSurf);
+                printf("w = %i, h = %i\n", sizeSurf->w, sizeSurf->h);
 
                 pathToSave[iIndex] = '0' + i;
                 pathToSave[jIndex] = '0' + j;
@@ -513,11 +517,11 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
                 size_t ind = i*(nbRows-1)+j;
                 case_coor[ind][0] = case_.x;
                 case_coor[ind][1] = case_.y;
-                boxesArray[ind] = *resultSurf;
+                boxesArray[ind] = *sizeSurf;
 
-                if (IMG_SaveJPG(resultSurf, pathToSave, 100) == -1)
+                if (IMG_SaveJPG(sizeSurf, pathToSave, 100) == -1)
                     printf("Unable to save the picture\n");
-                SDL_FreeSurface(resultSurf);
+                SDL_FreeSurface(sizeSurf);
             }
         }
     }

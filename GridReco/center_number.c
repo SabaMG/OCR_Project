@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+
 // This function ajuste the coordinate of the case for center the number
 void ajuste_case(SDL_Surface* source, SDL_Rect* case_)
 {
