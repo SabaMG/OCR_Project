@@ -64,6 +64,7 @@ int main () {
 	GtkTextView* train_logs_text_view = GTK_TEXT_VIEW(gtk_builder_get_object(builder, "train_logs_text_view"));
 
 	GtkButton* quit_button = GTK_BUTTON(gtk_builder_get_object(builder, "quit_button"));
+	GtkButton* save_button = GTK_BUTTON(gtk_builder_get_object(builder, "save_button"));
 	GtkButton* open_button = GTK_BUTTON(gtk_builder_get_object(builder, "open_button"));
 	GtkButton* resolve_button = GTK_BUTTON(gtk_builder_get_object(builder, "resolve_button"));
 	GtkButton* nn_load_btn = GTK_BUTTON(gtk_builder_get_object(builder, "nn_load_btn"));
@@ -90,6 +91,7 @@ int main () {
 			.main_image = main_image,
 			.current_nn_main_path_label = current_nn_main_path_label,
 			.resolve_button = resolve_button,
+			.save_button = save_button,
 			.nn_dialog = nn_dialog,
 			.image_pixbuf = NULL,
 			.current_nn_path_label = current_nn_path_label,
@@ -100,6 +102,7 @@ int main () {
 			.nn_train_btn = nn_train_btn,
 			.main_info_label = main_info_label,
 			.main_progress_bar = main_progress_bar,
+			.ui_queue = ui_queue,
 		},
 		.net = {
 			.network = network,
@@ -114,16 +117,11 @@ int main () {
 			.training_retval = -1,
 		},
 		.img = {
-			.progress_bar_text = NULL,
-			.progress_bar_fraction = 0.f,
 			.opened_image_path = NULL,
 			.is_resolving = 0,
+			.has_been_canceled = 0,
 			.resolving_retval = 0,
-			.has_to_update_image = 0,
-			.has_to_update_progress_bar = 0,
-			.original_surface = NULL,
-			.current_surface = NULL,
-			.ui_queue = ui_queue
+			.ui_update_timeout_id = -1,
 		},
 	};
 
@@ -148,6 +146,7 @@ int main () {
 
 	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(open_button, "clicked", G_CALLBACK(on_open_button), &data);
+	g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_button), &data);
 	g_signal_connect(nn_generate_btn, "clicked", G_CALLBACK(on_nn_generate_btn), &data);
 	g_signal_connect(nn_load_btn, "clicked", G_CALLBACK(on_nn_load_btn), &data);
 	g_signal_connect(nn_export_btn, "clicked", G_CALLBACK(on_nn_export_btn), &data);
@@ -174,10 +173,5 @@ int main () {
 
 	// Free network
 	free_network(network, data.net.layers);
-	// Free surfaces
-	if (data.img.original_surface != NULL)
-		SDL_FreeSurface(data.img.original_surface);
-	if (data.img.current_surface != NULL)
-		SDL_FreeSurface(data.img.current_surface);
 	return 0;
 }

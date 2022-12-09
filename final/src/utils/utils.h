@@ -13,6 +13,7 @@ typedef struct UserInterface {
 	GtkImage* main_image;
 	GtkLabel* current_nn_main_path_label;
 	GtkButton* resolve_button;
+	GtkButton* save_button;
 	GtkDialog* nn_dialog;
 	GdkPixbuf* image_pixbuf;
 	GtkLabel* current_nn_path_label;
@@ -23,6 +24,7 @@ typedef struct UserInterface {
 	GtkButton* nn_train_btn;
 	GtkLabel* main_info_label;
 	GtkProgressBar* main_progress_bar;
+	GAsyncQueue* ui_queue;
 } UserInterface;
 
 typedef struct NetworkData {
@@ -39,16 +41,11 @@ typedef struct NetworkData {
 } NetworkData;
 
 typedef struct ImageData {
-	char *progress_bar_text;
-	double progress_bar_fraction;
 	char *opened_image_path;
 	int is_resolving;
+	int has_been_canceled;
 	int resolving_retval;
-	int has_to_update_image;
-	int has_to_update_progress_bar;
-	SDL_Surface* original_surface;
-	SDL_Surface* current_surface;
-	GAsyncQueue* ui_queue;
+	int ui_update_timeout_id;
 } ImageData;
 
 typedef struct ProgramData {

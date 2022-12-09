@@ -30,6 +30,14 @@ gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_d
 	return FALSE;
 }
 
+
+gboolean on_save_button(GtkWidget *widget, gpointer user_data) {
+	(void)widget;
+	(void)user_data;
+	g_print("save\n");
+	return FALSE;
+}
+
 // Callback of clicked event from open button
 // Set main image
 gboolean on_open_button(GtkWidget *widget, gpointer user_data) {

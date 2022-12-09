@@ -4,6 +4,7 @@
 
 gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_data);
 
+gboolean on_save_button(GtkWidget *widget, gpointer user_data);
 gboolean on_open_button(GtkWidget *widget, gpointer user_data);
 
 gboolean on_nn_generate_btn(GtkWidget* widget, gpointer user_data);

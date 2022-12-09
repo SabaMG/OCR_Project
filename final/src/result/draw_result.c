@@ -80,14 +80,13 @@ void write_on_grid(SDL_Surface* grid, SDL_Surface* number, int x, int y)
 // This function make the final surface grid with empty_grid:
 // - in black init values
 // - in green solution values
-SDL_Surface* draw_empty(int grid[][SIZE], int result[][SIZE])
-{
+SDL_Surface* draw_empty(int grid[][SIZE], int result[][SIZE]) {
     // Init sdl window and image
-    SDL_Init(SDL_INIT_VIDEO);
+	//SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_JPG);
 
     // load the empty grid and modify format
-    SDL_Surface* init_grid = IMG_Load("empty_grid.jpg");
+    SDL_Surface* init_grid = IMG_Load("./assets/empty_grid.jpg");
     SDL_Surface* empty_grid = SDL_ConvertSurfaceFormat(init_grid, SDL_PIXELFORMAT_ARGB8888, 0);
     SDL_FreeSurface(init_grid);
 
