@@ -30,17 +30,11 @@ int main(int argc, char** argv)
     SDL_Surface* grid = SDL_ConvertSurfaceFormat(init_grid, SDL_PIXELFORMAT_ARGB8888, 0);
     SDL_FreeSurface(init_grid);
     
-    Uint32* pixels = grid->pixels;
-    printf("w = %i, h = %i\n", grid->w, grid->h/2);
-    int m = (grid->h/2) * grid->w + 50;
-    int pixel_w = pos(grid, m, grid->w);
-    printf("pixels : %i, color = %X\n", pixel_w, pixels[pixel_w]);
-    test(grid, pixel_w);
-
-    pixels[pixel_w] = 0xFF00FF00;
+    SDL_Surface* croped_grid = crop_grid(grid);
 
     // Save grid result
-    IMG_SaveJPG(grid, "res.jpg", 100);
+    IMG_SaveJPG(croped_grid, "res.jpg", 100);
+    SDL_FreeSurface(croped_grid);
     SDL_FreeSurface(grid);
 
     return EXIT_SUCCESS;

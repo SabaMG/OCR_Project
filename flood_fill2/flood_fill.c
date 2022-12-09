@@ -10,33 +10,129 @@
 #include "flood_fill.h"
 #include "queue.h"
 
-void put_color(Uint32* pixels, char* M, int size, Uint32 color)
+void color_grid(SDL_Surface* grid, char* M, int size)
 {
+    Uint32* pixels = grid->pixels;
+
+    for(int i = 0 ; i < size; ++i)
+    {
+        if(M[i] == 1)
+        {
+            pixels[i] = 0xFFFF0000;
+        }
+    }
+}
+
+SDL_Surface* crop_grid (SDL_Surface* grid)
+{
+    Uint32* pixels = grid->pixels;
+    // middle height of image
+    int middle_h = (grid->h/2) * grid->w;
+    
+    // coor of grid
+    int start_grid = 0;
+    int width_grid = 0;
+    int height_grid = 0;
+
+    // check all pixel in the line
+    for(int i = 0; i < grid->w; ++i)
+    {
+        // check if it's a white pixel
+        if(pixels[middle_h + i] == 0xFFFFFFFF)
+        {
+            // flood fill for pixel middle_h + i
+            int start = 0;
+            int width = 0;
+            int height = 0;
+            collect_form(grid, middle_h + i,&start, &width, &height);
+
+            if(width + height > width_grid + height_grid)
+            {
+                start_grid = start;
+                width_grid = width;
+                height_grid = height;
+            }
+        }
+    }
+    // color grid
+    //color_grid(grid, M, grid->w * grid->h);
+    pixels[start_grid] = 0xFFFF0000;
+
+    // cut image with this coordinates
+    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
+
+    SDL_Rect crop_rect;
+    crop_rect.x = start_grid % grid->w - 20;
+    crop_rect.y = start_grid / grid->w - 20;
+    crop_rect.w = width_grid + 20;
+    crop_rect.h = height_grid + 20;
+    
+    SDL_BlitSurface(grid, &crop_rect, croped_grid, NULL);
+
+    return croped_grid;
+}
+
+// this function extract the data from the matrix M
+void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height)
+{
+    int size = w * h;
+
+    // huper left corner and down right corner
+    int start = size;
+    int end = 0;
+    int x_s = w;
+    int y_s = h;
+    int x_e = 0;
+    int y_e = 0;
     for(int i = 0; i < size; ++i)
     {
         if(M[i] == 1)
         {
-            pixels[i] = color;
+            if((i % w) + (i / w) < x_s + y_s)
+            {
+                start = i;
+                x_s = (i % w);
+                y_s = (i / w);
+            }
+            else if((i % w) + (i / w) > x_e + y_e)
+            {
+                end = i;
+                x_e = (i % w);
+                y_e = (i / w);
+            }
         }
     }
-}
 
-int pos(SDL_Surface* grid, int middle_h, int w)
-{
-    Uint32* pixels = grid->pixels;
-
-    for(int i = 0; i < w; ++i)
+    // left and right bornes
+    int left = start % w;
+    int right = end % w;
+    int begin = start - left;
+    int max_i = end / w - start / w;
+    for(int i = 0; i < max_i; ++i)
     {
-        if(pixels[middle_h + i] == 0xFFFFFFFF)
+        for(int j = 0; j < w; ++j)
         {
-            return middle_h + i;
+            if(M[begin + (i * w + j)] == 1)
+            {
+                if(j < left)
+                {
+                    left = j;
+                }
+                else if(j > right)
+                {
+                    right = j;
+                }
+            }
         }
     }
 
-    return middle_h;
+    *start_pix = start;
+    *width = right - left;
+    *height = (end - start) / w;
 }
 
-void collect_coor(SDL_Surface* grid, int pos, int* start, int* width, int* height)
+// Collect all of the form in white beginning at pixel pos
+void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* height)
 {
     // Init some variables
     Uint32* pixels = grid->pixels;
@@ -44,9 +140,11 @@ void collect_coor(SDL_Surface* grid, int pos, int* start, int* width, int* heigh
     int size = grid->w * grid->h;
     char* M = calloc(size, sizeof(char));
     
+    // start flood algo with begin pixel pos
     f_fill(pixels, pos, M, grid->w, size, white);
-
-    put_color(pixels, M, size, 0xFFFF0000);
+    
+    // collect data from M
+    extract_data(M, grid->w, grid->h, start, width, height);
 
     free(M);
 }
