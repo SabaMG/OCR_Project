@@ -41,6 +41,7 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
     int width_grid = 0;
     int height_grid = 0;
 
+
     // check all pixel in the line
     for(int i = 0; i < grid->w; ++i)
     {
@@ -52,11 +53,11 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
             int width = 0;
             int height = 0;
             collect_form(grid, middle_h + i,&start, &width, &height);
-            
+
             int delta = my_abs(width - height) - my_abs(width_grid - height_grid);
             delta = my_abs(delta);
-
-            if(delta < 80)
+    
+            if(delta < 10)
             {
                 if(width + height > width_grid + height_grid)
                 {
@@ -83,34 +84,23 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
 }
 
 // this function extract the data from the matrix M
-void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height)
+void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height, int type)
 {
     int size = w * h;
+    int inv = (type + 1)%2;
 
-    // huper left corner and down right corner
-    int start = size;
-    int end = 0;
-    int x_s = w;
-    int y_s = h;
-    int x_e = 0;
-    int y_e = 0;
-    for(int i = 0; i < size; ++i)
+    // start pixel
+    int start = 0;
+    while(start < size && M[start] == inv)
     {
-        if(M[i] == 1)
-        {
-            if((i % w) + (i / w) < x_s + y_s)
-            {
-                start = i;
-                x_s = (i % w);
-                y_s = (i / w);
-            }
-            else if((i % w) + (i / w) > x_e + y_e)
-            {
-                end = i;
-                x_e = (i % w);
-                y_e = (i / w);
-            }
-        }
+        start += 1;
+    }
+
+    // end pixel
+    int end = size - 1;
+    while(end >= 0 && M[end] == inv)
+    {
+        end -= 1;
     }
 
     // left and right bornes
@@ -122,7 +112,7 @@ void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height
     {
         for(int j = 0; j < w; ++j)
         {
-            if(M[begin + (i * w + j)] == 1)
+            if(M[begin + (i * w + j)] == type)
             {
                 if(j < left)
                 {
@@ -136,7 +126,7 @@ void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height
         }
     }
 
-    *start_pix = start;
+    *start_pix = (start / w) * w + (left % w);
     *width = right - left;
     *height = (end - start) / w;
 }
@@ -154,7 +144,7 @@ void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* heigh
     f_fill(pixels, pos, M, grid->w, size, white);
     
     // collect data from M
-    extract_data(M, grid->w, grid->h, start, width, height);
+    extract_data(M, grid->w, grid->h, start, width, height, 1);
 
     free(M);
 }
