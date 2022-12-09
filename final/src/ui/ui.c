@@ -7,6 +7,7 @@
 #include "resolve.h"
 #include "../utils/utils.h"
 
+#define PATH_MAX 200
 
 // Callback of configure-event from window. It resize main image
 gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_data) {

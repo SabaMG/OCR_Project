@@ -346,7 +346,7 @@ gpointer resolution(gpointer user_data) {
 
 	data->img.is_resolving = 0;
 	//data->img.resolving_retval = 1; // Stop normally
-	g_thread_exit(NULL);
+	g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
 	return NULL;
 }
 

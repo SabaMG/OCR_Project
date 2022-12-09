@@ -6,6 +6,8 @@
 
 #include "network.h"
 
+#define PATH_MAX 200 // Because buggy on PIE
+
 // Initialize ocr: load default network + set ui
 void ocr_init(const char *network_path, Layer *network, GtkLabel* main_nn_path_label, GtkLabel* nn_nn_path_label) {
 	int err = load_weights(network_path, network);
