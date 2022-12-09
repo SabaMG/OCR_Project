@@ -2,36 +2,34 @@
 #include <SDL2/SDL_image.h>
 #include <err.h>
 #include <stdio.h>
-#include <SDL2/SDL2_rotozoom.h>
-#include "manual_rotation.h"
+#include "rotation.c"
 
-SDL_Surface* load_image(const char* path)
+SDL_Surface *load_image(char *path)
 {
-	SDL_Surface* tempSurface = IMG_Load(path);
-	if (tempSurface == NULL)
-		errx(EXIT_FAILURE, "%s", SDL_GetError());
-
-	SDL_Surface* surface = SDL_ConvertSurfaceFormat(tempSurface, SDL_PIXELFORMAT_RGB888, 0);
-	SDL_FreeSurface(tempSurface);
-	return surface;
+	SDL_Surface *image = IMG_Load(path);
+	if (image == NULL)
+		errx(3, "IMG_Load: %s", IMG_GetError());
+	return image;
 }
 
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    if(argc != 2)
-        errx(EXIT_FAILURE, "Usage: image-file");
-    
-    SDL_Surface* image = load_image(argv[1]);
-    printf("Insert your angle :");
-    char a[4];
+	if (argc != 2)
+		errx(EXIT_FAILURE, "Usage: image-file");
 
-    if (scanf("%s", a) >0) {
-    	long angle = str_to_uint(a)%360;
-    	Rotation_Manuel_F(image, (double)angle);
-    }
+	if (SDL_Init(SDL_INIT_VIDEO) != 0)
+		errx(EXIT_FAILURE, "%s", SDL_GetError());
 
-    else {
-    	printf("You did not enter any number.\n");
-    }
+	SDL_Surface *img = load_image(argv[1]);
+
+	double nombre = 0;
+	printf("Enter a value for the angle : ");
+	scanf("%le", &nombre);
+
+	img = SDL_RotationCentral(img, nombre);
+	IMG_SaveJPG(img, "out.jpg", 100);
+
+
+	return EXIT_SUCCESS;
 }
