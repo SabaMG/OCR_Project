@@ -466,7 +466,7 @@ struct Point* ComputeInters(struct Line* H_lines, struct Line* V_lines){
 }
 
 //Cut the boxes of the grid
-void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
+void CutGrid(SDL_Surface* originImg, SDL_Surface* sobelImg, struct Point* inters, char* pathToSave,
  int case_coor[81][2], SDL_Surface boxesArray[81], size_t iIndex, size_t jIndex){
 
     /*for(size_t i = 0; i < NB_LINES/2 * NB_LINES/2; i++){
@@ -488,7 +488,7 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
             case_.h = min_val;
 
             // Center case
-            //ajuste_case(originImg, &case_);
+            ajuste_case(sobelImg, &case_);
 
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
@@ -660,7 +660,6 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     PrintLines(sobelImage, V_lines, V_len, W, H);
     //Saving picture with drawn lines
     IMG_SaveJPG(sobelImage, linesImgPath, 100);
-    SDL_FreeSurface(sobelImage);
 
     
     //Get intersections
@@ -679,7 +678,8 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
      '0', '0', '.', 'j', 'p', 'g', 0};
     
-    CutGrid(originalImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
+    CutGrid(originalImage, sobelImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
+    SDL_FreeSurface(sobelImage);
 
     
     //Cleaning

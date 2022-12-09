@@ -4,6 +4,11 @@
 #include "center_number.h"
 #include "flood_fill.h"
 
+void ajuste_case(SDL_Surface* sobel, SDL_Rect case_)
+{
+
+}
+
 // This function ajuste the coordinate of the case for center the number
 void ajuste_case(SDL_Surface* source, SDL_Rect* case_)
 {

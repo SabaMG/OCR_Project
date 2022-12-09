@@ -33,6 +33,7 @@ void color_grid(SDL_Surface* grid, char* M, int size)
 SDL_Surface* crop_grid (SDL_Surface* grid)
 {
     Uint32* pixels = grid->pixels;
+    Uint32 white = 0xFFFFFFFF;
     // middle height of image
     int middle_h = (grid->h/2) * grid->w;
     
@@ -52,7 +53,7 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
             int start = 0;
             int width = 0;
             int height = 0;
-            collect_form(grid, middle_h + i,&start, &width, &height);
+            collect_form(grid, middle_h + i,&start, &width, &height, color);
 
             int delta = my_abs(width - height) - my_abs(width_grid - height_grid);
             delta = my_abs(delta);
@@ -70,13 +71,13 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
     }
 
     // cut image with this coordinates
-    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
+    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid, height_grid, 32,0,0,0,0);
 
     SDL_Rect crop_rect;
-    crop_rect.x = start_grid % grid->w - 20;
-    crop_rect.y = start_grid / grid->w - 20;
-    crop_rect.w = width_grid + 20;
-    crop_rect.h = height_grid + 20;
+    crop_rect.x = start_grid % grid->w;
+    crop_rect.y = start_grid / grid->w;
+    crop_rect.w = width_grid;
+    crop_rect.h = height_grid;
     
     SDL_BlitSurface(grid, &crop_rect, croped_grid, NULL);
 
@@ -132,16 +133,15 @@ void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height
 }
 
 // Collect all of the form in white beginning at pixel pos
-void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* height)
+void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* height, Uint32 color)
 {
     // Init some variables
     Uint32* pixels = grid->pixels;
-    Uint32 white = 0xFFFFFFFF;
     int size = grid->w * grid->h;
     char* M = calloc(size, sizeof(char));
     
     // start flood algo with begin pixel pos
-    f_fill(pixels, pos, M, grid->w, size, white);
+    f_fill(pixels, pos, M, grid->w, size, color);
     
     // collect data from M
     extract_data(M, grid->w, grid->h, start, width, height, 1);
