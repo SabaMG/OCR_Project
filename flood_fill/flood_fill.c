@@ -10,6 +10,13 @@
 #include "flood_fill.h"
 #include "queue.h"
 
+int my_abs(int a)
+{
+    if (a < 0)
+        return -a;
+    return a;
+}
+
 void color_grid(SDL_Surface* grid, char* M, int size)
 {
     Uint32* pixels = grid->pixels;
@@ -45,18 +52,21 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
             int width = 0;
             int height = 0;
             collect_form(grid, middle_h + i,&start, &width, &height);
+            
+            int delta = my_abs(width - height) - my_abs(width_grid - height_grid);
+            delta = my_abs(delta);
 
-            if(width + height > width_grid + height_grid)
+            if(delta < 80)
             {
-                start_grid = start;
-                width_grid = width;
-                height_grid = height;
+                if(width + height > width_grid + height_grid)
+                {
+                    start_grid = start;
+                    width_grid = width;
+                    height_grid = height;
+                }
             }
         }
     }
-    // color grid
-    //color_grid(grid, M, grid->w * grid->h);
-    pixels[start_grid] = 0xFFFF0000;
 
     // cut image with this coordinates
     SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
