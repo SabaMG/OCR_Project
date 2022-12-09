@@ -48,6 +48,7 @@ typedef struct ImageData {
 	int has_to_update_progress_bar;
 	SDL_Surface* original_surface;
 	SDL_Surface* current_surface;
+	GAsyncQueue* ui_queue;
 } ImageData;
 
 typedef struct ProgramData {

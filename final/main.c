@@ -80,6 +80,7 @@ int main () {
 	GtkDialog* nn_dialog = GTK_DIALOG(gtk_builder_get_object(builder, "neural_network_dialog"));
 	GtkDialog* about_dialog = GTK_DIALOG(gtk_builder_get_object(builder, "about_dialog"));
 
+	GAsyncQueue* ui_queue = g_async_queue_new();
 
 	// Create ProgramData struct
 	ProgramData data = {
@@ -122,6 +123,7 @@ int main () {
 			.has_to_update_progress_bar = 0,
 			.original_surface = NULL,
 			.current_surface = NULL,
+			.ui_queue = ui_queue
 		},
 	};
 
@@ -163,7 +165,6 @@ int main () {
 
 	// Initialize OCR
 	const char *default_network_path = "networks/default_network.net";
-	printf("%s\n", gtk_label_get_text(data.ui.current_nn_main_path_label));
 	ocr_init(default_network_path, network, data.ui.current_nn_main_path_label, data.ui.current_nn_path_label);
 
 
