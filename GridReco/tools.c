@@ -20,12 +20,7 @@ int min(int x, int y)
     return (x < y) ? x : y;
 }
 
-// Max function between two numbers
-int max(int x, int y)
-{
-    return (x > y) ? x : y;
-}
-
+//Return the index of the point with the minimal x
 size_t Point_minX_index(struct Point* list, size_t start, size_t end){
     int min = list[start].x;
     size_t min_index = start;
@@ -38,6 +33,7 @@ size_t Point_minX_index(struct Point* list, size_t start, size_t end){
     return min_index;
 }
 
+//Return the index of the point with the minimal y
 size_t Point_minY_index(struct Point* list, size_t start, size_t end){
     int min = list[start].y;
     size_t min_index = start;
@@ -50,12 +46,14 @@ size_t Point_minY_index(struct Point* list, size_t start, size_t end){
     return min_index;
 }
 
+//Swap the points at the i and j indexs
 void Point_swap(struct Point* list, size_t i, size_t j){
     struct Point tmp = list[i];
     list[i] = list[j];
     list[j] = tmp;
 }
 
+//Insertion sort based on x values
 void Point_inSort_x(struct Point* list, size_t start, size_t end){
     while (start < end - 1)
     {
@@ -66,6 +64,7 @@ void Point_inSort_x(struct Point* list, size_t start, size_t end){
     
 }
 
+//Insertion sort based on y values
 void Point_inSort_y(struct Point* list, size_t start, size_t end){
     while (start < end - 1)
     {
@@ -76,6 +75,7 @@ void Point_inSort_y(struct Point* list, size_t start, size_t end){
     
 }
 
+//Sort intersections based on y then x
 void Point_sortInters(struct Point* list, size_t length, int nbLines){
     Point_inSort_y(list, 0, length);
     for (size_t line = 0; line < (size_t)nbLines/2; line++)
@@ -85,20 +85,7 @@ void Point_sortInters(struct Point* list, size_t length, int nbLines){
     }
 }
 
-
-//returns the INDEX of the max in _list
-size_t maxList(int _list[], size_t start, size_t end){
-    size_t min_index = start;
-    int min = _list[start];
-    for (size_t i = start; i < end; i++){
-        if (_list[i] > min){
-            min = _list[i];
-            min_index = i;
-        }
-    }
-    return min_index;
-}
-
+//Return the index of the max in list
 size_t maxList_(size_t _list[], size_t start, size_t end){
     size_t min_index = start;
     size_t min = _list[start];
@@ -111,19 +98,7 @@ size_t maxList_(size_t _list[], size_t start, size_t end){
     return min_index;
 }
 
-//returns the INDEX of the min in _list
-size_t minList(size_t _list[], size_t start, size_t end){
-    size_t min_index = start;
-    size_t min = _list[start];
-    for (size_t i = start; i < end; i++){
-        if (_list[i] < min){
-            min = _list[i];
-            min_index = i;
-        }
-    }
-    return min_index;
-}
-
+//Return the index of the minimal rho in list
 size_t minList_Line(struct Line* list, size_t start, size_t end){
     size_t min_index = start;
     int min = abs(list[start].rho);
@@ -136,27 +111,14 @@ size_t minList_Line(struct Line* list, size_t start, size_t end){
     return min_index;
 }
 
-void swap(size_t* list, size_t i, size_t j){
-    int tmp = list[i];
-    list[i] = list[j];
-    list[j] = tmp;
-}
-
+//Swap the lines at the i and j indexs
 void swap_Line(struct Line* list, size_t i, size_t j){
     struct Line tmp = list[i];
     list[i] = list[j];
     list[j] = tmp;
 }
 
-void insert_sort(size_t* list, size_t start, size_t end){
-    while (start < end - 1)
-    {
-        size_t ind = minList(list, start, end);
-        swap(list, start, ind);
-        start++;
-    }
-}
-
+//Return the average value of the list
 int AverageOfList(size_t* list, size_t length){
     int sum = 0;
     for (size_t i = 0; i < length; i++)
@@ -166,6 +128,7 @@ int AverageOfList(size_t* list, size_t length){
     return sum/length;
 }
 
+//Pop the index-element by putting it at the end and decreasing the length
 void list_pop(struct Line* list, size_t length, size_t index){
     while(index < length - 1){
         list[index] = list[index + 1];
@@ -174,6 +137,7 @@ void list_pop(struct Line* list, size_t length, size_t index){
     list[length - 1].rho = -1;
 }
 
+//Sort lines based on abs(rho) values
 void Line_sort(struct Line* list, size_t start, size_t end){
     while (start < end - 1){
         size_t ind = minList_Line(list, start, end);
@@ -185,30 +149,6 @@ void Line_sort(struct Line* list, size_t start, size_t end){
 //Computes diagonal length
 int diagLen(int w, int h){
     return (int)(sqrt((w * w) + (h * h)));
-}
-
-//Fills Hough_lines[] with Hough lines algorithm
-void HoughAngle(SDL_Surface* img, int Hough_lines[][91], size_t w_){
-    Uint32 * pixels = (Uint32 *)img->pixels;
-    for (int x = 0; x < img->w; x++){
-        for (int y = 0; y < img->h; y++)
-        {
-            Uint32 pixel = pixels[y * (img->w) + x];
-            
-            if ((pixel & 0xff) == 0xff){
-                for (size_t rho = 0; rho < w_; rho++)
-                {
-                    for (int theta = 0; theta < 91; theta++)
-                    {
-                        if((int)rho==(int)(y*cos(theta*M_PI/180) +
-                        x*sin(theta*M_PI/180))){
-                            Hough_lines[rho][theta] += 1;
-                        }
-                    }   
-                }
-            }
-        }
-    }
 }
 
 
@@ -354,7 +294,7 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
     }
 }
 
-//Draw a line
+//Draw a line using Bresenham algorithm
 void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h){
     if (abs(y2 - y1) < abs(x2 - x1)){
         if (x1 > x2)
@@ -369,7 +309,7 @@ void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h)
     }
 }
 
-//Hough accumulator
+//Fill the Hough accumulator
 int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
     int nbRhos = 2*maxRho;
     int nbThetas = maxTheta;
@@ -389,6 +329,7 @@ int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
     return Accu;
 }
 
+//Print the lines from list in img surface
 void PrintLines(SDL_Surface* img, struct Line* list, size_t length, int img_w, int img_h){
     for(size_t i = 0; i < length; i++){
 
@@ -400,6 +341,7 @@ void PrintLines(SDL_Surface* img, struct Line* list, size_t length, int img_w, i
     }
 }
 
+//Compute the angle to rotate based on Horizontal lines
 int AngleToRot(struct Line* H_lines, size_t* H_len){
     int H_Angle = 0;
     for(size_t i_H = 0; i_H < *H_len; i_H++){
@@ -415,9 +357,6 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
 
     int nbRhos = 2*maxRho;//rho : [-maxRho, maxRho]
     int nbThetas = maxTheta;//theta : [0, theta]
-
-    //int W = img->w;//Width of the edge picture
-    //int H = img->h;//Height of the edge picture
 
     size_t i_H = 0;
     size_t i_V = 0;
@@ -471,6 +410,7 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
     return AngleToRot(H_lines, H_len);
 }
 
+//Compute the intersection point between the ((x1,y1),(x2,y2)) and ((x3,y3),(x4,y4)) lines
 int GetIntersection(int x1_, int y1_, int x2_, int y2_, int x3_, int y3_, int x4_, int y4_, int* X, int* Y){
     if ((x1_ == x2_ && y1_ == y2_) || (x3_ == x4_ && y3_ == y4_)){
         return 0;
@@ -525,6 +465,7 @@ struct Point* ComputeInters(struct Line* H_lines, struct Line* V_lines){
     return inters;
 }
 
+//Cut the boxes of the grid
 void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
  int case_coor[81][2], SDL_Surface boxesArray[81], size_t iIndex, size_t jIndex){
 
@@ -583,83 +524,7 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
     SDL_FreeSurface(originImg);
 }
 
-
-
-//Converts a list to a picture
-Uint32* listToPic(int* listIndex, int length, int w){
-    Uint32* res = malloc(length*w*sizeof(Uint32));
-    memset(res, 0, length*w*sizeof(Uint32));
-
-    for(int i = 0; i < length; i++){
-        int tmp = listIndex[i];
-        for(int j = 0; j < tmp; j++){
-            putPixel(res, i, w-j-1, length);
-        }
-    }
-    return res;
-}
-
-//Converts accumulator to picture
-Uint32* accToPic(int* Acc, int* w, int* h){
-    Uint32* res = malloc(*w * *h * sizeof(Uint32));
-    memset(res, 0, *w**h*sizeof(Uint32));
-
-    int maxMat = 0;
-    for(int x = 0; x < *w; x++){
-    for(int y = 0; y < *h; y++){
-        if(Acc[y**w + x] > maxMat){
-            maxMat = Acc[y**w + x];
-            //printf("Max rho,theta : %i, %i\n", x, y);
-        }
-    }
-    }
-    
-    for(int x = 0; x < *w; x++){
-    for(int y = 0; y < *h; y++){
-        if(Acc[y**w + x] > 0){
-            int mid = (int)((int)(((double)(Acc[y**w + x])/maxMat)*255)& 0xff);
-            res[y**w+x] = (0xff << 24) | (mid << 16) |
-             (mid << 8) | (mid);
-        }
-    }
-    }
-    return res;
-}
-
-//returns the second dimension index of the max
-size_t MaxIndex2DArray(int table[][91], size_t w, size_t h){
-    size_t max_index = 0;
-    int max = 0;
-    for (size_t i = 0; i < w; i++){
-        for (size_t j = 0; j < h; j++){
-            if (table[i][j] > max){
-                max = table[i][j];
-                max_index = j;
-            }
-        }
-    }
-    return max_index;
-}
-
-void SortLists(size_t* linesX, size_t* linesY, size_t lenX, size_t lenY){
-    insert_sort(linesX, 0, lenX);
-    insert_sort(linesY, 0, lenY);
-}
-
-//Computes the number of white pixel for each line and col
-void PixelOnColsAndLines(Uint32* pixels, int linesX[], int linesY[],
- size_t lenX, size_t lenY){
-    for (size_t x = 0; x < lenX; x++){
-        for (size_t y = 0; y < lenY; y++){
-            Uint32 pixel = pixels[y * (lenX) + x];
-            if ((pixel & 0xff) == 0xff){
-                linesX[x]++;
-                linesY[y]++;
-            }
-        }
-    }
-}
-
+//Remove inconsistent lines
 int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 
     Line_sort(list, 0, *length);
@@ -700,7 +565,7 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
         }
 
         //print lists
-        printf("List (sorted) = ");
+        /*printf("List (sorted) = ");
         for (size_t i = 0; i < *length; i++)
         {
             printf("%4i |", list[i].rho);
@@ -726,7 +591,7 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
         {
             printf("%4zu |", farFromAverage[i]);
         }
-        printf("\n");
+        printf("\n");*/
 
 
         size_t ind_max = maxList_(farFromAverage, 0, *length);
@@ -745,97 +610,6 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
     return removed;
 }
 
-//Puts the indexs of the 10 max of list[] in dest[] (with threshold)
-void SortNbMaxsIndexs(int list[], size_t len, size_t dest[], size_t nbRound){
-    for (size_t round = 0; round < nbRound; round++){
-        size_t max = maxList(list, 0, len);
-        //printf("%zu MAX == %i\n", round+1, list[max]);
-        size_t ind = max-1;
-        int threshold = (int)((float)(list[max])*0.98);
-        while (ind > 0 && (list[ind] > threshold || max - ind < 10))
-        {
-            list[ind] *= -1;
-            ind--;
-        }
-        ind = max + 1;
-        while (ind < len && (list[ind] > threshold || ind - max < 10))
-        {
-            list[ind] *= -1;
-            ind++;
-        }
-        list[max] *= -1;
-        dest[round] = max;
-    }
-}
-
-void ShowLines(Uint32* pixels, size_t* X_maxs, size_t* Y_maxs, size_t nbMaxs, size_t W, size_t H){
-    for(size_t r = 0; r < nbMaxs; r++){
-        size_t cooX = X_maxs[r];
-        for (size_t j = 0; j < H; j++){
-            pixels[j * (W) + cooX] = (0xff << 24) | (0xff << 16) |
-             (0x00 << 8) | (0x00);
-        }
-        size_t cooY = Y_maxs[r];
-        for (size_t j = 0; j < W; j++){
-            pixels[cooY * (W) + j] = (0xff << 24) | (0xff << 16) |
-             (0x00 << 8) | (0x00);
-        }
-    }
-}
-
-//Turns detected lined and cols in red
-void DisplayLines(Uint32* pixels, size_t listX[], size_t listY[], size_t ImgW,
- size_t ImgH){
-    for(size_t r = 0; r < 10; r++){
-        size_t cooX = listX[r];
-        for (size_t j = 0; j < ImgH; j++){
-            pixels[j * (ImgW) + cooX] = (0xff << 24) | (0xff << 16) |
-             (0x00 << 8) | (0x00);
-        }
-        size_t cooY = listY[r];
-        for (size_t j = 0; j < ImgW; j++){
-            pixels[cooY * (ImgW) + j] = (0xff << 24) | (0xff << 16) |
-             (0x00 << 8) | (0x00);
-        }
-    }
-}
-
-//Cuts the picture based on the intersections and saves all boxes
-void CutAndSaveBoxes(char* PictPath, size_t listOfX[], size_t listOfY[],
- char* pathToSave, size_t iIndex, size_t jIndex){
-    //Load the original picture (without sobel filter)
-    SDL_Surface *newImg = IMG_Load(PictPath);
-    for (size_t j = 0; j < 9; j++){
-        for (size_t i = 0; i < 9; i++){
-            SDL_Rect case_;
-            int min_val = min(listOfX[i + 1] - listOfX[i], listOfY[i + 1] - listOfY[i]);
-            case_.x = listOfX[i];
-            case_.y = listOfY[j];
-            case_.w = min_val;
-            case_.h = min_val;
-            
-            //printf("case: x=%4i y=%4i ++ w=%i h=%i\n", case_.x, case_.y, case_.w, case_.h);
-
-            // Center case
-            ajuste_case(newImg, &case_);
-
-            SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
-             case_.h, 32, 0, 0, 0, 0);
-            SDL_UnlockSurface(resultSurf);
-            if (SDL_BlitSurface(newImg, &case_, resultSurf, NULL) == 0)
-            {
-                //make zoom of the surface to reich 28x28 pixels
-                float z =  28 / (float)(resultSurf->w);
-                resultSurf = resize(resultSurf, z);
-
-                pathToSave[iIndex] = '0' + i;
-                pathToSave[jIndex] = '0' + j;
-
-                IMG_SaveJPG(resultSurf, pathToSave, 100);
-            }
-        }
-    }
-}
 
 //Main fonction which complete segmentation 
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
