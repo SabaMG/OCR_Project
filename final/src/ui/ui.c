@@ -138,7 +138,9 @@ gboolean on_nn_load_btn(GtkWidget* widget, gpointer user_data) {
 	(void)widget;
 	ProgramData *data = user_data;
 
+	printf("on_nn_load_btn(): %s\n", data->net.network_to_load_path);
 	int err = load_weights(data->net.network_to_load_path, data->net.network);
+	print_layer(data->net.network, 3);
 	if (err == 1)
 		errx(1, "on_nn_load_btn: Failed to load network.\n");
 

@@ -34,6 +34,8 @@ int main () {
 
 	Layer network[N_LAYERS];
 	generate_network(network, N_LAYERS, N_NEURONS_ARRAY, sizes_inputs);
+	//print_layer(network, 3);
+
 	
 
 	// Initialize GTK
@@ -163,9 +165,11 @@ int main () {
 
 
 	// Initialize OCR
-	const char *default_network_path = "networks/default_network.net";
+	//const char *default_network_path = "networks/default_network.net";
+	const char *default_network_path = "networks/network_17.net";
 	ocr_init(default_network_path, network, data.ui.current_nn_main_path_label, data.ui.current_nn_path_label);
 
+	print_layer(network, 3);
 
 	// Runs the main loop
 	gtk_main();

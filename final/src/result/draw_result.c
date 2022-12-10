@@ -9,7 +9,7 @@
 
 #include "draw_result.h"
 
-int min(int x, int y)
+int Min(int x, int y)
 {
    if(x < y) 
        return x;
@@ -109,7 +109,7 @@ SDL_Surface* draw_empty(int grid[][SIZE], int result[][SIZE]) {
     TTF_Init();
     
     // Create font variable with font arial.ttf and size font_size
-    int font_size = (int)(min(empty_grid->w, empty_grid->h) / 9) * 0.90;
+    int font_size = (int)(Min(empty_grid->w, empty_grid->h) / 9) * 0.90;
     TTF_Font* font = TTF_OpenFont("./assets/font.ttf", font_size);
     if(font == NULL) {
 //	printf("font null : %s\n", TTF_GetError());

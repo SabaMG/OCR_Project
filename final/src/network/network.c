@@ -3,12 +3,14 @@
 #include <string.h>
 #include <math.h>
 #include <err.h>
+#include <time.h>
 
 #include "network.h"
 
 // This function load weights from path file
 int load_weights(const char *path, Layer l[]) {
-    // open stream reader in stream
+	printf("enter\n");
+    // open strea reader in stream
     FILE* stream;
     stream = fopen(path, "r");
     
@@ -22,12 +24,18 @@ int load_weights(const char *path, Layer l[]) {
     size_t i = 0;
     size_t j = 0;
     size_t k = 0;
+	int z = -1;
 
     // read file char by char
     char c;
     char val_str[100] = "";
     double val;
-    while((c = fgetc(stream)) != -1) {
+    char * endPtr;
+	size_t tmp = 0;
+	printf("yo\n");
+    while((c = fgetc(stream)) != EOF) {
+		//printf("hey\n");
+		printf("%c\n", c);
         switch(c) {
             // next layer
             case ']':
@@ -38,31 +46,53 @@ int load_weights(const char *path, Layer l[]) {
             // write bias +next neuron
             case '}':
                 val = atof(val_str);
+
+				//val = strtod(val_str, &endPtr);
                 val_str[0] = 0;
+				printf("bug\n");
+					printf("val = %f\n", val);
+				//if (z == 3)
                 l[i].neurons[j].bias = val;
+				printf("bug1\n");
                 j += 1;
                 k = 0;
                 break;
             // write weight + Next weight
-            case ',':
+            case ';':
                 val = atof(val_str);
                 val_str[0] = 0;
-                l[i].neurons[j].weights[k] = val;
+				printf("bug5\n");
+				printf("z = %i\n", z);
+				printf("val = %f\n", val);
+				printf("neuron %i in layer %i has %i weights\n", j, i, k);
+				if (z != 2)
+					l[i].neurons[j].weights[k] = val;
+				printf("bug4\n");
                 k += 1;
                 break;
             // write last weight
             case ')':
                 val = atof(val_str);
                 val_str[0] = 0;
-                l[i].neurons[j].weights[k] = val;
+				printf("bug3\n");
+				if (z != 2)
+					l[i].neurons[j].weights[k] = val;
+				printf("bug2\n");
                 break;
             default:
-                if(c == '[' || c == '{' || c == '(')
+                if(c == '{' || c == '(')
                     break;
+                if(c == '[') {
+					z++;
+					break;
+				}
+				if (c == '.')
+					c = ',';
                 strncat(val_str, &c, 1);
         }
     }
     
+	printf("here\n");
     // close stream reader
     fclose(stream);
 	return 0;
@@ -115,22 +145,28 @@ int save_weights(char *path, Layer l[], size_t nb_layer, char **res_path) {
                 // convert double in string
                 char str[100];
                 sprintf(str, "%f", l[i].neurons[j].weights[k]);
-                fputs(str, stream);
+				fputs(str, stream);
+				//printf("%s\n", str);
 
                 if (k < nb_weight - 1) {
-                    fputc(',', stream);
+                    fputc(';', stream);
                 }
             }
             fputc(')', stream);
             // Save bias
             char str[100];
             sprintf(str, "%f", l[i].neurons[j].bias);
+			//printf("%s\n", str);
             fputs(str, stream);
             fputc('}', stream);
+			//printf("do neuron %i of layer %i\n", j, i);
 
         }
+		printf("do layer %i\n", i);
         fputc(']', stream);
     }
+	fflush(stream);
+	fclose(stream);
 	//printf("Network saved in '%s'\n", save_path);
 	//return res_path
 	*res_path = save_path;
@@ -142,18 +178,19 @@ int save_weights(char *path, Layer l[], size_t nb_layer, char **res_path) {
 /* return a random number between 0 and 1
 	used for initializing weights */
 double getRandom() {
-	//srand(time(NULL));
 	return ((double)rand()) / ((double)RAND_MAX) * 2 - 1;
 }
 
 // This function print the layer l
 void print_layer(Layer l[], size_t size) {
 	for(size_t i = 0; i < size; ++i) {
-		printf("Layer%zu:\n", i);
+//			printf("Layer%zu:\n", i);
 		size_t nb_neuron = l[i].size;
 
+		//printf("size: %i\n", nb_neuron);
 		for(size_t j = 0; j < nb_neuron; ++j) {
-			printf("    bias : %f\n", l[i].neurons[j].bias);
+			if (j < 5)
+				printf("\nbias of the %ith neuron: %f\n",j, l[i].neurons[j].bias);
 			size_t nb_weight = l[i].neurons[j].size;
 
 			for(size_t k = 0; k < nb_weight; ++k)
@@ -181,9 +218,11 @@ void generate_network(Layer l[], size_t layers, size_t sizes_neurons[], size_t s
 
 	//int o = 0;
 	// Generate layer i 
+	srand(time(NULL));
 	for(size_t i = 0; i < layers; ++i) {
 		l[i].size = sizes_neurons[i];
 		l[i].neurons = calloc(l[i].size, sizeof(struct neuron));
+		//printf("gen(): %i neurons in layer %i\n", l[i].size, i);
 		l[i].begin = l[i].neurons;
 		l[i].end = l[i].begin + l[i].size;
 		struct neuron * p = l[i].begin;
@@ -195,16 +234,23 @@ void generate_network(Layer l[], size_t layers, size_t sizes_neurons[], size_t s
 				n.size = sizes_neurons[i + 1];
 			else
 				n.size = 0;
+			//printf("gen(): %i weights for neuron %i\n", n.size, j);
 			n.weights = calloc(n.size, sizeof(double));
 			n.begin = n.weights;
 			n.end = n.begin + n.size;
 
     		// generate weights k of neuron j
+			/*
 			for (double* k = n.begin; k < n.end; ++k) {
 				*k = getRandom();
 			}
+			*/
+			for (size_t k = 0; k < n.size; k++) {
+				n.weights[k] = getRandom();
+			}
 
 			n.bias = getRandom(); // init bias
+			//printf("%f ", n.bias);
 			n.value = 0; // init value
 			n.delta = 0; // init delta
 						 // make link between layer i and neuron j
