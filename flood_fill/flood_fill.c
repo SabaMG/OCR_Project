@@ -103,13 +103,13 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
     free(M_grid);
 
     // cut image with this coordinates
-    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid, height_grid, 32,0,0,0,0);
+    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
 
     SDL_Rect crop_rect;
-    crop_rect.x = start_grid % grid->w;
-    crop_rect.y = start_grid / grid->w;
-    crop_rect.w = width_grid;
-    crop_rect.h = height_grid;
+    crop_rect.x = start_grid % grid->w - 20;
+    crop_rect.y = start_grid / grid->w - 20;
+    crop_rect.w = width_grid + 40;
+    crop_rect.h = height_grid + 40;
     
     SDL_BlitSurface(grid, &crop_rect, croped_grid, NULL);
 
