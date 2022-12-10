@@ -12,7 +12,7 @@
 
 void help()
 {
-    char* str = "./main [binarised_image.jpg] [res_image.jpg]";
+    char* str = "./main [image.jpg] [sobel.jpg] [res.jpg]";
     errx(1, str);
 }
 
