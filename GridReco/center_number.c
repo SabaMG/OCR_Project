@@ -7,15 +7,16 @@
 void ajuste_case(SDL_Surface* source, SDL_Rect* case_)
 {
     // remove lines of grid
-    remove_lines(case_);
+    remove_lines(case_, 5);
 
     // Get center coordinate of number in case
+    int white_case = 0;
     int centerX = 0, centerY = 0;
     SDL_Surface* centerSurf = SDL_CreateRGBSurface(0, case_->w, case_->h, 32, 0, 0, 0, 0);
     SDL_UnlockSurface(centerSurf);
     if(SDL_BlitSurface(source, case_, centerSurf, NULL) == 0)
     {
-        center_pixel(centerSurf, &centerX, &centerY, 3.5);
+        white_case = center_pixel(centerSurf, &centerX, &centerY, 3.5);
     }
 
     // center number in the case
@@ -28,14 +29,21 @@ void ajuste_case(SDL_Surface* source, SDL_Rect* case_)
     }
     case_->x += deltaX;
     case_->y += deltaY;
-
+    
+    // undo remove lines
+    if(!white_case)
+    {
+        undo_remove_lines(case_, 5);
+    }
+    
     // free surface
     SDL_FreeSurface(centerSurf);
 }
 
 // This function store coordinate of the center of number
 // in x and y vriables
-void center_pixel(SDL_Surface* s, int* x, int* y, float seuil)
+// return 1 if it a white case else 0
+int center_pixel(SDL_Surface* s, int* x, int* y, float seuil)
 {
     Uint32* pixels = s->pixels;
 
@@ -83,7 +91,10 @@ void center_pixel(SDL_Surface* s, int* x, int* y, float seuil)
     {
         *x = (min_coorX + max_coorX) / 2;
         *y = (min_coorY + max_coorY) / 2;
+        return 0;
     }
+    // else white case
+    return 1;
 }
 
 // This function calculate the grey level of a pixel
@@ -113,12 +124,21 @@ int average_surface(SDL_Surface* s)
 }
 
 // This function cut the lines of sudoku
-void remove_lines(SDL_Rect* case_)
+void remove_lines(SDL_Rect* case_, int degre)
 {
-    case_->x += case_->w / 5;
-    case_->y += case_->h / 5;
-    case_->w -= (2 * case_->w) / 5;
-    case_->h -= (2 * case_->h) / 5;
+    case_->x += case_->w / degre;
+    case_->y += case_->h / degre;
+    case_->w -= (2 * case_->w) / degre;
+    case_->h -= (2 * case_->h) / degre;
+}
+
+// This function undo remove line
+void undo_remove_lines(SDL_Rect* case_, int degre)
+{
+    case_->x -= case_->w / degre;
+    case_->y -= case_->h / degre;
+    case_->w += (2 * case_->w) / degre;
+    case_->h += (2 * case_->h) / degre;
 }
 
 /// Those functions are use for make a zoom of the surface, 

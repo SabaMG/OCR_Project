@@ -495,13 +495,11 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
             case_.y = inters[j*nbRows + i].y;
             int min_val = min(abs(case_.x - inters[(j + 1)*nbRows + (i+1)].x),
              abs(case_.y - inters[(j + 1)*nbRows + (i+1)].y));
-            case_.w = min_val - min_val/6;
-            case_.h = min_val - min_val/6;
-            case_.x += min_val/6;
-            case_.y += min_val/6;
+            case_.w = min_val;
+            case_.h = min_val;
 
             // Center case
-            //ajuste_case_fill(sobel, &case_);
+            ajuste_case(originImg, &case_);
 
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
