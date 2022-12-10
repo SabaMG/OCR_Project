@@ -44,3 +44,37 @@ GdkPixbuf * gtk_image_new_from_sdl_surface (SDL_Surface *surface) {
 
 	return pixbuf;
 }
+
+// format: Format of the pixel used by the surface.
+Uint32 pixel_to_grayscale(Uint32 pixel_color, SDL_PixelFormat* format) {
+	Uint8 r, g, b;
+	// Get r, g, b from the pixel.
+	SDL_GetRGB(pixel_color, format, &r, &g, &b);
+	// Determine average.
+	Uint8 average = 255 - (0.3*r + 0.59*g + 0.11*b);
+	// Set r, g, b to average.
+	r = average;
+	g = average;
+	b = average;
+	// Return new color.
+	return SDL_MapRGB(format, r, g, b);
+}
+
+void surface_to_grayscale(SDL_Surface* surface) {
+	// Get array of pixels.
+	Uint32* pixels = surface->pixels;
+	// Get len of the array.
+	int len = surface->w * surface->h;
+	// Get the format of the surface.
+	SDL_PixelFormat* format = surface->format;
+	// Lock the surface.
+	if (SDL_LockSurface(surface) != 0)
+		printf("error\n");
+		//errx(EXIT_FAILURE, "%s", SDL_GetError());
+	// Convert each pixel to gray.
+	for (int i = 0; i < len; i++) {
+		pixels[i] = pixel_to_grayscale(pixels[i], format);
+	}
+	// Unlock the surface.
+	SDL_UnlockSurface(surface);
+}

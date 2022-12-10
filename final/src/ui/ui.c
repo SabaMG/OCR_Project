@@ -9,6 +9,11 @@
 
 #define PATH_MAX 200
 
+#define N_LAYERS 3
+#define N_NEURONS_INPUT 784
+#define N_NEURONS_HIDDEN_1 32
+#define N_NEURONS_OUTPUT 10
+
 // Callback of configure-event from window. It resize main image
 gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_data) {
 	(void)event;
@@ -99,6 +104,13 @@ gboolean on_nn_generate_btn(GtkWidget* widget, gpointer user_data) {
 	ProgramData *data = user_data;
 
 	// Reset each neurons weights and biais
+	// Generate network
+	size_t N_NEURONS_ARRAY[] = {N_NEURONS_INPUT, N_NEURONS_HIDDEN_1, N_NEURONS_OUTPUT};
+	size_t sizes_inputs[] = {784, 784, 32};
+
+	Layer network[N_LAYERS];
+	generate_network(network, N_LAYERS, N_NEURONS_ARRAY, sizes_inputs);
+	/*
 	Layer *network = data->net.network;
 	for(size_t i = 0; i < data->net.layers; ++i) {
 		for(size_t j = 0; j < data->net.sizes_neurons[i]; ++j) {
@@ -109,6 +121,7 @@ gboolean on_nn_generate_btn(GtkWidget* widget, gpointer user_data) {
 			network[i].neurons[j].delta = 0;
 		}
 	}
+	*/
 
 	gtk_widget_hide(GTK_WIDGET(data->ui.nn_info_bar));
 	gtk_label_set_text(data->ui.nn_info_bar_label, "Network successfully generated (3 layers).");
@@ -140,7 +153,7 @@ gboolean on_nn_load_btn(GtkWidget* widget, gpointer user_data) {
 
 	printf("on_nn_load_btn(): %s\n", data->net.network_to_load_path);
 	int err = load_weights(data->net.network_to_load_path, data->net.network);
-	print_layer(data->net.network, 3);
+	//print_layer(data->net.network, 3);
 	if (err == 1)
 		errx(1, "on_nn_load_btn: Failed to load network.\n");
 

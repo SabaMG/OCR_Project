@@ -9,7 +9,6 @@
 
 // This function load weights from path file
 int load_weights(const char *path, Layer l[]) {
-	printf("enter\n");
     // open strea reader in stream
     FILE* stream;
     stream = fopen(path, "r");
@@ -32,10 +31,7 @@ int load_weights(const char *path, Layer l[]) {
     double val;
     char * endPtr;
 	size_t tmp = 0;
-	printf("yo\n");
     while((c = fgetc(stream)) != EOF) {
-		//printf("hey\n");
-		printf("%c\n", c);
         switch(c) {
             // next layer
             case ']':
@@ -46,14 +42,8 @@ int load_weights(const char *path, Layer l[]) {
             // write bias +next neuron
             case '}':
                 val = atof(val_str);
-
-				//val = strtod(val_str, &endPtr);
                 val_str[0] = 0;
-				printf("bug\n");
-					printf("val = %f\n", val);
-				//if (z == 3)
                 l[i].neurons[j].bias = val;
-				printf("bug1\n");
                 j += 1;
                 k = 0;
                 break;
@@ -61,23 +51,16 @@ int load_weights(const char *path, Layer l[]) {
             case ';':
                 val = atof(val_str);
                 val_str[0] = 0;
-				printf("bug5\n");
-				printf("z = %i\n", z);
-				printf("val = %f\n", val);
-				printf("neuron %i in layer %i has %i weights\n", j, i, k);
 				if (z != 2)
 					l[i].neurons[j].weights[k] = val;
-				printf("bug4\n");
                 k += 1;
                 break;
             // write last weight
             case ')':
                 val = atof(val_str);
                 val_str[0] = 0;
-				printf("bug3\n");
 				if (z != 2)
 					l[i].neurons[j].weights[k] = val;
-				printf("bug2\n");
                 break;
             default:
                 if(c == '{' || c == '(')
@@ -91,8 +74,6 @@ int load_weights(const char *path, Layer l[]) {
                 strncat(val_str, &c, 1);
         }
     }
-    
-	printf("here\n");
     // close stream reader
     fclose(stream);
 	return 0;
@@ -156,19 +137,16 @@ int save_weights(char *path, Layer l[], size_t nb_layer, char **res_path) {
             // Save bias
             char str[100];
             sprintf(str, "%f", l[i].neurons[j].bias);
-			//printf("%s\n", str);
             fputs(str, stream);
             fputc('}', stream);
 			//printf("do neuron %i of layer %i\n", j, i);
 
         }
-		printf("do layer %i\n", i);
         fputc(']', stream);
     }
 	fflush(stream);
 	fclose(stream);
 	//printf("Network saved in '%s'\n", save_path);
-	//return res_path
 	*res_path = save_path;
 	//free(save_path);
 	return 0;

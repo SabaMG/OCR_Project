@@ -9,29 +9,37 @@
 #define PATH_MAX 200 // Because buggy on PIE
 
 // Initialize ocr: load default network + set ui
-void ocr_init(const char *network_path, Layer *network, GtkLabel* main_nn_path_label, GtkLabel* nn_nn_path_label) {
+int ocr_init(const char *network_path, Layer *network, GtkLabel* main_nn_path_label, GtkLabel* nn_nn_path_label) {
 	int err = load_weights(network_path, network);
 	printf("ocr_init(): Load network\n");
 
-	if (err == 1)
-		errx(1, "init_ocr: Failed to init ocr.\n");
+	if (err == 1) {
+		printf("ocr_init(): Failed to init ocr.");
+		// Set nn_path_label to internal network
+		gtk_label_set_text(main_nn_path_label, "Internal Network (Not Trained)");
+		gtk_label_set_text(nn_nn_path_label, "Internal Network (Not Trained)");
+		return 1;
 
-	char cwd[PATH_MAX];
-	char text[PATH_MAX] = {0};
-
-	if (getcwd(cwd, sizeof(cwd)) != NULL) {
-		strcat(text, cwd);
-		strcat(text, "/");
-		strcat(text, network_path);
 	}
-	else
-		printf("init_ocr: Failed to get cwd.\n");
-	gtk_label_set_text(main_nn_path_label, text);
-	gtk_label_set_text(nn_nn_path_label, text);
+	else {
+		char cwd[PATH_MAX];
+		char text[PATH_MAX] = {0};
+
+		if (getcwd(cwd, sizeof(cwd)) != NULL) {
+			strcat(text, cwd);
+			strcat(text, "/");
+			strcat(text, network_path);
+		}
+		else
+			printf("init_ocr: Failed to get cwd.\n");
+		gtk_label_set_text(main_nn_path_label, text);
+		gtk_label_set_text(nn_nn_path_label, text);
+		return 0;
+	}
 }
 
 /* return sigmoid(x)
-	https://en.wikipedia.org/wiki/Sigmoid_function */
+https://en.wikipedia.org/wiki/Sigmoid_function */
 double sigmoid(double x) {
 	return 1 / (1 + exp(-x));
 }
@@ -52,17 +60,19 @@ void softmax(size_t layer_size, Neuron neurons[]) {
 void feed_forward(Layer network[], double inputs[]) {
 
 	// DEBUG
-	printf("[\n");
-	for (size_t i = 0; i < 28; i++) {
-		for (size_t j = 0; j < 28; j++) {
-			if (inputs[i * 28 + j] == 255)
-				inputs[i * 28 + j] = 1;
-			printf("%.f ", inputs[i * 28 + j]);
-		}
-		printf("\n");
-	}
-	printf("]\n");
-	printf("\n");
+	/*
+	   printf("[\n");
+	   for (size_t i = 0; i < 28; i++) {
+	   for (size_t j = 0; j < 28; j++) {
+	   if (inputs[i * 28 + j] == 255)
+	   inputs[i * 28 + j] = 1;
+	   printf("%.f ", inputs[i * 28 + j]);
+	   }
+	   printf("\n");
+	   }
+	   printf("]\n");
+	   printf("\n");
+	   */
 
 	// Put inputs in neurons value
 	// network[0] is the input layer
@@ -125,52 +135,84 @@ void update_network(Layer network[], double learning_rate) {
 	}
 }
 
-int ocr(Layer *network, SDL_Surface* sp, SDL_Surface** s_from_inputs) {
-	//SDL_Surface *sp = SDL_ConvertSurfaceFormat(&surface, SDL_PIXELFORMAT_ARGB8888, 0);
+int ocr(Layer *network, SDL_Surface* surface, int debug, double outs[]) {
 	double *inputs = (double *)malloc(784 * sizeof(double));
-	Uint32* pixels = sp->pixels;
+	Uint32* pixels = surface->pixels;
 	Uint32 pixel;
 	Uint8 r, g, b, v = 0;
-	//printf("[ ");
-	for (int y = 0; y < sp->h; y++) {
-		for (int x = 0; x < sp->w; x++) {
-			pixel = pixels[y * sp->w + x];
+	for (int y = 0; y < surface->h; y++) {
+		for (int x = 0; x < surface->w; x++) {
+			pixel = pixels[y * surface->w + x];
 			r = pixel >> 16 & 0xFF;
 			g = pixel >> 8 & 0xFF;
 			b = pixel & 0xFF;
 			v = (r + g + b) / 3;
-			if (v < 100)
+			if (v < 6) // TODO: Bricolage
 				v = 0;
-			else
-				v = 255;
-			//printf("%i ", v);
-			inputs[y * sp->w + x] = (double)v;
-			Uint32* n_pixels = (*s_from_inputs)->pixels;
-			n_pixels[y * (*s_from_inputs)->w + x] = SDL_MapRGB((*s_from_inputs)->format, v, v, v);
-			/*
-			if (v < 100 ) 
-				n_pixels[y * (*s_from_inputs)->w + x] = SDL_MapRGB((*s_from_inputs)->format, 0, 0, 0);
-			else 
-				n_pixels[y * (*s_from_inputs)->w + x] = SDL_MapRGB((*s_from_inputs)->format, 255, 255, 255);
-				*/
+			inputs[y * surface->w + x] = (double)v;
 		}
-	//	printf("\n");
 	}
-	//printf(" ]\n");
-	
+
+	// DEBUG
+	// Print image in console
+	if (debug) {
+		printf("[\n");
+		for (size_t i = 0; i < 28; i++) {
+			for (size_t j = 0; j < 28; j++) {
+				printf("%.f ", inputs[i * 28 + j]);
+			}
+			printf("\n");
+		}
+		printf("]\n");
+	}
+
 	feed_forward(network, inputs);
 
-	int best = 0;
-	printf("[ ");
+
 	for (size_t k = 0; k < 10; k++) {
-		printf("%f ", network[2].neurons[k].value);
-		if (network[2].neurons[best].value < network[2].neurons[k].value)
-			best = k;
+		double val = network[2].neurons[k].value;
+		switch(k) {
+			case 0:
+				outs[9] = val;
+				break;
+			case 1:
+				outs[0] = val;
+				break;
+			case 2:
+				outs[7] = val;
+				break;
+			case 3:
+				outs[6] = val;
+				break;
+			case 4:
+				outs[1] = val;
+				break;
+			case 5:
+				outs[8] = val;
+				break;
+			case 6:
+				outs[4] = val;
+				break;
+			case 7:
+				outs[4] = val;
+				break;
+			case 8:
+				outs[2] = val;
+				break;
+			case 9:
+				outs[5] = val;
+				break;
+		}
 	}
-	printf("]");
-	printf("\n");
+
+	int out = 0;
+
+	for (size_t k = 0; k < 10; k++) {
+		if (outs[out] < outs[k])
+			out = k;
+	}
 
 	free(inputs);
 	//SDL_FreeSurface(surface);
-	return best;
+	return out;
 }

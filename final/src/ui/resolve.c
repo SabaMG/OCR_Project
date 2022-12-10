@@ -10,45 +10,13 @@
 #include "../preprocess/sobel.h"
 #include "../preprocess/tools.h"
 #include "../preprocess/rotation.h"
+#include "../preprocess/flood_fill.h"
 #include "../network/ocr.h"
 #include "../solver/solver.h"
 #include "../result/draw_result.h"
 
 #define GRID_SIZE 9
 
-// format: Format of the pixel used by the surface.
-Uint32 pixel_to_grayscale(Uint32 pixel_color, SDL_PixelFormat* format) {
-	Uint8 r, g, b;
-	// Get r, g, b from the pixel.
-	SDL_GetRGB(pixel_color, format, &r, &g, &b);
-	// Determine average.
-	Uint8 average = 255 - (0.3*r + 0.59*g + 0.11*b);
-	// Set r, g, b to average.
-	r = average;
-	g = average;
-	b = average;
-	// Return new color.
-	return SDL_MapRGB(format, r, g, b);
-}
-
-void surface_to_grayscale(SDL_Surface* surface) {
-	// Get array of pixels.
-	Uint32* pixels = surface->pixels;
-	// Get len of the array.
-	int len = surface->w * surface->h;
-	// Get the format of the surface.
-	SDL_PixelFormat* format = surface->format;
-	// Lock the surface.
-	if (SDL_LockSurface(surface) != 0)
-		printf("error\n");
-		//errx(EXIT_FAILURE, "%s", SDL_GetError());
-	// Convert each pixel to gray.
-	for (int i = 0; i < len; i++) {
-		pixels[i] = pixel_to_grayscale(pixels[i], format);
-	}
-	// Unlock the surface.
-	SDL_UnlockSurface(surface);
-}
 // Define structure for an element of the async queue contening what to update in ui
 typedef struct {
 	char* text;
@@ -221,6 +189,25 @@ gpointer resolution(gpointer user_data) {
 	g_async_queue_push(data->ui.ui_queue, sobel_i);
 
 	// ========================================================================
+	// FLOOD FILL
+	// ========================================================================
+
+	// Update pg
+	ui_queue_elt* ff_e = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	ff_e->has_to_update_pg = 1;
+	ff_e->text = "Flood Fill";
+	ff_e->fraction = 0.1;
+	g_async_queue_push(data->ui.ui_queue, ff_e);
+
+	SDL_Surface* croped_surface = crop_grid(converted_surface, sobel_surface);
+
+	// Update image
+	ui_queue_elt* ff_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	ff_i->has_to_update_img = 1;
+	ff_i->surface = sobel_surface;
+	g_async_queue_push(data->ui.ui_queue, ff_i);
+
+	// ========================================================================
 	// IMAGE EDGES DETECTION | HOUGH
 	// ========================================================================
 
@@ -242,8 +229,9 @@ gpointer resolution(gpointer user_data) {
 	//int angle = segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
 
 	// While angle is not equal to 0, rotate segmentation_surface
-	int angle = segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
-	g_print("bug\n");
+	printf("bug\n");
+	int angle = Segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
+	printf("bug\n");
 
 	// Update image or do rotation
 	if (angle == 0) {
@@ -288,7 +276,7 @@ gpointer resolution(gpointer user_data) {
 			seg_pg->fraction = 0.1;
 
 			// Try again segmentation
-			angle = segmentation(converted_surface, tmp_segmentation_surface, "", case_coor, boxesArray);
+			angle = Segmentation(converted_surface, tmp_segmentation_surface, "", case_coor, boxesArray);
 			g_print("resolution(): Angle after rotation = %i\n", angle);
 
 			// Update image
@@ -304,6 +292,13 @@ gpointer resolution(gpointer user_data) {
 	}
 
 
+
+	g_print("resolution(): Finished resolution\n");
+
+	data->img.is_resolving = 0;
+	//data->img.resolving_retval = 1; // Stop normally
+	g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
+	return NULL;
 	// ========================================================================
 	// RESIZE DIGIT IMAGE
 	// ========================================================================
@@ -315,17 +310,17 @@ gpointer resolution(gpointer user_data) {
 	elt7->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, elt7);
 
-	/*
-	   for (size_t i = 0; i < GRID_SIZE; i++) {
-	   for (size_t j = 0; j < GRID_SIZE; j++) {
-	   SDL_Surface digit_surface = boxesArray[GRID_SIZE * i + j];
-	   g_print("w: %i, h: %i", digit_surface.w, digit_surface.h);
-	//int res = ocr(data->net.network, digit_surface);
-	//g_print("res = %i\n", res);
-	//not_resolved_digits_grid[i][j] = res;
-	}
-	}
-	*/
+
+	// ========================================================================
+	// OCR
+	// ========================================================================
+
+	// Update pg
+	ui_queue_elt* elt8 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	elt8->has_to_update_pg = 1;
+	elt8->text = "Digit Optical Recognition";
+	elt8->fraction = 0.1;
+	g_async_queue_push(data->ui.ui_queue, elt8);
 
 	// DEBUG: SAVE BOXES
 	//Sets the directory to put the boxes into
@@ -341,80 +336,73 @@ gpointer resolution(gpointer user_data) {
 	char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
 		'0', '0', '.', 'p', 'n', 'g', 0};
 
-	for (size_t i = 0; i < 9; i++) {
-		for (size_t j = 0; j < 9; j++) {
-			SDL_Surface surf = boxesArray[GRID_SIZE * i + j];
-			surface_to_grayscale(&surf);
-			/*
-			filename_[10] = '0' + i;
-			filename_[11] = '0' + j;
-			if (SDL_SaveBMP(&surf, filename_) == -1)
-				printf("Unable to save the picture\n");
-				*/
-		}
-	}
-
-
-	// ========================================================================
-	// OCR
-	// ========================================================================
-
-	// Update pg
-	ui_queue_elt* elt8 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-	elt8->has_to_update_pg = 1;
-	elt8->text = "Digit Optical Recognition";
-	elt8->fraction = 0.1;
-	g_async_queue_push(data->ui.ui_queue, elt8);
-
 	int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
+
+	double outs[10];
+
+	// DEBUG PURPOSE
+	int image_grid[GRID_SIZE][GRID_SIZE] = {
+		{5,3,0,0,7,0,0,0,0},
+		{6,0,0,1,9,5,0,0,0},
+		{0,9,8,0,0,0,0,6,0},
+		{8,0,0,0,6,0,0,0,3},
+		{4,0,0,8,0,3,0,0,1},
+		{7,0,0,0,2,0,0,0,6},
+		{0,6,0,0,0,0,2,8,0},
+		{0,0,0,4,1,9,0,0,5},
+		{0,0,0,0,8,0,0,7,9},
+	};	
 
 	for (size_t i = 0; i < GRID_SIZE; i++) {
 		for (size_t j = 0; j < GRID_SIZE; j++) {
-			SDL_Surface digit_surface = boxesArray[GRID_SIZE * i + j];
-			SDL_Surface* surf =  SDL_ConvertSurfaceFormat(&digit_surface, SDL_PIXELFORMAT_ARGB8888, 0);
-			SDL_Surface* n_surf = SDL_CreateRGBSurface(0, surf->w, surf->h, 32, 0,0,0,0);
+			SDL_Surface surface = boxesArray[GRID_SIZE * i + j];
+			// Grayscale
+			surface_to_grayscale(&surface);
 
+			// DEBUG: SAVES BOXES
 			filename_[10] = '0' + i;
 			filename_[11] = '0' + j;
-
-			char* res_s = calloc(2, sizeof(char));
-			int res = ocr(data->net.network, surf, &n_surf);
-			if (SDL_SaveBMP(n_surf, filename_) == -1)
+			if (SDL_SaveBMP(&surface, filename_) == -1)
 				printf("Unable to save the picture\n");
-			res_s[0] = '0' + res;
-			//g_print("res = %s\n", res_s);
-			not_resolved_digits_grid[j][i] = res;
-			ui_queue_elt* q = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-			q->has_to_update_pg = 1;
-			q->text = res_s;
-			q->has_to_update_img = 1;
-			q->surface = surf;
-			g_async_queue_push(data->ui.ui_queue, q);
 
-			/*
-			ui_queue_elt* q1 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-			q1->has_to_update_pg = 1;
-			q1->text = "surface to feed";
-			q1->has_to_update_img = 1;
-			q1->surface = n_surf;
-			g_async_queue_push(data->ui.ui_queue, q1);
-			*/
+			char* out_s = calloc(2, sizeof(char));
+
+			int out = ocr(data->net.network, &surface, 0, outs);
+
+			out_s[0] = '0' + out;
+
+			not_resolved_digits_grid[j][i] = out;
+
+			if (not_resolved_digits_grid[j][i] != image_grid[j][i]) {
+				printf("wrong: output = %i | expected = %i\n", not_resolved_digits_grid[j][i], image_grid[j][i]);
+				printf("[ ");
+				for (size_t k = 0; k < 10; k++) {
+					printf("%f ", outs[k]);
+				}
+				printf("]\n");
+			}
 		}
 	}
 
-	int image_grid[GRID_SIZE][GRID_SIZE] = {
-	   {5,3,0,0,7,0,0,0,0},
-	   {6,0,0,1,9,5,0,0,0},
-	   {0,9,8,0,0,0,0,6,0},
-	   {8,0,0,0,6,0,0,0,3},
-	   {4,0,0,8,0,3,0,0,1},
-	   {7,0,0,0,2,0,0,0,6},
-	   {0,6,0,0,0,0,2,8,0},
-	   {0,0,0,4,1,9,0,0,5},
-	   {0,0,0,0,8,0,0,7,9},
-	};	
-
+	/*
 	g_print("\n");
+	for(size_t i = 0; i < GRID_SIZE; ++i) {
+		for ( size_t j = 0; j < GRID_SIZE; ++j) {
+			if (not_resolved_digits_grid[i][j] != image_grid[i][j]) {
+				printf("wrong: output = %i | expected = %i\n", not_resolved_digits_grid[i][j], image_grid[i][j]);
+				printf("[ ");
+				for (size_t k = 0; k < 10; k++) {
+					printf("%f ", outs[k]);
+				}
+				printf("]\n");
+			}
+		}
+	}
+	*/
+
+
+	printf("\n");
+	int good = 0;
 	for(size_t i = 0; i < GRID_SIZE; ++i) {
 		for ( size_t j = 0; j < GRID_SIZE; ++j) {
 			if(j % 3 == 0)
@@ -422,27 +410,30 @@ gpointer resolution(gpointer user_data) {
 			if(not_resolved_digits_grid[i][j] != 0) {
 				if (not_resolved_digits_grid[i][j] == image_grid[i][j]) {
 					printf("\033[0;32m");
+					good++;
 				}
-				else {
+				else 
 					printf("\033[0;31m");
-				}
 				printf("[%i]", not_resolved_digits_grid[i][j]);
 				printf("\033[0m");
 			}
-			else
+			else {
+				if (not_resolved_digits_grid[i][j] == image_grid[i][j]) {
+					printf("\033[0;32m");
+					good++;
+				}
+				else 
+					printf("\033[0;31m");
 				printf("[ ]");
+			}
 		}
 		if((i + 1) % 3 == 0)
 			printf("\n");
 		printf("\n");
 	}
 
-	g_print("resolution(): Finished resolution\n");
+	g_print("Score: %i / 81\n\n", good);
 
-	data->img.is_resolving = 0;
-	//data->img.resolving_retval = 1; // Stop normally
-	g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
-	return NULL;
 	//int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
 
 	// TEST: solve and render on image 1

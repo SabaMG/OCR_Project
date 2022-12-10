@@ -9,6 +9,7 @@
 #include "network.h"
 
 // This function load weights from path file
+/*
 void load_weights(char *path, Layer l[])
 {
     // open stream reader in stream
@@ -71,10 +72,99 @@ void load_weights(char *path, Layer l[])
     // close stream reader
     fclose(stream);
 }
+*/
 
+void load_weights( char *path, Layer l[]) {
+    // open strea reader in stream
+    FILE* stream;
+    stream = fopen(path, "r");
+    
+    // check if file can be open
+    if(stream == NULL) {
+//		return 1;
+        errx(1, "file can't be open");
+    }
+    
+    // layer i and neuron j
+    size_t i = 0;
+    size_t j = 0;
+    size_t k = 0;
+	int z = -1;
+
+    // read file char by char
+    char c;
+    char val_str[100] = "";
+    double val;
+    char * endPtr;
+	//size_t tmp = 0;
+	//printf("yo\n");
+    while((c = fgetc(stream)) != EOF) {
+		//printf("hey\n");
+		//printf("%c\n", c);
+        switch(c) {
+            // next layer
+            case ']':
+                i += 1;
+                j = 0;
+                k = 0;
+                break;
+            // write bias +next neuron
+            case '}':
+                val = atof(val_str);
+
+				//val = strtod(val_str, &endPtr);
+				//printf("val_s = %s\n", val_str);
+                val_str[0] = 0;
+				//printf("bug\n");
+					//printf("val = %f\n", val);
+				//if (z == 3)
+                l[i].neurons[j].bias = val;
+				//printf("bug1\n");
+                j += 1;
+                k = 0;
+                break;
+            // write weight + Next weight
+            case ';':
+                val = atof(val_str);
+                val_str[0] = 0;
+				//printf("bug5\n");
+				//printf("z = %i\n", z);
+				//printf("val = %f\n", val);
+				//printf("neuron %i in layer %i has %i weights\n", j, i, k);
+				if (z != 2)
+					l[i].neurons[j].weights[k] = val;
+				//printf("bug4\n");
+                k += 1;
+                break;
+            // write last weight
+            case ')':
+                val = atof(val_str);
+                val_str[0] = 0;
+				//printf("bug3\n");
+				if (z != 2)
+					l[i].neurons[j].weights[k] = val;
+				//printf("bug2\n");
+                break;
+            default:
+                if(c == '{' || c == '(')
+                    break;
+                if(c == '[') {
+					z++;
+					break;
+				}
+				if (c == ',')
+					c = '.';
+                strncat(val_str, &c, 1);
+        }
+    }
+    
+	//printf("here\n");
+    // close stream reader
+    fclose(stream);
+	//return 0;
+}
 // This function save weight in path file
-void save_weights(char *path, Layer l[], size_t nb_layer)
-{
+char* save_weights(char *path, Layer l[], size_t nb_layer) {
     // open stream write in stream
     FILE* stream = NULL;
     //stream = fopen(path, "w");
@@ -116,7 +206,8 @@ void save_weights(char *path, Layer l[], size_t nb_layer)
 
                 if (k < nb_weight - 1)
                 {
-                    fputc(',', stream);
+                    //fputc(',', stream);
+                    fputc(';', stream);
                 }
             }
             fputc(')', stream);
@@ -129,7 +220,10 @@ void save_weights(char *path, Layer l[], size_t nb_layer)
         }
         fputc(']', stream);
     }
+	fflush(stream);
+	fclose(stream);
 	printf("Network saved in '%s'\n", save_path);
+	return save_path;
 }
 
 
@@ -140,6 +234,7 @@ double getRandom() {
 	return ((double)rand()) / ((double)RAND_MAX) * 2 - 1;
 }
 
+/*
 // This function print the layer l
 void print_layer(Layer l[], size_t size) {
 	for(size_t i = 0; i < size; ++i) {
@@ -159,7 +254,28 @@ void print_layer(Layer l[], size_t size) {
 		}
 	}
 }
+*/
 
+void print_layer(Layer l[], size_t size) {
+	for(size_t i = 0; i < size; ++i) {
+//			printf("Layer%zu:\n", i);
+		size_t nb_neuron = l[i].size;
+
+		//printf("size: %i\n", nb_neuron);
+		for(size_t j = 0; j < nb_neuron; ++j) {
+			if (j < 5)
+				printf("\nbias of the %ith neuron: %f\n",j, l[i].neurons[j].bias);
+			size_t nb_weight = l[i].neurons[j].size;
+
+			for(size_t k = 0; k < nb_weight; ++k)
+				printf("    weight : %f\n", l[i].neurons[j].weights[k]);
+
+			printf("    value : %f\n", l[i].neurons[j].value);
+			printf("    delta : %f\n", l[i].neurons[j].delta);
+			printf("\n");
+		}
+	}
+}
 // This function free the memorie store for layers and neurons
 void free_network(Layer l[], size_t size) {
 	for(size_t i = 0; i < size; ++i) {

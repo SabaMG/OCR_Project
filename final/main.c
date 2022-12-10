@@ -5,7 +5,6 @@
 
 #include <gtk/gtk.h>
 
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
@@ -13,7 +12,6 @@
 #include "src/ui/train.h"
 #include "src/ui/resolve.h"
 #include "src/utils/utils.h"
-
 #include "src/network/ocr.h"
 #include "src/network/network.h"
 #include "src/network/training.h"
@@ -34,7 +32,6 @@ int main () {
 
 	Layer network[N_LAYERS];
 	generate_network(network, N_LAYERS, N_NEURONS_ARRAY, sizes_inputs);
-	//print_layer(network, 3);
 
 	
 
@@ -165,11 +162,8 @@ int main () {
 
 
 	// Initialize OCR
-	//const char *default_network_path = "networks/default_network.net";
-	const char *default_network_path = "networks/network_17.net";
+	const char *default_network_path = "networks/default_network.net";
 	ocr_init(default_network_path, network, data.ui.current_nn_main_path_label, data.ui.current_nn_path_label);
-
-	print_layer(network, 3);
 
 	// Runs the main loop
 	gtk_main();

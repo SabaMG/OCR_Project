@@ -103,7 +103,7 @@ float train(Layer network[], double ***samples, double results[][10], int *numbe
 	for (size_t i = 0; i < 10; i++)
 		current_indexes[i] = 0;
 
-	return evaluate(network, samples, results, current_indexes, 100, v_flag); // TODO: put 100 in variable
+	return evaluate(network, samples, results, current_indexes, 80, v_flag); // TODO: put 100 in variable
 																	  //return 0.f;
 }
 
@@ -246,7 +246,7 @@ void training(Layer *network, char *training_folder_path, int epochs, double lea
 
 	int current_indexes[10] = {0};
 	clock_t chrono = clock();
-	int error = evaluate(network, samples, results, current_indexes, 100, v_flag);
+	int error = evaluate(network, samples, results, current_indexes, 80, v_flag);
 	int bestError = error;
 	int goal = 5;
 	printf("training: START LEARNING\n");
@@ -281,7 +281,7 @@ void training(Layer *network, char *training_folder_path, int epochs, double lea
 		else
 			printf("\033[0;31m");
 
-		printf("\tEpoch %i: %i / %i\n", e, (100 - error), 100);
+		printf("\tEpoch %i: %i / %i\n", e, (80 - error), 80);
 		printf("\033[0m");
 		printf("----------------------------------------------------------\n");
 		// Inc epoch

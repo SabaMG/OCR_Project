@@ -57,3 +57,7 @@ typedef struct ProgramData {
 SDL_Surface *copy_surface(SDL_Surface *source);
 
 GdkPixbuf * gtk_image_new_from_sdl_surface (SDL_Surface *surface);
+
+Uint32 pixel_to_grayscale(Uint32 pixel_color, SDL_PixelFormat* format);
+
+void surface_to_grayscale(SDL_Surface* surface);
