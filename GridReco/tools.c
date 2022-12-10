@@ -192,7 +192,8 @@ void maxInAccu(int* Accu, int nbRhos, int nbThetas, int* _rho, int* _theta){
     }
     }
 
-    printf("Max (%i,%i) = %i ||||\n", res[0], res[1], Accu[res[1] * nbRhos + res[0]]);
+    printf("Max (%i,%i) = %i ||||\n", res[0], res[1],
+     Accu[res[1] * nbRhos + res[0]]);
 
     *_rho = res[0] - nbRhos/2;
     *_theta = res[1];
@@ -205,7 +206,8 @@ void putPixel(Uint32* pixels, int x, int y, int w){
 }
 
 //Sub-function to draw a line
-void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h){
+void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w,
+ int h){
     int x, y, dx, dy;
     double e;
     int e_10, e_01;
@@ -295,7 +297,8 @@ void _BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h
 }
 
 //Draw a line using Bresenham algorithm
-void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w, int h){
+void BresenhamLine(Uint32* pixels, int x1, int y1, int x2, int y2, int w,
+ int h){
     if (abs(y2 - y1) < abs(x2 - x1)){
         if (x1 > x2)
             _BresenhamLine(pixels, x2, y2, x1, y1, w, h);
@@ -320,7 +323,7 @@ int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
         if((pixels[y*W+x]&0xffffff) != 0xffffff) continue;
         for (int theta = 0; theta < maxTheta; theta++)
         {
-            int rho = (double)x*(cos(RAD(theta))) + (double)y*(sin(RAD(theta)));
+            int rho = (double)x*(cos(RAD(theta)))+(double)y*(sin(RAD(theta)));
             rho += maxRho;
             Accu[theta*nbRhos + rho] += 1;
         }
@@ -330,7 +333,8 @@ int* HoughAccu(Uint32* pixels, int W, int H, int maxRho, int maxTheta){
 }
 
 //Print the lines from list in img surface
-void PrintLines(SDL_Surface* img, struct Line* list, size_t length, int img_w, int img_h){
+void PrintLines(SDL_Surface* img, struct Line* list, size_t length, int img_w,
+ int img_h){
     for(size_t i = 0; i < length; i++){
 
         struct Line line = list[i];
@@ -353,7 +357,8 @@ int AngleToRot(struct Line* H_lines, size_t* H_len){
 
 //Computes coordinates and draw the corresponding lines
 int ComputeLines(int nbLines, int* Acc, int maxRho,
- int maxTheta, struct Line* H_lines, size_t* H_len, struct Line* V_lines, size_t* V_len){
+ int maxTheta, struct Line* H_lines, size_t* H_len, struct Line* V_lines,
+  size_t* V_len){
 
     int nbRhos = 2*maxRho;//rho : [-maxRho, maxRho]
     int nbThetas = maxTheta;//theta : [0, theta]
@@ -410,8 +415,10 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
     return AngleToRot(H_lines, H_len);
 }
 
-//Compute the intersection point between the ((x1,y1),(x2,y2)) and ((x3,y3),(x4,y4)) lines
-int GetIntersection(int x1_, int y1_, int x2_, int y2_, int x3_, int y3_, int x4_, int y4_, int* X, int* Y){
+//Compute the intersection point between the ((x1,y1),(x2,y2))
+//and ((x3,y3),(x4,y4)) lines
+int GetIntersection(int x1_, int y1_, int x2_, int y2_, int x3_, int y3_,
+ int x4_, int y4_, int* X, int* Y){
     if ((x1_ == x2_ && y1_ == y2_) || (x3_ == x4_ && y3_ == y4_)){
         return 0;
     }
@@ -431,8 +438,10 @@ int GetIntersection(int x1_, int y1_, int x2_, int y2_, int x3_, int y3_, int x4
 	if (denominator == 0)
 		return 0;
 
-    long long int numerator_x = (((x1*y2 - y1*x2)*(x3-x4))-((x1-x2)*(x3*y4 - y3*x4)));
-    long long int numerator_y = ((x1*y2 - y1*x2)*(y3-y4)-(y1-y2)*(x3*y4 - y3*x4));
+    long long int numerator_x = (((x1*y2 - y1*x2)*(x3-x4))
+    -((x1-x2)*(x3*y4 - y3*x4)));
+    long long int numerator_y = ((x1*y2 - y1*x2)*(y3-y4)
+    -(y1-y2)*(x3*y4 - y3*x4));
     *X = numerator_x / denominator;
 	*Y = numerator_y / denominator;
 
@@ -453,8 +462,9 @@ struct Point* ComputeInters(struct Line* H_lines, struct Line* V_lines){
         for(size_t j = 0; j < 10; j++){
             int X = 0;
             int Y = 0;
-            if(GetIntersection(H_lines[i].x1, H_lines[i].y1, H_lines[i].x2, H_lines[i].y2,
-                V_lines[j].x1, V_lines[j].y1, V_lines[j].x2, V_lines[j].y2, &X, &Y)){
+            if(GetIntersection(H_lines[i].x1, H_lines[i].y1, H_lines[i].x2,
+             H_lines[i].y2, V_lines[j].x1, V_lines[j].y1, V_lines[j].x2,
+              V_lines[j].y2, &X, &Y)){
                     struct Point t = INIT_POINTSTRUCT(X, Y);
                     inters[index] = t;
             }
@@ -467,7 +477,8 @@ struct Point* ComputeInters(struct Line* H_lines, struct Line* V_lines){
 
 //Cut the boxes of the grid
 void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
- int case_coor[81][2], SDL_Surface boxesArray[81], size_t iIndex, size_t jIndex){
+ int case_coor[81][2], SDL_Surface boxesArray[81], size_t iIndex,
+  size_t jIndex){
 
     /*for(size_t i = 0; i < NB_LINES/2 * NB_LINES/2; i++){
         printf("%zu: x=%4i y=%4i\n", i, inters[i].x, inters[i].y);
@@ -498,7 +509,8 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
             if (SDL_BlitSurface(originImg, &case_, resultSurf, NULL) == 0)
             {
 
-                //printf("case %zu: x=%4i y=%4i => w=%4i h=%4i\n", i*(nbRows-1)+j, case_.x, case_.y, case_.w, case_.h);
+                //printf("case %zu: x=%4i y=%4i => w=%4i h=%4i\n",
+                // i*(nbRows-1)+j, case_.x, case_.y, case_.w, case_.h);
 
                 if(case_.w == 0 || case_.h == 0){
                     printf("Cut issue\n");
@@ -613,7 +625,6 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 
     return removed;
 }
-
 
 //Main fonction which complete segmentation 
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
