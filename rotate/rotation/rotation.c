@@ -26,7 +26,7 @@ Uint32 get_pixel(SDL_Surface *surface, int x, int y)
 	}
 }
 
-void inline set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
+void set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
 {
 	int bpp = surface->format->BytesPerPixel;
 	Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
@@ -64,7 +64,7 @@ void inline set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
 }
 
 // central rotation, automatically allocate memory
-SDL_Surface *SDL_RotationCentral(SDL_Surface *origine, float angle)
+SDL_Surface* RotationCentral(SDL_Surface *origine, double angle)
 {
 	SDL_Surface *destination;
 	int i;
@@ -111,6 +111,5 @@ SDL_Surface *SDL_RotationCentral(SDL_Surface *origine, float angle)
 				set_pixel(destination, i, j, color);
 			}
 		}
-	SDL_SaveBMP(destination, "image_rotate.bmp");	// save image
 	return destination;
 }

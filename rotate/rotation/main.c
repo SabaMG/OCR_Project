@@ -17,8 +17,8 @@ SDL_Surface *load_image(char *path)
 int main(int argc, char **argv)
 {
 	// Checks the number of arguments.
-	if (argc != 2)
-		errx(EXIT_FAILURE, "Usage: image-file"); // Loock if there are any error.
+	if (argc != 3)
+		errx(EXIT_FAILURE, "Usage: image-in image-out"); // Loock if there are any error.
 
 	// Initialize the SDL.
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -32,8 +32,9 @@ int main(int argc, char **argv)
 	scanf("%le", &nombre);
 	//
 	// Save
-	SDL_RotationCentral(img, nombre);
+	img = RotationCentral(img, nombre);
 
+	IMG_SaveJPG(img, argv[2], 100);
 	// make rotation
 	// - Convert the surface into binarize sauvala ....
 	// surface_to_grayscale(surface_color);

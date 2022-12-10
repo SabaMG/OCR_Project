@@ -1,16 +1,5 @@
-# Makefile
-
-CC = gcc
-CFLAGS = -Wall -Wextra -O3 `pkg-config --cflags sdl2 SDL2_image`
-LDLIBS = -lm `pkg-config --libs sdl2 SDL2_image`
-
-
-all: main rotation
-
-main: main.o
+all:
+	gcc -Wall -Wextra -g -fsanitize=address main.c rotation.c -o main -lm -lSDL2 -lSDL2_image
 
 clean:
-	${RM} *.o 
-	${RM} rotation
-	${RM} *.bmp
-# END
+	rm main
