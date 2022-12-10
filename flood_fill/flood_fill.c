@@ -41,55 +41,55 @@ void write_mat(char* src, char* dest, int size)
     }
 }
 
-SDL_Surface* crop_grid (SDL_Surface* grid)
+SDL_Surface* crop_grid (SDL_Surface* grid, SDL_Surface* sobel)
 {
-    Uint32* pixels = grid->pixels;
+    Uint32* pixels = sobel->pixels;
     // middle height of image
     int middle_h = 0;
     
-    // coor of grid
-    int start_grid = 0;
-    int width_grid = 0;
-    int height_grid = 0;
+    // coor of sobel
+    int start_sobel = 0;
+    int width_sobel = 0;
+    int height_sobel = 0;
 
-    char* M_grid = calloc(grid->w * grid->h, sizeof(char*));
-    printf("w = %i , h = %i\n", grid->w, grid->h);
+    char* M_sobel = calloc(sobel->w * sobel->h, sizeof(char*));
+    printf("w = %i , h = %i\n", sobel->w, sobel->h);
 
     for(int k = 0; k < 10; ++k)
     {
-	middle_h = (grid->h * k/10) * grid->w;
+	middle_h = (sobel->h * k/10) * sobel->w;
 	// check all pixel in the line
-	for(int i = 0; i < grid->w; ++i)
+	for(int i = 0; i < sobel->w; ++i)
 	{
 	    // check if it's a white pixel
-	    if(pixels[middle_h + i] == 0xFFFFFFFF && M_grid[middle_h + i] == 0)
+	    if(pixels[middle_h + i] == 0xFFFFFFFF && M_sobel[middle_h + i] == 0)
 	    {
-		char* M = calloc(grid->w * grid->h, sizeof(char));
+		char* M = calloc(sobel->w * sobel->h, sizeof(char));
 
 		// flood fill for pixel middle_h + i
 		int start = 0;
 		int width = 0;
 		int height = 0;
-		collect_form(grid, middle_h + i, M, &start, &width, &height);
+		collect_form(sobel, middle_h + i, M, &start, &width, &height);
 
 		int curr_delta = my_abs(width - height);
 		if(curr_delta < 5)
 		{
-		    int delta = my_abs(width + height - width_grid - height_grid);
+		    int delta = my_abs(width + height - width_sobel - height_sobel);
 		    if(delta < 10)
 		    {
-			write_mat(M, M_grid, grid->w * grid->h);
+			write_mat(M, M_sobel, sobel->w * sobel->h);
 		    }
 		    else
 		    {
-		    	if(width + height > width_grid + height_grid)
+		    	if(width + height > width_sobel + height_sobel)
 			{
-			    start_grid = start;
-			    width_grid = width;
-			    height_grid = height;
-			    free(M_grid);
-			    M_grid = calloc(grid->w * grid->h, sizeof(char));
-			    write_mat(M, M_grid, grid->w * grid->h);
+			    start_sobel = start;
+			    width_sobel = width;
+			    height_sobel = height;
+			    free(M_sobel);
+			    M_sobel = calloc(sobel->w * sobel->h, sizeof(char));
+			    write_mat(M, M_sobel, sobel->w * sobel->h);
 			}
 		    }
 		}
@@ -99,21 +99,21 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
 	}
     }
 
-    extract_data(M_grid, grid->w, grid->h, &start_grid, &width_grid, &height_grid, 1);
-    free(M_grid);
+    extract_data(M_sobel, sobel->w, sobel->h, &start_sobel, &width_sobel, &height_sobel, 1);
+    free(M_sobel);
 
     // cut image with this coordinates
-    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
+    SDL_Surface* croped_sobel = SDL_CreateRGBSurface(0, width_sobel + 40, height_sobel + 40, 32,0,0,0,0);
 
     SDL_Rect crop_rect;
-    crop_rect.x = start_grid % grid->w - 20;
-    crop_rect.y = start_grid / grid->w - 20;
-    crop_rect.w = width_grid + 40;
-    crop_rect.h = height_grid + 40;
+    crop_rect.x = start_sobel % sobel->w - 20;
+    crop_rect.y = start_sobel / sobel->w - 20;
+    crop_rect.w = width_sobel + 40;
+    crop_rect.h = height_sobel + 40;
     
-    SDL_BlitSurface(grid, &crop_rect, croped_grid, NULL);
+    SDL_BlitSurface(grid, &crop_rect, croped_sobel, NULL);
 
-    return croped_grid;
+    return croped_sobel;
 }
 
 // this function extract the data from the matrix M
@@ -180,7 +180,7 @@ void collect_form(SDL_Surface* grid, int pos, char* M, int* start, int* width, i
 
 }
 
-// This function run the flood_fill algo and write res in matrix M
+// This function run the flood_fill algo and write res in matrix M, return nb of pixels
 void f_fill(Uint32* pixels, int begin_pixel, char* M, int w, int size, Uint32 color)
 {
     // create a queue

@@ -1,6 +1,6 @@
 #pragma once
 
-SDL_Surface* crop_grid (SDL_Surface* grid);
+SDL_Surface* crop_grid (SDL_Surface* grid, SDL_Surface* sobel);
 void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height, int type);
 void put_color(Uint32* pixels, char* M, int size, Uint32 color);
 int pos(SDL_Surface* grid, int middle_h, int w);
