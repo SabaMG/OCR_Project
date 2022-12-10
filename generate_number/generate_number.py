@@ -1,7 +1,4 @@
 #Import required library
-from tkinter import *
-from tkinter import font
-
 from PIL import Image, ImageDraw, ImageFont
 import os
 
@@ -9,25 +6,29 @@ def make_dir(number):
     for i in range(number):
         os.mkdir(str(i + 1))
 
-#def gen_img(width, height, message, size, font):
+def gen_img(width, height, message, size, font, filename):
+    img = Image.new('RGB', (width, height), color='white')
+    imgDraw = ImageDraw.Draw(img)
+    textWidth = imgDraw.textlength(message, font)
+    new_box = imgDraw.textbbox((0, 0), message, font)
+    new_w = new_box[2] - new_box[0]  # bottom-top
+    new_h = new_box[3] - new_box[1]  # right-left]]]]
+    xText = (width - new_w) / 2
+    yText = (height - new_h) / 2
+    if(message == "0"):
+        message = ""
+    imgDraw.text((xText, yText), message, font=font, fill=(0, 0, 0))
+    img.save(filename)
 
 
 width = 28
 height = 28
 
-message = "Lucas 1 2 3 4 5 6 7 8 9"
+path = '/home/lucassiauve/Documents/EPITA/Projet_S3_OCR/generate_number/fonts/'
+fonts = os.listdir(path)
 
-#Create a list of font using the font-family constructor
-root = Tk()
-fonts=list(font.families())
-fonts.sort()
-print(fonts)
-
-for font_name in fonts:
-    the_font = font.Font(family=font_name, size=20)
-    img = Image.new('RGB', (width, height), color='white')
-    imgDraw = ImageDraw.Draw(img)
-    xText = (width - 20) / 2
-    yText = (height - 20) / 2
-    imgDraw.text((xText, yText), message, font=the_font, fill=(0, 0, 0))
-    img.save(message + 'png')
+for i in range(10):
+    for font_name in fonts:
+        path_f = path + font_name
+        f = ImageFont.truetype(path_f, 20)
+        gen_img(width, height, str(i), 20, f, 'data/' + str(i) + '/' + font_name + '.jpg')
