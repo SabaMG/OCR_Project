@@ -22,11 +22,18 @@ def gen_img(width, height, message, size, angle, font, filename):
     img.save(filename)
 
 
+def init_dir(main_dir_name):
+    os.mkdir(main_dir_name)
+    for i in range(10):
+        os.mkdir(main_dir_name + "/" + str(i))
+
 width = 28
 height = 28
 
 path = '/home/lucassiauve/Documents/EPITA/Projet_S3_OCR/generate_number/fonts/'
 fonts = os.listdir(path)
+
+init_dir("data")
 
 for i in range(10):
     for j in range(15, 30):
@@ -36,3 +43,4 @@ for i in range(10):
                 path_f = path + font_name
                 f = ImageFont.truetype(path_f, 20)
                 gen_img(width, height, str(i), j, k, f, 'data/' + str(i) + '/' + name + '.jpg')
+
