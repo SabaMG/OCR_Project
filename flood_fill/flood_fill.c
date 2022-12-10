@@ -100,7 +100,6 @@ SDL_Surface* crop_grid (SDL_Surface* grid)
     }
 
     extract_data(M_grid, grid->w, grid->h, &start_grid, &width_grid, &height_grid, 1);
-    color_grid(grid, M_grid, grid->w * grid->h);
     free(M_grid);
 
     // cut image with this coordinates
