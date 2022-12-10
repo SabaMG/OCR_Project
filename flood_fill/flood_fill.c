@@ -30,53 +30,87 @@ void color_grid(SDL_Surface* grid, char* M, int size)
     }
 }
 
+void write_mat(char* src, char* dest, int size)
+{
+    for(int i = 0; i < size; ++i)
+    {
+	if(src[i] != 0)
+	{
+	    dest[i] = src[i];
+	}
+    }
+}
+
 SDL_Surface* crop_grid (SDL_Surface* grid)
 {
     Uint32* pixels = grid->pixels;
     // middle height of image
-    int middle_h = (grid->h/2) * grid->w;
+    int middle_h = 0;
     
     // coor of grid
     int start_grid = 0;
     int width_grid = 0;
     int height_grid = 0;
 
+    char* M_grid = calloc(grid->w * grid->h, sizeof(char*));
+    printf("w = %i , h = %i\n", grid->w, grid->h);
 
-    // check all pixel in the line
-    for(int i = 0; i < grid->w; ++i)
+    for(int k = 0; k < 10; ++k)
     {
-        // check if it's a white pixel
-        if(pixels[middle_h + i] == 0xFFFFFFFF)
-        {
-            // flood fill for pixel middle_h + i
-            int start = 0;
-            int width = 0;
-            int height = 0;
-            collect_form(grid, middle_h + i,&start, &width, &height);
+	middle_h = (grid->h * k/10) * grid->w;
+	// check all pixel in the line
+	for(int i = 0; i < grid->w; ++i)
+	{
+	    // check if it's a white pixel
+	    if(pixels[middle_h + i] == 0xFFFFFFFF && M_grid[middle_h + i] == 0)
+	    {
+		char* M = calloc(grid->w * grid->h, sizeof(char));
 
-            int delta = my_abs(width - height) - my_abs(width_grid - height_grid);
-            delta = my_abs(delta);
-    
-            if(delta < 10)
-            {
-                if(width + height > width_grid + height_grid)
-                {
-                    start_grid = start;
-                    width_grid = width;
-                    height_grid = height;
-                }
-            }
-        }
+		// flood fill for pixel middle_h + i
+		int start = 0;
+		int width = 0;
+		int height = 0;
+		collect_form(grid, middle_h + i, M, &start, &width, &height);
+
+		int curr_delta = my_abs(width - height);
+		if(curr_delta < 5)
+		{
+		    int delta = my_abs(width + height - width_grid - height_grid);
+		    if(delta < 10)
+		    {
+			write_mat(M, M_grid, grid->w * grid->h);
+		    }
+		    else
+		    {
+		    	if(width + height > width_grid + height_grid)
+			{
+			    start_grid = start;
+			    width_grid = width;
+			    height_grid = height;
+			    free(M_grid);
+			    M_grid = calloc(grid->w * grid->h, sizeof(char));
+			    write_mat(M, M_grid, grid->w * grid->h);
+			}
+		    }
+		}
+
+		free(M);
+	    }
+	}
     }
 
+    extract_data(M_grid, grid->w, grid->h, &start_grid, &width_grid, &height_grid, 1);
+    color_grid(grid, M_grid, grid->w * grid->h);
+    free(M_grid);
+
     // cut image with this coordinates
-    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid + 40, height_grid + 40, 32,0,0,0,0);
+    SDL_Surface* croped_grid = SDL_CreateRGBSurface(0, width_grid, height_grid, 32,0,0,0,0);
 
     SDL_Rect crop_rect;
-    crop_rect.x = start_grid % grid->w - 20;
-    crop_rect.y = start_grid / grid->w - 20;
-    crop_rect.w = width_grid + 20;
-    crop_rect.h = height_grid + 20;
+    crop_rect.x = start_grid % grid->w;
+    crop_rect.y = start_grid / grid->w;
+    crop_rect.w = width_grid;
+    crop_rect.h = height_grid;
     
     SDL_BlitSurface(grid, &crop_rect, croped_grid, NULL);
 
@@ -132,13 +166,12 @@ void extract_data(char* M, int w, int h, int* start_pix, int* width, int* height
 }
 
 // Collect all of the form in white beginning at pixel pos
-void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* height)
+void collect_form(SDL_Surface* grid, int pos, char* M, int* start, int* width, int* height)
 {
     // Init some variables
     Uint32* pixels = grid->pixels;
     Uint32 white = 0xFFFFFFFF;
     int size = grid->w * grid->h;
-    char* M = calloc(size, sizeof(char));
     
     // start flood algo with begin pixel pos
     f_fill(pixels, pos, M, grid->w, size, white);
@@ -146,7 +179,6 @@ void collect_form(SDL_Surface* grid, int pos, int* start, int* width, int* heigh
     // collect data from M
     extract_data(M, grid->w, grid->h, start, width, height, 1);
 
-    free(M);
 }
 
 // This function run the flood_fill algo and write res in matrix M
