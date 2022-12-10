@@ -518,6 +518,8 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
                 //make zoom of the surface to reich 28x28 pixels
                 float z =  28 / (float)(resultSurf->w - 1);
                 SDL_Surface* sizeSurf = resize(resultSurf, z);
+                sizeSurf->w -= sizeSurf->w - 28;
+                sizeSurf->h -= sizeSurf->h - 28;
                 SDL_FreeSurface(resultSurf);
                 printf("w = %i, h = %i\n", sizeSurf->w, sizeSurf->h);
 

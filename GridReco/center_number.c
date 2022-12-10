@@ -7,7 +7,7 @@
 void ajuste_case(SDL_Surface* source, SDL_Rect* case_)
 {
     // remove lines of grid
-    remove_lines(case_, 5);
+    remove_lines(case_, 4);
 
     // Get center coordinate of number in case
     int white_case = 0;
@@ -33,7 +33,7 @@ void ajuste_case(SDL_Surface* source, SDL_Rect* case_)
     // undo remove lines
     if(!white_case)
     {
-        undo_remove_lines(case_, 5);
+        undo_remove_lines(case_, 4);
     }
     
     // free surface
