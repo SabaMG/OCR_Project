@@ -86,31 +86,33 @@ void update_network(Layer network[], double learning_rate) {
 	}
 }
 
-int ocr(Layer *network, SDL_Surface *surface) {
-	double *inputs = (double *)malloc(784 * sizeof(double));
-	Uint32* pixels = surface->pixels;
-	Uint32 pixel;
-	Uint8 r, g, b, v = 0;
-	for (int y = 0; y < surface->h; y++) {
-		for (int x = 0; x < surface->w; x++) {
-			pixel = pixels[y * surface->w + x];
-			r = pixel >> 16 & 0xFF;
-			g = pixel >> 8 & 0xFF;
-			b = pixel & 0xFF;
-			v = (r + g + b) / 3;
-			inputs[y * surface->w + x] = (double)v;
-		}
-	}
-	
-	feed_forward(network, inputs);
+/*
+   int ocr(Layer *network, SDL_Surface *surface) {
+   double *inputs = (double *)malloc(784 * sizeof(double));
+   Uint32* pixels = surface->pixels;
+   Uint32 pixel;
+   Uint8 r, g, b, v = 0;
+   for (int y = 0; y < surface->h; y++) {
+   for (int x = 0; x < surface->w; x++) {
+   pixel = pixels[y * surface->w + x];
+   r = pixel >> 16 & 0xFF;
+   g = pixel >> 8 & 0xFF;
+   b = pixel & 0xFF;
+   v = (r + g + b) / 3;
+   inputs[y * surface->w + x] = (double)v;
+   }
+   }
 
-	int best = 0;
-	for (size_t k = 0; k < 10; k++) {
-		if (network[2].neurons[best].value < network[2].neurons[k].value)
-			best = k;
-	}
+   feed_forward(network, inputs);
 
-	free(inputs);
-	SDL_FreeSurface(surface);
-	return best;
-}
+   int best = 0;
+   for (size_t k = 0; k < 10; k++) {
+   if (network[2].neurons[best].value < network[2].neurons[k].value)
+   best = k;
+   }
+
+   free(inputs);
+   SDL_FreeSurface(surface);
+   return best;
+   }
+   */

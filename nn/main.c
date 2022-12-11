@@ -34,7 +34,11 @@ int main(int argc, char **argv) {
 	// Parsing arguments
 	int d_flag = 0;
 	int v_flag = 0;
+	int w_flag = 1;
+	int debug = 0;
+	int ocr_flag = 0;
 	char *training_folder_path;
+	char *ocr_folder_path;
 	char *network_path = NULL;
 	char *arg;
 
@@ -53,6 +57,24 @@ int main(int argc, char **argv) {
 			v_flag = 1;
 			i++;
 		}
+		else if (strcmp(arg, "-debug") == 0) {
+			debug = 1;
+			i++;
+		}
+		else if (strcmp(arg, "-ocr") == 0) {
+			ocr_flag = 1;
+			i++;
+			if (i < argc)
+				ocr_folder_path = argv[i];
+			else
+				errx(EXIT_FAILURE, "Option '-ocr' requires an argument.");
+		}
+		/*
+		else if (strcmp(arg, "-w") == 0) {
+			w_flag = 1;
+			i++;
+		}
+		*/
 		else if (strcmp(arg, "-l") == 0) {
 			i++;
 			if (i < argc)
@@ -86,12 +108,21 @@ int main(int argc, char **argv) {
 	Layer network[N_LAYERS];
 	generate_network(network, N_LAYERS, N_NEURONS_ARRAY, sizes_inputs);
 
-	if (d_flag) {
-		if (network_path != NULL)
+	if (network_path != NULL)
 			load_weights(network_path, network);
 
-		training(network, training_folder_path, learning_rate, v_flag);
+	if (ocr_flag) {
+		ocr(network, ocr_folder_path, w_flag, debug);
 	}
+
+	if (d_flag && !ocr_flag) {
+	//	if (network_path != NULL)
+	//		load_weights(network_path, network);
+		//print_layer(network, 3);
+
+		training(network, training_folder_path, learning_rate, v_flag, w_flag);
+	}
+	free_network(network, 3);
 
 	return EXIT_SUCCESS;
 }

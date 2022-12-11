@@ -15,4 +15,4 @@ void backpropagation(Layer network[], double expected_outputs[]);
 
 void update_network(Layer network[], double learning_rate);
 
-int ocr(Layer *network, SDL_Surface surface);
+//int ocr(Layer *network, SDL_Surface surface);
