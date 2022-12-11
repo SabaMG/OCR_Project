@@ -216,9 +216,9 @@ gpointer resolution(gpointer user_data) {
 	sobel_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, sobel_e);
 
-	IMG_SaveJPG(converted_surface, "./converted_avant_sobel.jpg", 100);
+	IMG_SaveJPG(converted_surface, "./debug/converted_before_sobel.jpg", 100);
 	SDL_Surface* sobel_surface = sobel(converted_surface);
-	IMG_SaveJPG(sobel_surface, "./sobel_1.jpg", 100);
+	IMG_SaveJPG(sobel_surface, "./sebug/sobel_1.jpg", 100);
 	/*
 	SDL_Surface* sobel_surface;
 	if (data->img.applied_filter == 1) {
@@ -248,8 +248,10 @@ gpointer resolution(gpointer user_data) {
 	ff_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, ff_e);
 
+	IMG_SaveJPG(converted_surface, "./debug/converted_before_crop.jpg", 100);
+	IMG_SaveJPG(sobel_surface, "./debug/sobel_before_crop.jpg", 100);
 	SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
-	IMG_SaveJPG(cropped_surface, "./cropped_after_gauss.jpg", 100);
+	IMG_SaveJPG(cropped_surface, "./debug/after_crop.jpg", 100);
 	//SDL_Surface* cropped_surface = crop_grid(gauss_surface, sobel_surface);
 	/*
 	SDL_Surface* cropped_surface;
@@ -283,8 +285,8 @@ gpointer resolution(gpointer user_data) {
 
 	SDL_Surface* cropped_surface_copy =  SDL_ConvertSurfaceFormat(cropped_surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
-	SDL_Surface* cropped_sobel_surface = sobel(cropped_surface);
-	IMG_SaveJPG(sobel_surface, "./sobel_afer_cropped.jpg", 100);
+	SDL_Surface* cropped_sobel_surface = sobel(cropped_surface_copy);
+	IMG_SaveJPG(cropped_sobel_surface, "./debug/sobel_afer_cropped.jpg", 100);
 
 	// Update image
 	ui_queue_elt* sobel_i2 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -316,7 +318,7 @@ gpointer resolution(gpointer user_data) {
 	//int angle = segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
 
 	// While angle is not equal to 0, rotate segmentation_surface
-	int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debug_hough_segm.jpg", case_coor, boxesArray);
+	int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debug/debug_hough_segm.jpg", case_coor, boxesArray);
 
 	// Update image or do rotation
 	if (angle == 0) {
@@ -332,6 +334,7 @@ gpointer resolution(gpointer user_data) {
 		SDL_Surface* tmp_segmentation_surface;
 
 		while (angle != 0) {
+			printf("rotate again\n");
 			// ========================================================================
 			// ROTATION AUTO
 			// ========================================================================

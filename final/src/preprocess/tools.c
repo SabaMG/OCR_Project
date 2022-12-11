@@ -1,14 +1,13 @@
 #include "tools.h"
 #include "center_number.h"
+//#include "../warp/warp.h"
 
 #include <math.h>
 #include <err.h>
 #include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-///// Rajoute par charles pour ubuntu
-# define M_PI           3.14159265358979323846  /* pi */
-//////
+
 #define RAD(A)  (M_PI*((double)(A))/180.0)
 #define INIT_POINTSTRUCT(X, Y) \
 { .x=X, .y=Y }
@@ -35,12 +34,36 @@ size_t Point_minX_index(struct Point* list, size_t start, size_t end){
     return min_index;
 }
 
+size_t Point_maxX_index(struct Point* list, size_t start, size_t end){
+    int min = list[start].x;
+    size_t min_index = start;
+    for(size_t i = start; i < end; i++){
+        if(list[i].x > min){
+            min = list[i].x;
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
 //Return the index of the point with the minimal y
 size_t Point_minY_index(struct Point* list, size_t start, size_t end){
     int min = list[start].y;
     size_t min_index = start;
     for(size_t i = start; i < end; i++){
         if(list[i].y < min){
+            min = list[i].y;
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
+size_t Point_maxY_index(struct Point* list, size_t start, size_t end){
+    int min = list[start].y;
+    size_t min_index = start;
+    for(size_t i = start; i < end; i++){
+        if(list[i].y > min){
             min = list[i].y;
             min_index = i;
         }
@@ -373,7 +396,6 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
     int rho = -1;//value to be fill by MaxInAccu()
     int theta = -1;//value to be fill by MaxInAccu()
     for(int round = 0; round < nbLines; round++){
-    //for(int round = 0; round < 20; round++){
     //while((i_H < 12 || i_V < 12)){
         
         //Modifies 'rho' and 'theta' with the max coordinates
@@ -406,7 +428,7 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
         //Debug purposes
         printf("=== Ligne %zu :\n", i_H + i_V);
         printf("r,t: %i,%i\n", rho, theta);
-        printf("x0,y0: %f, %f\n", x0, y0);
+        //printf("x0,y0: %f, %f\n", x0, y0);
         printf("x1,y1: %i, %i\n", x1, y1);
         printf("x2,y2: %i, %i\n\n", x2, y2);
 
@@ -507,7 +529,8 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
             SDL_Surface *resultSurf = SDL_CreateRGBSurface(0, case_.w,
              case_.h, 32, 0, 0, 0, 0);
             SDL_UnlockSurface(resultSurf); //SegFault
-            if (SDL_BlitSurface(originImg, &case_, resultSurf, NULL) == 0) {
+            if (SDL_BlitSurface(originImg, &case_, resultSurf, NULL) == 0)
+            {
 
                 //printf("case %zu: x=%4i y=%4i => w=%4i h=%4i\n",
                 // i*(nbRows-1)+j, case_.x, case_.y, case_.w, case_.h);
@@ -523,7 +546,7 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
                 sizeSurf->w -= sizeSurf->w - 28;
                 sizeSurf->h -= sizeSurf->h - 28;
                 //SDL_FreeSurface(resultSurf);
-                //printf("w = %i, h = %i\n", sizeSurf->w, sizeSurf->h);
+                printf("w = %i, h = %i\n", sizeSurf->w, sizeSurf->h);
 
                 pathToSave[iIndex] = '0' + i;
                 pathToSave[jIndex] = '0' + j;
@@ -539,8 +562,7 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
             }
         }
     }
-	printf("sortie cutgrid\n");
-    SDL_FreeSurface(originImg);
+    //SDL_FreeSurface(originImg);
 }
 
 //Remove inconsistent lines
@@ -614,7 +636,7 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 
 
         size_t ind_max = maxList_(farFromAverage, 0, *length);
-        //printf("Removing: %zueme line rho = %i\n", ind_max, list[ind_max].rho);
+        printf("Removing: %zueme line rho = %i\n", ind_max, list[ind_max].rho);
         list_pop(list, *length, ind_max);
         *length -= 1;
         removed++;
@@ -631,20 +653,17 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 
 //Main fonction which complete segmentation 
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
- char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]){
+ char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]/*, int warped*/){
 
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
-	IMG_SaveJPG(sobelImage, "./entree_segm_sobel.jpg", 100);
-	IMG_SaveJPG(originalImage, "./entree_segm_origin.jpg", 100);
 
     int W = sobelImage->w;//Width of the edge picture
     int H = sobelImage->h;//Height of the edge picture
    
     int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
     int maxTheta = 180; //theta values : [0, maxTheta]
-    //int nbLines = 24; //number of lines to print
-    int nbLines = 20; //number of lines to print
+    int nbLines = 24; //number of lines to print
     
 
     //Create and Fill the hough accumulator
@@ -664,17 +683,11 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     if (abs(AngleToRotate) > 5 /*&& !notRotated*/)
         return AngleToRotate;
 
-	int nbToReH = (H_len > 10) ? H_len - 10 : 0;
-	int nbToReV = (V_len > 11) ?  V_len - 10 : 0; 
     int removed = 0;
-    //printf("H_lines to remove: %zu\n", H_len - 10);
-    printf("H_lines to remove: %zu\n", nbToReH);
-    //removed += RemoveNoise(H_lines, &H_len, H_len - 10);
-    removed += RemoveNoise(H_lines, &H_len, nbToReH);
-    //printf("\nV_lines to remove: %zu\n", V_len - 10);
-    printf("\nV_lines to remove: %zu\n", nbToReV);
-    //removed += RemoveNoise(V_lines, &V_len, V_len - 10);
-    removed += RemoveNoise(V_lines, &V_len, nbToReV);
+    printf("H_lines to remove: %zu\n", H_len - 10);
+    removed += RemoveNoise(H_lines, &H_len, H_len - 10);
+    printf("\nV_lines to remove: %zu\n", V_len - 10);
+    removed += RemoveNoise(V_lines, &V_len, V_len - 10);
     printf("\n## %i elements removed\n", removed);
 
     if (H_len < 10)
@@ -693,7 +706,36 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     //Get intersections
     struct Point* intersXY = ComputeInters(H_lines, V_lines);
 
+    /*if(!warped){
+
+        //Create dest surface
+        SDL_Surface* imgWarped = SDL_ConvertSurfaceFormat(originalImage,
+         SDL_PIXELFORMAT_ARGB8888, 0);
+        SDL_LockSurface(imgWarped);
+        //Clear all its pixels
+        SDL_memset(imgWarped->pixels, 0, imgWarped->h*imgWarped->pitch);
+
+        //src
+        struct Rectangle A = {{intersXY[0].x, intersXY[9].x, intersXY[90].x,
+        intersXY[99].x}, {intersXY[0].y, intersXY[9].y, intersXY[90].y,
+        intersXY[99].y}};
+        printf("Warp src points:\n x1=%lf y1 = %lf\n x2=%lf y2 = %lf\n x3=%lf y3 = %lf\n x4=%lf y4 = %lf\n",
+         A.px[0], A.py[0], A.px[1], A.py[1], A.px[2], A.py[2], A.px[3], A.py[3]);
+
+        //dest
+        int size = min(imgWarped->h, imgWarped->w);
+        printf("Warp dest points:\n x1=%i y1 = %i\n x2=%i y2 = %i\n x3=%i y3 = %i\n x4=%i y4 = %i\n",
+         10, 10, size - 10, 10, 10, size - 10, size - 10, size - 10);
+        struct Rectangle B = {{10, size - 10, 10, size - 10},
+         {10, 10, size - 10, size - 10}};
+
+        Warp(originalImage, imgWarped, &A, &B);
+        SDL_FreeSurface(imgWarped);
+    }*/
+
+
     //Sets the directory to put the boxes into
+	/*
     struct stat st;
     if (stat("./boxes", &st) == 0)
         printf("/boxes is present\n");
@@ -705,10 +747,9 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
 
     char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
      '0', '0', '.', 'j', 'p', 'g', 0};
-//	char filename_[] = "";
+	 */
     
-    CutGrid(originalImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
-	printf("bug3\n");
+    //CutGrid(originalImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
 
     
     //Cleaning
