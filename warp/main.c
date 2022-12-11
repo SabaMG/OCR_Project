@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <err.h>
 #include "warp.h"
-#include "mat.h"
 
 
 int main(int argc, char** argv){
@@ -27,17 +26,21 @@ int main(int argc, char** argv){
 
 	if(argc != 2)
 		errx(1, "./main [IMG]\n");
+	
+	//Load Image as src surface
 	SDL_Surface* img = IMG_Load(argv[1]);
-	SDL_Surface* img_cvrt = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_ARGB8888, 0);
+	SDL_Surface* img_cvrt = SDL_ConvertSurfaceFormat(img,
+	 SDL_PIXELFORMAT_ARGB8888, 0);
 	SDL_FreeSurface(img);
 	img = img_cvrt;
 	SDL_LockSurface(img);
-	SDL_Surface* cp = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_ARGB8888, 0);
-	SDL_LockSurface(cp);
-	Uint32* pixels = img->pixels;
-	Uint32* pixels_cp = cp->pixels;
-	
-	SDL_memset(img->pixels, 0, img->h*img->pitch);
+
+	//Create dest surface
+	SDL_Surface* imgWarped = SDL_ConvertSurfaceFormat(img,
+	 SDL_PIXELFORMAT_ARGB8888, 0);
+	SDL_LockSurface(imgWarped);
+	//Clear all its pixels
+	SDL_memset(imgWarped->pixels, 0, imgWarped->h*imgWarped->pitch);
 
 	/*printf("M1 =\n");
 	printMat(M1);
@@ -59,16 +62,10 @@ int main(int argc, char** argv){
 		printf(" %2.4f |", tmp2[i]);
 	printf("\n");*/
 	
-	struct Rectangle* A = calloc(1, sizeof(struct Rectangle));
-	A->px[0] = 360;
-	A->px[1] = 420;
-	A->px[2] = 130;
-	A->px[3] = 100;
-	A->py[0] = 110;
-	A->py[1] = 270;
-	A->py[2] = 400;
-	A->py[3] = 280;
-	struct Rectangle* B = calloc(1, sizeof(struct Rectangle));
+	struct Rectangle A = {{360, 420, 130, 100}, {110, 270, 400, 280}};
+	struct Rectangle B = {{500, 500, 100, 100}, {200, 390, 390, 200}};
+
+	/*struct Rectangle* B = calloc(1, sizeof(struct Rectangle));
 	B->px[0] = 500;
 	B->px[1] = 500;
 	B->px[2] = 100;
@@ -76,36 +73,12 @@ int main(int argc, char** argv){
 	B->py[0] = 200;
 	B->py[1] = 390;
 	B->py[2] = 390;
-	B->py[3] = 200;
+	B->py[3] = 200;*/
 
-	double H[3][3] = {};
-	computeH(*A, *B, H);
+	//Main call
+	Warp(img, imgWarped, &A, &B);	
 	
-	for(int _x = 0; _x < cp->w; _x++){
-	for(int _y = 0; _y < cp->h; _y++){
-		int x = _x;
-		int y = /*cp->h -*/ _y;
-		double X[3] = {x, y, 1};
-		double tmp[3] = {};
-		MultMat3x1(H, X, tmp);
-		int x2 = (int)(tmp[0]/tmp[2]);
-		int y2 = /*cp->h -*/ (int)(tmp[1]/tmp[2]);
-		//printf("%lf, %lf, %lf\n", tmp[0], tmp[1], tmp[2]);
-		//printf("%i,%i --> %i,%i\n", x, y, x2, y2);
-		if(((x2>=0)&&(x2<img->w))&&(y2>=0)&&(y2<img->h)){
-			Uint32 pixel = pixels_cp[y * cp->w + x];
-			Uint8 r = pixel >> 16 & 0xFF;
-                    	Uint8 g = pixel >> 8 & 0xFF;
-                    	Uint8 b = pixel & 0xFF;
-			pixels[y2*img->w+x2] = (0xff << 24)|(r << 16)|(g << 8)|(b);
-		}
-	}
-	}
-	IMG_SaveJPG(img, "res.jpg", 100);
-	
-	free(A);
-	free(B);
-	SDL_FreeSurface(cp);
+	SDL_FreeSurface(imgWarped);
 	SDL_FreeSurface(img);
 	return 0;
 }
