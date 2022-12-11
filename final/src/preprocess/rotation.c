@@ -3,6 +3,10 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+///// Rajoute par charles pour ubuntu
+# define M_PI           3.14159265358979323846  /* pi */
+//////
+//
 Uint32 get_pixel(SDL_Surface *surface, int x, int y)
 {
 	int bpp = surface->format->BytesPerPixel;

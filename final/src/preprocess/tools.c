@@ -6,7 +6,9 @@
 #include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-
+///// Rajoute par charles pour ubuntu
+# define M_PI           3.14159265358979323846  /* pi */
+//////
 #define RAD(A)  (M_PI*((double)(A))/180.0)
 #define INIT_POINTSTRUCT(X, Y) \
 { .x=X, .y=Y }

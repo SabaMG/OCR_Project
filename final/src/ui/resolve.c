@@ -24,6 +24,7 @@ typedef struct {
 	int has_to_update_pg;
 	int has_to_update_img;
 	SDL_Surface* surface;
+	int ratio_can_changed;
 } ui_queue_elt;
 
 // Handler error function
@@ -91,6 +92,23 @@ gboolean update_ui_when_resolving(gpointer user_data) {
 
 			gint original_width = gdk_pixbuf_get_width(data->ui.image_pixbuf);
 			gint original_height = gdk_pixbuf_get_height(data->ui.image_pixbuf);
+
+			float surf_height;
+			float surf_width;
+			float ratio;
+			//if (elt->ratio_can_changed == 1) {
+				surf_height  = elt->surface->h;
+				surf_width  = elt->surface->w;
+				//printf("height = %f * width\n", surf_height / surf_width);
+				ratio = surf_height / surf_width;
+				//original_width -= 200;
+				gint height = gtk_widget_get_allocated_height(GTK_WIDGET(data->ui.window));
+				if (ratio * original_width < height) {
+					original_height = ratio * original_width;
+					printf("height: %f\n", original_height);
+					printf("width: %f\n", original_width);
+				}
+			//}
 
 			// Rescale pixbuf
 			//data->ui.image_pixbuf = pixbuf; 
@@ -205,6 +223,7 @@ gpointer resolution(gpointer user_data) {
 	ui_queue_elt* ff_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
 	ff_i->has_to_update_img = 1;
 	ff_i->surface = cropped_surface;
+	ff_i->ratio_can_changed = 1;
 	g_async_queue_push(data->ui.ui_queue, ff_i);
 
 	// ========================================================================
@@ -405,20 +424,20 @@ gpointer resolution(gpointer user_data) {
 	}
 
 	/*
-	g_print("\n");
-	for(size_t i = 0; i < GRID_SIZE; ++i) {
-		for ( size_t j = 0; j < GRID_SIZE; ++j) {
-			if (not_resolved_digits_grid[i][j] != image_grid[i][j]) {
-				printf("wrong: output = %i | expected = %i\n", not_resolved_digits_grid[i][j], image_grid[i][j]);
-				printf("[ ");
-				for (size_t k = 0; k < 10; k++) {
-					printf("%f ", outs[k]);
-				}
-				printf("]\n");
-			}
-		}
-	}
-	*/
+	   g_print("\n");
+	   for(size_t i = 0; i < GRID_SIZE; ++i) {
+	   for ( size_t j = 0; j < GRID_SIZE; ++j) {
+	   if (not_resolved_digits_grid[i][j] != image_grid[i][j]) {
+	   printf("wrong: output = %i | expected = %i\n", not_resolved_digits_grid[i][j], image_grid[i][j]);
+	   printf("[ ");
+	   for (size_t k = 0; k < 10; k++) {
+	   printf("%f ", outs[k]);
+	   }
+	   printf("]\n");
+	   }
+	   }
+	   }
+	   */
 
 
 	printf("\n");
