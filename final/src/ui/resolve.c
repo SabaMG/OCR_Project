@@ -169,13 +169,13 @@ gpointer resolution(gpointer user_data) {
 	g_async_queue_push(data->ui.ui_queue, gauss_i);
 
 	// ========================================================================
-	// SOBEL FILTER
+	// SOBEL FILTER ORIGINAL IMAGE
 	// ========================================================================
 
 	// Update pg
 	ui_queue_elt* sobel_e = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
 	sobel_e->has_to_update_pg = 1;
-	sobel_e->text = "Sobel Filter";
+	sobel_e->text = "Sobel Filter Original Image";
 	sobel_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, sobel_e);
 
@@ -199,17 +199,39 @@ gpointer resolution(gpointer user_data) {
 	ff_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, ff_e);
 
-	SDL_Surface* croped_surface = crop_grid(converted_surface, sobel_surface);
+	SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
 
 	// Update image
 	ui_queue_elt* ff_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
 	ff_i->has_to_update_img = 1;
-	ff_i->surface = sobel_surface;
+	ff_i->surface = cropped_surface;
 	g_async_queue_push(data->ui.ui_queue, ff_i);
 
 	// ========================================================================
+	// SOBEL FILTER CROPPED IMAGE
+	// ========================================================================
+
+	// Update pg
+	ui_queue_elt* sobel_e2 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	sobel_e2->has_to_update_pg = 1;
+	sobel_e2->text = "Sobel Filter Cropped Image";
+	sobel_e2->fraction = 0.1;
+	g_async_queue_push(data->ui.ui_queue, sobel_e2);
+
+	SDL_Surface* cropped_surface_copy =  SDL_ConvertSurfaceFormat(cropped_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+
+	SDL_Surface* cropped_sobel_surface = sobel(cropped_surface);
+
+	// Update image
+	ui_queue_elt* sobel_i2 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	sobel_i2->has_to_update_img = 1;
+	sobel_i2->surface = cropped_sobel_surface;
+	g_async_queue_push(data->ui.ui_queue, sobel_i2);
+	// ========================================================================
 	// IMAGE EDGES DETECTION | HOUGH
 	// ========================================================================
+
+	g_print("resolution(): Finished resolution\n");
 
 	// Update pg
 	ui_queue_elt* elt4 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -223,15 +245,15 @@ gpointer resolution(gpointer user_data) {
 	SDL_Surface boxesArray[81] = {};
 
 	// Copy sobel_surface to segmentation_surface
-	SDL_Surface* segmentation_surface = copy_surface(sobel_surface);
+	SDL_Surface* segmentation_surface = copy_surface(cropped_sobel_surface);
 
 	// sobel_surface becomes segmentation surface;
 	//int angle = segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
 
 	// While angle is not equal to 0, rotate segmentation_surface
-	printf("bug\n");
-	int angle = Segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
-	printf("bug\n");
+	printf("bug avant segm\n");
+	int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debugSegmentation.jpg", case_coor, boxesArray);
+	printf("bug apres segm\n");
 
 	// Update image or do rotation
 	if (angle == 0) {
@@ -291,14 +313,12 @@ gpointer resolution(gpointer user_data) {
 		segmentation_surface = tmp_segmentation_surface;
 	}
 
-
-
-	g_print("resolution(): Finished resolution\n");
-
 	data->img.is_resolving = 0;
 	//data->img.resolving_retval = 1; // Stop normally
 	g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
 	return NULL;
+
+
 	// ========================================================================
 	// RESIZE DIGIT IMAGE
 	// ========================================================================

@@ -192,8 +192,8 @@ void maxInAccu(int* Accu, int nbRhos, int nbThetas, int* _rho, int* _theta){
     }
     }
 
-    //printf("Max (%i,%i) = %i ||||\n", res[0], res[1],
-     //Accu[res[1] * nbRhos + res[0]]);
+    printf("Max (%i,%i) = %i ||||\n", res[0], res[1],
+     Accu[res[1] * nbRhos + res[0]]);
 
     *_rho = res[0] - nbRhos/2;
     *_theta = res[1];
@@ -401,11 +401,11 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
         }
 
         //Debug purposes
-        //printf("=== Ligne %zu :\n", i_H + i_V);
-        //printf("r,t: %i,%i\n", rho, theta);
-        //printf("x0,y0: %f, %f\n", x0, y0);
-        //printf("x1,y1: %i, %i\n", x1, y1);
-        //printf("x2,y2: %i, %i\n\n", x2, y2);
+        printf("=== Ligne %zu :\n", i_H + i_V);
+        printf("r,t: %i,%i\n", rho, theta);
+        printf("x0,y0: %f, %f\n", x0, y0);
+        printf("x1,y1: %i, %i\n", x1, y1);
+        printf("x2,y2: %i, %i\n\n", x2, y2);
 
     }
 
@@ -519,19 +519,19 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
                 SDL_Surface* sizeSurf = resize(resultSurf, z);
                 sizeSurf->w -= sizeSurf->w - 28;
                 sizeSurf->h -= sizeSurf->h - 28;
-                SDL_FreeSurface(resultSurf);
+                //SDL_FreeSurface(resultSurf);
                 //printf("w = %i, h = %i\n", sizeSurf->w, sizeSurf->h);
 
-                //pathToSave[iIndex] = '0' + i;
-                //pathToSave[jIndex] = '0' + j;
+                pathToSave[iIndex] = '0' + i;
+                pathToSave[jIndex] = '0' + j;
 
                 size_t ind = i*(nbRows-1)+j;
                 case_coor[ind][0] = case_.x;
                 case_coor[ind][1] = case_.y;
                 boxesArray[ind] = *sizeSurf;
 
-                //if (IMG_SaveJPG(sizeSurf, pathToSave, 100) == -1)
-                //    printf("Unable to save the picture\n");
+                if (IMG_SaveJPG(sizeSurf, pathToSave, 100) == -1)
+                    printf("Unable to save the picture\n");
                 //SDL_FreeSurface(sizeSurf);
             }
         }
@@ -632,6 +632,8 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
 
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
+	//IMG_SaveJPG(sobelImage, "./sobelImage.jpg", 100);
+	//IMG_SaveJPG(originalImage, "./originImage.jpg", 100);
 
     int W = sobelImage->w;//Width of the edge picture
     int H = sobelImage->h;//Height of the edge picture
@@ -654,16 +656,16 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     //Compute and print the lines
     int AngleToRotate = ComputeLines(nbLines, Acc, maxRho, maxTheta,
      H_lines, &H_len, V_lines, &V_len);
-//    printf("Angle To Rotate: %i\n\n", AngleToRotate);
+    printf("Angle To Rotate: %i\n\n", AngleToRotate);
     if (abs(AngleToRotate) > 5 /*&& !notRotated*/)
         return AngleToRotate;
 
     int removed = 0;
- //   printf("H_lines to remove: %zu\n", H_len - 10);
+    printf("H_lines to remove: %zu\n", H_len - 10);
     removed += RemoveNoise(H_lines, &H_len, H_len - 10);
-  //  printf("\nV_lines to remove: %zu\n", V_len - 10);
+    printf("\nV_lines to remove: %zu\n", V_len - 10);
     removed += RemoveNoise(V_lines, &V_len, V_len - 10);
-   // printf("\n## %i elements removed\n", removed);
+    printf("\n## %i elements removed\n", removed);
 
     if (H_len < 10)
         errx(1, "Not enough H_lines: %zu\n", H_len);
@@ -674,7 +676,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     PrintLines(sobelImage, H_lines, H_len, W, H);
     PrintLines(sobelImage, V_lines, V_len, W, H);
     //Saving picture with drawn lines
-    //IMG_SaveJPG(sobelImage, linesImgPath, 100);
+    IMG_SaveJPG(sobelImage, linesImgPath, 100);
     //SDL_FreeSurface(sobelImage);
 
     
@@ -682,7 +684,6 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     struct Point* intersXY = ComputeInters(H_lines, V_lines);
 
     //Sets the directory to put the boxes into
-	/*
     struct stat st;
     if (stat("./boxes", &st) == 0)
         printf("/boxes is present\n");
@@ -694,8 +695,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
 
     char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
      '0', '0', '.', 'j', 'p', 'g', 0};
-	 */
-	char filename_[] = "";
+//	char filename_[] = "";
     
     CutGrid(originalImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
 	printf("bug3\n");
