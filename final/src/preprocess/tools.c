@@ -548,16 +548,16 @@ void CutGrid(SDL_Surface* originImg, struct Point* inters, char* pathToSave,
                 //SDL_FreeSurface(resultSurf);
                 printf("w = %i, h = %i\n", sizeSurf->w, sizeSurf->h);
 
-                pathToSave[iIndex] = '0' + i;
-                pathToSave[jIndex] = '0' + j;
+                //pathToSave[iIndex] = '0' + i;
+                //pathToSave[jIndex] = '0' + j;
 
                 size_t ind = i*(nbRows-1)+j;
                 case_coor[ind][0] = case_.x;
                 case_coor[ind][1] = case_.y;
                 boxesArray[ind] = *sizeSurf;
 
-                if (IMG_SaveJPG(sizeSurf, pathToSave, 100) == -1)
-                    printf("Unable to save the picture\n");
+                //if (IMG_SaveJPG(sizeSurf, pathToSave, 100) == -1)
+                    //printf("Unable to save the picture\n");
                 //SDL_FreeSurface(sizeSurf);
             }
         }
@@ -653,7 +653,7 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 
 //Main fonction which complete segmentation 
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
- char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]/*, int warped*/){
+ char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81], int nbLines/*, int warped*/){
 
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
@@ -663,7 +663,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
    
     int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
     int maxTheta = 180; //theta values : [0, maxTheta]
-    int nbLines = 24; //number of lines to print
+    //int nbLines = 20; //number of lines to print
     
 
     //Create and Fill the hough accumulator
@@ -680,7 +680,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     int AngleToRotate = ComputeLines(nbLines, Acc, maxRho, maxTheta,
      H_lines, &H_len, V_lines, &V_len);
     printf("Angle To Rotate: %i\n\n", AngleToRotate);
-    if (abs(AngleToRotate) > 5 /*&& !notRotated*/)
+    if (abs(AngleToRotate) > 30 /*&& !notRotated*/)
         return AngleToRotate;
 
     int removed = 0;
@@ -699,7 +699,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     PrintLines(sobelImage, H_lines, H_len, W, H);
     PrintLines(sobelImage, V_lines, V_len, W, H);
     //Saving picture with drawn lines
-    IMG_SaveJPG(sobelImage, linesImgPath, 100);
+//    IMG_SaveJPG(sobelImage, linesImgPath, 100);
     //SDL_FreeSurface(sobelImage);
 
     
@@ -749,7 +749,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
      '0', '0', '.', 'j', 'p', 'g', 0};
 	 */
     
-    //CutGrid(originalImage, intersXY, filename_, case_coor, boxesArray, 10, 11);
+    CutGrid(originalImage, intersXY, "", case_coor, boxesArray, 10, 11);
 
     
     //Cleaning
@@ -757,6 +757,8 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     free(V_lines);
     free(Acc);
     free(intersXY);
+
+    printf("exit hough\n");
 
     return EXIT_SUCCESS;
 }

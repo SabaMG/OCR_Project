@@ -73,7 +73,7 @@ SDL_Surface* crop_grid (SDL_Surface* grid, SDL_Surface* sobel)
 		collect_form(sobel, middle_h + i, M, &start, &width, &height);
 
 		int curr_delta = my_abs(width - height);
-		if(curr_delta < 5)
+		if(curr_delta < 10)
 		{
 		    int delta = my_abs(width + height - width_sobel - height_sobel);
 		    if(delta < 10)
@@ -113,6 +113,7 @@ SDL_Surface* crop_grid (SDL_Surface* grid, SDL_Surface* sobel)
     
     SDL_BlitSurface(grid, &crop_rect, croped_sobel, NULL);
 
+        printf("exit flood fill\n");
     return croped_sobel;
 }
 

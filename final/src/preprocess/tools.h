@@ -46,7 +46,7 @@ void PrintLines(SDL_Surface* img, struct Line* list, size_t length, int img_w,
  int img_h);
 //Main fonction which complete segmentation 
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
- char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]/*, int warped*/);
+ char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81], int nbLines/*, int warped*/);
 
 
 #endif

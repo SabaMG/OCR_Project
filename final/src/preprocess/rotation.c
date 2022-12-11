@@ -30,7 +30,7 @@ Uint32 get_pixel(SDL_Surface *surface, int x, int y)
 	}
 }
 
-void inline set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
+void set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
 {
 	int bpp = surface->format->BytesPerPixel;
 	Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
