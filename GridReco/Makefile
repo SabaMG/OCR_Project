@@ -6,7 +6,7 @@ CFLAGS = -Wall -Wextra -fsanitize=address -g
 LDFLAGS = -fsanitize=address -lm
 LDLIBS = `pkg-config --libs sdl2 SDL2_image`
 
-SRC = main.c tools.c center_number.c
+SRC = main.c tools.c center_number.c #../warp/warp.c
 OBJ = ${SRC:.c=.o}
 DEP = ${SRC:.c=.d}
 

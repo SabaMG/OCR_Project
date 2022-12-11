@@ -1,5 +1,6 @@
 #include "tools.h"
 #include "center_number.h"
+#include "../warp/warp.h"
 
 #include <math.h>
 #include <err.h>
@@ -33,12 +34,36 @@ size_t Point_minX_index(struct Point* list, size_t start, size_t end){
     return min_index;
 }
 
+size_t Point_maxX_index(struct Point* list, size_t start, size_t end){
+    int min = list[start].x;
+    size_t min_index = start;
+    for(size_t i = start; i < end; i++){
+        if(list[i].x > min){
+            min = list[i].x;
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
 //Return the index of the point with the minimal y
 size_t Point_minY_index(struct Point* list, size_t start, size_t end){
     int min = list[start].y;
     size_t min_index = start;
     for(size_t i = start; i < end; i++){
         if(list[i].y < min){
+            min = list[i].y;
+            min_index = i;
+        }
+    }
+    return min_index;
+}
+
+size_t Point_maxY_index(struct Point* list, size_t start, size_t end){
+    int min = list[start].y;
+    size_t min_index = start;
+    for(size_t i = start; i < end; i++){
+        if(list[i].y > min){
             min = list[i].y;
             min_index = i;
         }
@@ -628,7 +653,7 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 
 //Main fonction which complete segmentation 
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
- char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]){
+ char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81]/*, int warped*/){
 
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
@@ -638,7 +663,7 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
    
     int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
     int maxTheta = 180; //theta values : [0, maxTheta]
-    int nbLines = 24; //number of lines to print
+    int nbLines = 20; //number of lines to print
     
 
     //Create and Fill the hough accumulator
@@ -680,6 +705,34 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     
     //Get intersections
     struct Point* intersXY = ComputeInters(H_lines, V_lines);
+
+    /*if(!warped){
+
+        //Create dest surface
+        SDL_Surface* imgWarped = SDL_ConvertSurfaceFormat(originalImage,
+         SDL_PIXELFORMAT_ARGB8888, 0);
+        SDL_LockSurface(imgWarped);
+        //Clear all its pixels
+        SDL_memset(imgWarped->pixels, 0, imgWarped->h*imgWarped->pitch);
+
+        //src
+        struct Rectangle A = {{intersXY[0].x, intersXY[9].x, intersXY[90].x,
+        intersXY[99].x}, {intersXY[0].y, intersXY[9].y, intersXY[90].y,
+        intersXY[99].y}};
+        printf("Warp src points:\n x1=%lf y1 = %lf\n x2=%lf y2 = %lf\n x3=%lf y3 = %lf\n x4=%lf y4 = %lf\n",
+         A.px[0], A.py[0], A.px[1], A.py[1], A.px[2], A.py[2], A.px[3], A.py[3]);
+
+        //dest
+        int size = min(imgWarped->h, imgWarped->w);
+        printf("Warp dest points:\n x1=%i y1 = %i\n x2=%i y2 = %i\n x3=%i y3 = %i\n x4=%i y4 = %i\n",
+         10, 10, size - 10, 10, 10, size - 10, size - 10, size - 10);
+        struct Rectangle B = {{10, size - 10, 10, size - 10},
+         {10, 10, size - 10, size - 10}};
+
+        Warp(originalImage, imgWarped, &A, &B);
+        SDL_FreeSurface(imgWarped);
+    }*/
+
 
     //Sets the directory to put the boxes into
     struct stat st;

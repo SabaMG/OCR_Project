@@ -29,12 +29,16 @@ int main(int argc, char *argv[]){
     SDL_Surface *originImg = IMG_Load(argv[1]);
     if (originImg == NULL)
 	    err(1, "Surface errors found");
+    SDL_Surface *tmp = SDL_ConvertSurfaceFormat(originImg,
+     SDL_PIXELFORMAT_ARGB8888, 0);
+    SDL_FreeSurface(originImg);
+    originImg = tmp;
 
     //Load the sobel picture
     SDL_Surface *sobelImage = IMG_Load(argv[2]);
     if (originImg == NULL)
 	    err(1, "Surface errors found");
-    SDL_Surface *tmp = SDL_ConvertSurfaceFormat(sobelImage,
+    tmp = SDL_ConvertSurfaceFormat(sobelImage,
      SDL_PIXELFORMAT_ARGB8888, 0);
     SDL_FreeSurface(sobelImage);
     sobelImage = tmp;
@@ -43,7 +47,7 @@ int main(int argc, char *argv[]){
     int case_coor[81][2] = {};
     SDL_Surface boxesArray[81] = {};
     int res = Segmentation(originImg, sobelImage, linesImgPath, case_coor,
-     boxesArray);
+     boxesArray/*, 0*/);
 
     printf("RETURN VALUE: %i\n", res);
 
