@@ -435,6 +435,7 @@ gpointer resolution(gpointer user_data) {
 
     // DEBUG: SAVE BOXES
     //Sets the directory to put the boxes into
+    /*
     struct stat st;
     if (stat("./boxes", &st) == 0)
         printf("segmentation(): /boxes is present\n");
@@ -446,6 +447,7 @@ gpointer resolution(gpointer user_data) {
 
     char filename_[] = {'b', 'o', 'x', 'e', 's', '/', 'b', 'o', 'x', '_',
         '0', '0', '.', 'p', 'n', 'g', 0};
+        */
 
     int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
 
@@ -471,10 +473,10 @@ gpointer resolution(gpointer user_data) {
             surface_to_grayscale(&surface);
 
             // DEBUG: SAVES BOXES
-            filename_[10] = '0' + i;
-            filename_[11] = '0' + j;
-            if (SDL_SaveBMP(&surface, filename_) == -1)
-                printf("Unable to save the picture\n");
+//            filename_[10] = '0' + i;
+ //           filename_[11] = '0' + j;
+  //          if (SDL_SaveBMP(&surface, filename_) == -1)
+   //             printf("Unable to save the picture\n");
 
             char* out_s = calloc(2, sizeof(char));
 
@@ -483,7 +485,7 @@ gpointer resolution(gpointer user_data) {
             out_s[0] = '0' + out;
 
             not_resolved_digits_grid[j][i] = out;
-
+            /*
             if (not_resolved_digits_grid[j][i] != image_grid[j][i]) {
                 printf("wrong: output = %i | expected = %i\n", not_resolved_digits_grid[j][i], image_grid[j][i]);
                 printf("[ ");
@@ -492,6 +494,7 @@ gpointer resolution(gpointer user_data) {
                 }
                 printf("]\n");
             }
+            */
         }
     }
 
@@ -548,23 +551,6 @@ gpointer resolution(gpointer user_data) {
     printf("here2\n");
 
     g_print("Score: %i / 81\n\n", good);
-
-    //int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
-
-    // TEST: solve and render on image 1
-    /*
-       int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {
-       {5,3,0,0,7,0,0,0,0},
-       {6,0,0,1,9,5,0,0,0},
-       {0,9,8,0,0,0,0,6,0},
-       {8,0,0,0,6,0,0,0,3},
-       {4,0,0,8,0,3,0,0,1},
-       {7,0,0,0,2,0,0,0,6},
-       {0,6,0,0,0,0,2,8,0},
-       {0,0,0,4,1,9,0,0,5},
-       {0,0,0,0,8,0,0,7,9},
-       };	
-       */
 
     // All possible grids identified by the ocr
     //int all_possible_digits_grids[GRID_SIZE][GRID_SIZE][10] = {};
@@ -655,7 +641,7 @@ gpointer resolution(gpointer user_data) {
     if (empty_grid == NULL)
         return fail_resolution("Failed to convert init_grid surface", user_data);
     // Free init_grid surface
-    SDL_FreeSurface(init_grid);
+    //SDL_FreeSurface(init_grid);
 
     // Save center coordinate of each boxes
     int coor[81][2] = {};
