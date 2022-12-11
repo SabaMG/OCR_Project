@@ -175,10 +175,12 @@ void ocr(Layer network[], char *folder_path, int w_flag, int debug) {
 
 		surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
+		/*
 		if (w_flag) {
 			//printf("wflag, passage en niveau de gris blanc sur noir\n");
 			surface_to_grayscale(surface);
 		}
+		*/
 
 		double *image = (double *)malloc(784 * sizeof(double));
 		Uint32 pixel;

@@ -190,6 +190,7 @@ int main () {
 	// Runs the main loop
 	gtk_main();
 
+	/*
 	if (data.img.original_surface != NULL)
 		SDL_FreeSurface(data.img.original_surface);
 	if (data.img.filtered_surface != NULL)
@@ -198,6 +199,7 @@ int main () {
 		SDL_FreeSurface(data.img.gauss_surface);
 	if (data.img.gamma_surface != NULL)
 		SDL_FreeSurface(data.img.gamma_surface);
+		*/
 
 
 	// Free network

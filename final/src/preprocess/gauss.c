@@ -52,9 +52,9 @@ SDL_Surface* blur(SDL_Surface *imageSurface, int blur_extent) //This manipulates
             //(((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)) calculates
             //the total number of pixels present in a block of blur radius
  
-            r = (Uint8)(rb / (((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)));
+            b = (Uint8)(rb / (((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)));
             g = (Uint8)(gb / (((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)));
-            b = (Uint8)(bb / (((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)));
+            r = (Uint8)(bb / (((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)));
             a = (Uint8)(ab / (((blur_extent * 2) + 1) * ((blur_extent * 2) + 1)));
  
             //Bit shifting color bits to form a 32 bit proper colour
