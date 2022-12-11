@@ -141,6 +141,7 @@ int main () {
 			.filtered_surface = NULL,
 			.gauss_surface = NULL,
 			.gamma_surface = NULL,
+			.solved_surface = NULL,
 		},
 	};
 

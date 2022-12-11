@@ -1,4 +1,5 @@
 #include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
 
@@ -15,6 +16,16 @@
 #define N_NEURONS_INPUT 784
 #define N_NEURONS_HIDDEN_1 32
 #define N_NEURONS_OUTPUT 10
+
+int file_exists2(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    int is_exist = 0;
+    if (fp != NULL) {
+        is_exist = 1;
+        fclose(fp); // close the file
+    }
+    return is_exist;
+}
 
 // Callback of configure-event from window. It resize main image
 gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_data) {
@@ -40,9 +51,31 @@ gboolean on_configure_window(GtkWindow *window, GdkEvent *event, gpointer user_d
 
 
 gboolean on_save_button(GtkWidget *widget, gpointer user_data) {
+	ProgramData *data = user_data;
 	(void)widget;
-	(void)user_data;
-	g_print("save\n");
+    FILE* stream = NULL;
+	int i = 10;
+	char *save_path;
+	char *path = "./images/sudoku_solved";
+	do {
+		char* buf = (char *)calloc((int)(log10(i)) + 1, sizeof(char));
+		snprintf(buf, (int)log10(i) + 1, "%i", i);
+		save_path = (char *)calloc(strlen(buf) + 60, sizeof(char));
+		strcat(save_path, path);
+		strcat(save_path, buf);
+		strcat(save_path, ".jpg");
+		free(buf);
+		i += 10;
+	}
+	while (file_exists2(save_path) == 1 && i < 1000); // TODO: put 1000 in a variable
+	stream = fopen(save_path, "w");
+	if (stream == NULL) {
+		g_print("on_save_button(): Cannot access to stream\n");
+	}
+	else {
+		IMG_SaveJPG(data->img.solved_surface, save_path, 100);
+		g_print("on_save_button(): Saved in %s\n", save_path);
+	}
 	return FALSE;
 }
 

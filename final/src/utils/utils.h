@@ -59,6 +59,7 @@ typedef struct ImageData {
 	SDL_Surface* filtered_surface;
 	SDL_Surface* gauss_surface;
 	SDL_Surface* gamma_surface;
+	SDL_Surface* solved_surface;
 } ImageData;
 
 typedef struct ProgramData {

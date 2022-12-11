@@ -181,7 +181,7 @@ gpointer resolution(gpointer user_data) {
 		return fail_resolution("Failed to convert image", user_data);
 
 	// ========================================================================
-	// GAUSS FILTER if any
+	// GAUSS FILTER if any // TODO A DEBUGGGGGG
 	// ========================================================================
 
 	SDL_Surface* gauss_surface = SDL_ConvertSurfaceFormat(converted_surface, SDL_PIXELFORMAT_ARGB8888, 0);
@@ -633,7 +633,8 @@ gpointer resolution(gpointer user_data) {
 	elt11->surface = solved_sudo_surface;
 	g_async_queue_push(data->ui.ui_queue, elt11);
 
-	//sleep(1);
+	data->img.solved_surface = solved_sudo_surface;
+
 	g_print("resolution(): Finished resolution\n");
 
 	data->img.is_resolving = 0;
