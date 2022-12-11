@@ -373,6 +373,7 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
     int rho = -1;//value to be fill by MaxInAccu()
     int theta = -1;//value to be fill by MaxInAccu()
     for(int round = 0; round < nbLines; round++){
+    //for(int round = 0; round < 20; round++){
     //while((i_H < 12 || i_V < 12)){
         
         //Modifies 'rho' and 'theta' with the max coordinates
@@ -634,15 +635,16 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
 
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
-	IMG_SaveJPG(sobelImage, "./sobelImage.jpg", 100);
-	IMG_SaveJPG(originalImage, "./originImage.jpg", 100);
+	IMG_SaveJPG(sobelImage, "./entree_segm_sobel.jpg", 100);
+	IMG_SaveJPG(originalImage, "./entree_segm_origin.jpg", 100);
 
     int W = sobelImage->w;//Width of the edge picture
     int H = sobelImage->h;//Height of the edge picture
    
     int maxRho = diagLen(W,H); //rho values : [-maxRho, maxRho]
     int maxTheta = 180; //theta values : [0, maxTheta]
-    int nbLines = 24; //number of lines to print
+    //int nbLines = 24; //number of lines to print
+    int nbLines = 20; //number of lines to print
     
 
     //Create and Fill the hough accumulator
@@ -662,11 +664,17 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     if (abs(AngleToRotate) > 5 /*&& !notRotated*/)
         return AngleToRotate;
 
+	int nbToReH = (H_len > 10) ? H_len - 10 : 0;
+	int nbToReV = (V_len > 11) ?  V_len - 10 : 0; 
     int removed = 0;
-    printf("H_lines to remove: %zu\n", H_len - 10);
-    removed += RemoveNoise(H_lines, &H_len, H_len - 10);
-    printf("\nV_lines to remove: %zu\n", V_len - 10);
-    removed += RemoveNoise(V_lines, &V_len, V_len - 10);
+    //printf("H_lines to remove: %zu\n", H_len - 10);
+    printf("H_lines to remove: %zu\n", nbToReH);
+    //removed += RemoveNoise(H_lines, &H_len, H_len - 10);
+    removed += RemoveNoise(H_lines, &H_len, nbToReH);
+    //printf("\nV_lines to remove: %zu\n", V_len - 10);
+    printf("\nV_lines to remove: %zu\n", nbToReV);
+    //removed += RemoveNoise(V_lines, &V_len, V_len - 10);
+    removed += RemoveNoise(V_lines, &V_len, nbToReV);
     printf("\n## %i elements removed\n", removed);
 
     if (H_len < 10)

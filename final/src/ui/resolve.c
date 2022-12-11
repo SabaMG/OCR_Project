@@ -216,7 +216,10 @@ gpointer resolution(gpointer user_data) {
 	sobel_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, sobel_e);
 
-	//SDL_Surface* sobel_surface = sobel(converted_surface);
+	IMG_SaveJPG(converted_surface, "./converted_avant_sobel.jpg", 100);
+	SDL_Surface* sobel_surface = sobel(converted_surface);
+	IMG_SaveJPG(sobel_surface, "./sobel_1.jpg", 100);
+	/*
 	SDL_Surface* sobel_surface;
 	if (data->img.applied_filter == 1) {
 		sobel_surface = sobel(gauss_surface);
@@ -226,6 +229,7 @@ gpointer resolution(gpointer user_data) {
 		sobel_surface = sobel(converted_surface);
 		IMG_SaveJPG(sobel_surface, "./sobel_from_converted.jpg", 100);
 	}
+	*/
 
 	// Update image
 	ui_queue_elt* sobel_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -244,8 +248,10 @@ gpointer resolution(gpointer user_data) {
 	ff_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, ff_e);
 
-	//SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
+	SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
+	IMG_SaveJPG(cropped_surface, "./cropped_after_gauss.jpg", 100);
 	//SDL_Surface* cropped_surface = crop_grid(gauss_surface, sobel_surface);
+	/*
 	SDL_Surface* cropped_surface;
 	if (data->img.applied_filter == 1) {
 		cropped_surface = crop_grid(gauss_surface, sobel_surface);
@@ -255,6 +261,7 @@ gpointer resolution(gpointer user_data) {
 		cropped_surface = crop_grid(converted_surface, sobel_surface);
 		IMG_SaveJPG(sobel_surface, "./cropped_from_converted.jpg", 100);
 	}
+	*/
 
 	// Update image
 	ui_queue_elt* ff_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -277,6 +284,7 @@ gpointer resolution(gpointer user_data) {
 	SDL_Surface* cropped_surface_copy =  SDL_ConvertSurfaceFormat(cropped_surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
 	SDL_Surface* cropped_sobel_surface = sobel(cropped_surface);
+	IMG_SaveJPG(sobel_surface, "./sobel_afer_cropped.jpg", 100);
 
 	// Update image
 	ui_queue_elt* sobel_i2 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -308,9 +316,7 @@ gpointer resolution(gpointer user_data) {
 	//int angle = segmentation(converted_surface, segmentation_surface, "", case_coor, boxesArray);
 
 	// While angle is not equal to 0, rotate segmentation_surface
-	printf("bug avant segm\n");
-	int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debugSegmentation.jpg", case_coor, boxesArray);
-	printf("bug apres segm\n");
+	int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debug_hough_segm.jpg", case_coor, boxesArray);
 
 	// Update image or do rotation
 	if (angle == 0) {
@@ -345,7 +351,20 @@ gpointer resolution(gpointer user_data) {
 			rot_i->surface = rotated_surface;
 			g_async_queue_push(data->ui.ui_queue, rot_i);
 
-			tmp_segmentation_surface = SDL_ConvertSurfaceFormat(rotated_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+			// Sobel after rot
+			SDL_Surface* sobel_after_rot =  SDL_ConvertSurfaceFormat(rotated_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+
+			sobel_after_rot =  sobel(sobel_after_rot);
+
+			// Crop after sobel
+			SDL_Surface *cropped_after_rot = SDL_ConvertSurfaceFormat(sobel_after_rot, SDL_PIXELFORMAT_ARGB8888, 0);
+
+			cropped_after_rot = crop_grid(rotated_surface, sobel_after_rot);
+			SDL_Surface *sobel_after_cropped = SDL_ConvertSurfaceFormat(cropped_after_rot, SDL_PIXELFORMAT_ARGB8888, 0);
+
+			SDL_Surface* sobel_cropped = sobel(sobel_after_cropped);
+	
+			//SDL_Surface* tmp_segmentation_surface =  SDL_ConvertSurfaceFormat(, SDL_PIXELFORMAT_ARGB8888, 0);
 
 			// SEGMENTATION
 			// Update pg
@@ -355,7 +374,8 @@ gpointer resolution(gpointer user_data) {
 			seg_pg->fraction = 0.1;
 
 			// Try again segmentation
-			angle = Segmentation(converted_surface, tmp_segmentation_surface, "", case_coor, boxesArray);
+			//angle = Segmentation(, sobel_cropped, "", case_coor, boxesArray);
+			angle = Segmentation(cropped_after_rot, sobel_cropped, "", case_coor, boxesArray);
 			g_print("resolution(): Angle after rotation = %i\n", angle);
 
 			// Update image
@@ -679,7 +699,7 @@ gboolean on_resolve_button(GtkWidget* widget, gpointer user_data) {
 		// Create new thread
 		g_thread_new(NULL, resolution, user_data);
 		// Create timeout for ui updates
-		data->img.ui_update_timeout_id = g_timeout_add(1000, update_ui_when_resolving, user_data);
+		data->img.ui_update_timeout_id = g_timeout_add(300, update_ui_when_resolving, user_data);
 	}
 
 	return FALSE;
