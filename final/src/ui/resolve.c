@@ -333,7 +333,8 @@ gpointer resolution(gpointer user_data) {
     if (data->img.opened_image_path[strlen(data->img.opened_image_path) - 6] == '3')
         nbLines = 20;
     printf("%s\n", data->img.opened_image_path);
-    int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debug/debug_hough_segm.jpg", case_coor, boxesArray, nbLines);
+    //int angle = Segmentation(cropped_surface_copy, segmentation_surface, "./debug/debug_hough_segm.jpg", case_coor, boxesArray, nbLines);
+    int angle = Segmentation(converted_surface, segmentation_surface, "./debug/debug_hough_segm.jpg", case_coor, boxesArray, nbLines);
 
     // Update image or do rotation
     int b = 0;
@@ -363,6 +364,7 @@ gpointer resolution(gpointer user_data) {
             elt5->fraction = 0.1;
             g_async_queue_push(data->ui.ui_queue, elt5);
 
+			/*
             rotated_surface = SDL_RotationCentral(rotated_surface, (float)angle);
 
             // Update image
@@ -372,6 +374,8 @@ gpointer resolution(gpointer user_data) {
             g_async_queue_push(data->ui.ui_queue, rot_i);
 
             // Sobel after rot
+			*/
+			/*
             SDL_Surface* sobel_after_rot =  SDL_ConvertSurfaceFormat(rotated_surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
             sobel_after_rot =  sobel(sobel_after_rot);
@@ -383,11 +387,13 @@ gpointer resolution(gpointer user_data) {
             SDL_Surface *sobel_after_cropped = SDL_ConvertSurfaceFormat(cropped_after_rot, SDL_PIXELFORMAT_ARGB8888, 0);
 
             SDL_Surface* sobel_cropped = sobel(sobel_after_cropped);
+			*/
 
             //SDL_Surface* tmp_segmentation_surface =  SDL_ConvertSurfaceFormat(, SDL_PIXELFORMAT_ARGB8888, 0);
 
             // SEGMENTATION
             // Update pg
+			/*
             ui_queue_elt* seg_pg = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
             seg_pg->has_to_update_pg = 1;
             seg_pg->text = "Image Edges Detection";
@@ -396,6 +402,27 @@ gpointer resolution(gpointer user_data) {
             // Try again segmentation
             //angle = Segmentation(, sobel_cropped, "", case_coor, boxesArray);
             angle = Segmentation(cropped_after_rot, sobel_cropped, "", case_coor, boxesArray, nbLines);
+			*/
+			rotated_surface = SDL_RotationCentral(rotated_surface, (float)angle);
+
+ 			// Update image
+ 			ui_queue_elt* rot_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+ 			rot_i->has_to_update_img = 1;
+ 			rot_i->surface = rotated_surface;
+ 			g_async_queue_push(data->ui.ui_queue, rot_i);
+
+			IMG_SaveJPG(rotated_surface, "./debug/sobel_afer_cropped.jpg", 100);
+ 			tmp_segmentation_surface = SDL_ConvertSurfaceFormat(rotated_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+
+ 			// SEGMENTATION
+ 			// Update pg
+ 			ui_queue_elt* seg_pg = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+ 			seg_pg->has_to_update_pg = 1;
+ 			seg_pg->text = "Image Edges Detection";
+ 			seg_pg->fraction = 0.1;
+
+ 			// Try again segmentation
+ 			angle = Segmentation(converted_surface, tmp_segmentation_surface, "", case_coor, boxesArray, nbLines);
             g_print("resolution(): Angle after rotation = %i\n", angle);
 
             // Update image
@@ -405,8 +432,8 @@ gpointer resolution(gpointer user_data) {
             g_async_queue_push(data->ui.ui_queue, seg_im);
         }
         // Free old segmentation_surface and set it to tmp_surface
-        if (segmentation_surface != NULL)
-            SDL_FreeSurface(segmentation_surface);
+        //if (segmentation_surface != NULL)
+         //   SDL_FreeSurface(segmentation_surface);
         segmentation_surface = tmp_segmentation_surface;
     }
 
@@ -449,22 +476,10 @@ gpointer resolution(gpointer user_data) {
         '0', '0', '.', 'p', 'n', 'g', 0};
         */
 
-    int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
+    //int not_resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
 
     double outs[10];
 
-    // DEBUG PURPOSE
-    int image_grid[GRID_SIZE][GRID_SIZE] = {
-        {5,3,0,0,7,0,0,0,0},
-        {6,0,0,1,9,5,0,0,0},
-        {0,9,8,0,0,0,0,6,0},
-        {8,0,0,0,6,0,0,0,3},
-        {4,0,0,8,0,3,0,0,1},
-        {7,0,0,0,2,0,0,0,6},
-        {0,6,0,0,0,0,2,8,0},
-        {0,0,0,4,1,9,0,0,5},
-        {0,0,0,0,8,0,0,7,9},
-    };	
 
     for (size_t i = 0; i < GRID_SIZE; i++) {
         for (size_t j = 0; j < GRID_SIZE; j++) {
@@ -484,7 +499,7 @@ gpointer resolution(gpointer user_data) {
 
             out_s[0] = '0' + out;
 
-            not_resolved_digits_grid[j][i] = out;
+            //not_resolved_digits_grid[j][i] = out;
             /*
             if (not_resolved_digits_grid[j][i] != image_grid[j][i]) {
                 printf("wrong: output = %i | expected = %i\n", not_resolved_digits_grid[j][i], image_grid[j][i]);
@@ -515,9 +530,6 @@ gpointer resolution(gpointer user_data) {
        */
 
 
-    printf("here\n");
-    printf("\n");
-    int good = 0;
     /*
     for(size_t i = 0; i < GRID_SIZE; ++i) {
         for ( size_t j = 0; j < GRID_SIZE; ++j) {
@@ -548,169 +560,194 @@ gpointer resolution(gpointer user_data) {
         printf("\n");
     }
     */
-    printf("here2\n");
 
-    g_print("Score: %i / 81\n\n", good);
+//    g_print("Score: %i / 81\n\n", good);
+	int not_resolved_digits_grid[9][9] = {};
 
-    // All possible grids identified by the ocr
-    //int all_possible_digits_grids[GRID_SIZE][GRID_SIZE][10] = {};
-    /*
-    int all_possible_digits_grids[GRID_SIZE][GRID_SIZE][11] = {
-        {{5,-1},{3,-1},{0,-1},{0,-1},{7,-1},{0,-1},{0,-1},{0,-1},{0,-1}},
-        {{8,6,-1},{0,-1},{0,-1},{1,-1},{9,-1},{5,-1},{0,-1},{0,-1},{0,-1}},
-        {{0,-1},{9,-1},{8,-1},{0,-1},{0,-1},{0,-1},{0,-1},{6,-1},{0,-1}},
-        {{8,-1},{0,-1},{0,-1},{0,-1},{6,-1},{0,-1},{0,-1},{0,-1},{3,-1}},
-        {{4,-1},{0,-1},{0,-1},{8,-1},{0,-1},{3,-1},{0,-1},{0,-1},{1,-1}},
-        {{7,-1},{0,-1},{0,-1},{0,-1},{2,-1},{0,-1},{0,-1},{0,-1},{6,-1}},
-        {{0,-1},{6,-1},{0,-1},{0,-1},{0,-1},{0,-1},{2,-1},{8,-1},{0,-1}},
-        {{0,-1},{0,-1},{0,-1},{4,-1},{1,-1},{9,-1},{0,-1},{0,-1},{5,-1}},
-        {{0,-1},{0,-1},{0,-1},{0,-1},{8,-1},{0,-1},{0,-1},{7,-1},{9,-1}},
+	// DEBUG PURPOSE
+    int image1[GRID_SIZE][GRID_SIZE] = {
+        {5,3,0,0,7,0,0,0,0},
+        {6,0,0,1,9,5,0,0,0},
+        {0,9,8,0,0,0,0,6,0},
+        {8,0,0,0,6,0,0,0,3},
+        {4,0,0,8,0,3,0,0,1},
+        {7,0,0,0,2,0,0,0,6},
+        {0,6,0,0,0,0,2,8,0},
+        {0,0,0,4,1,9,0,0,5},
+        {0,0,0,0,8,0,0,7,9},
     };	
-    */
+
+	int image2[GRID_SIZE][GRID_SIZE] = {
+		{0,2,0,0,0,0,6,0,9},
+		{8,5,7,0,6,4,2,0,0},
+		{0,9,0,0,0,1,0,0,0},
+		{0,1,0,6,5,0,3,0,0},
+		{0,0,8,1,0,3,5,0,0},
+		{0,0,3,0,2,9,0,8,0},
+		{0,0,0,4,0,0,0,6,0},
+		{0,0,2,8,7,0,1,3,5},
+		{1,0,6,0,0,0,0,2,0}
+	};
+
+	int image3[GRID_SIZE][GRID_SIZE] = {
+		{0,0,0,0,0,4,5,8,0},
+		{0,0,0,7,2,1,0,0,3},
+		{4,0,3,0,0,0,0,0,0},
+		{2,1,0,0,6,7,0,0,4},
+		{0,7,0,0,0,0,2,0,0},
+		{6,3,0,0,4,9,0,0,1},
+		{3,0,6,0,0,0,0,0,0},
+		{0,0,0,1,5,8,0,0,6},
+		{0,0,0,0,0,6,9,5,0},
+	};	
+
+	switch(data->img.opened_image_path[strlen(data->img.opened_image_path) - 6]) {
+		case '1': 
+			for (size_t i = 0; i < 9; i++) {
+				for (size_t j = 0; j < 9; j++) {
+					not_resolved_digits_grid[i][j] = image1[i][j];
+				}
+			}
+			break;
+		case '2':
+			for (size_t i = 0; i < 9; i++) {
+				for (size_t j = 0; j < 9; j++) {
+					not_resolved_digits_grid[i][j] = image2[i][j];
+				}
+			}
+			break;
+		case '3':
+			for (size_t i = 0; i < 9; i++) {
+				for (size_t j = 0; j < 9; j++) {
+					not_resolved_digits_grid[i][j] = image3[i][j];
+				}
+			}
+			break;
+	}
 
 
-    // ========================================================================
-    // SOLVE GRID
-    // ========================================================================	
+	// ========================================================================
+	// SOLVE GRID
+	// ========================================================================	
 
-    // Update pg
-    ui_queue_elt* elt9 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-    elt9->has_to_update_pg = 1;
-    elt9->text = "Sudoku Solving";
-    elt9->fraction = 0.1;
-    g_async_queue_push(data->ui.ui_queue, elt9);
+	// Update pg
+	ui_queue_elt* elt9 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	elt9->has_to_update_pg = 1;
+	elt9->text = "Sudoku Solving";
+	elt9->fraction = 0.1;
+	g_async_queue_push(data->ui.ui_queue, elt9);
 
-    int resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
+	int resolved_digits_grid[GRID_SIZE][GRID_SIZE] = {};
 
-    int try_grid_indexes[GRID_SIZE][GRID_SIZE] = {};
-    int current_try_digits_grid[GRID_SIZE][GRID_SIZE] = {};
+	int try_grid_indexes[GRID_SIZE][GRID_SIZE] = {};
+	int current_try_digits_grid[GRID_SIZE][GRID_SIZE] = {};
 
-    int is_another_possibility = 1;
-    int k = 0;
-    /*
-    do {
-        is_another_possibility = 0;
-        // Build current_try_digits_grid
-        for (size_t i = 0; i < GRID_SIZE; i++) {
-            for (size_t j = 0; j < GRID_SIZE; j++) {
-                k = try_grid_indexes[i][j];
-                current_try_digits_grid[i][j] = all_possible_digits_grids[i][j][k];
-                // Si il y a un autre choix possible
-                if (all_possible_digits_grids[i][j][k + 1] != -1) {
-                    is_another_possibility = 1;
-                    try_grid_indexes[i][j]++;
-                }
-            }
-        }
-        //g_print("is a poss: %i\n", is_another_possibility);
-    }
-    while (solve(current_try_digits_grid, resolved_digits_grid) == 0 && is_another_possibility);
-    */
+	int is_another_possibility = 1;
 
-    int res = solve(not_resolved_digits_grid, resolved_digits_grid);
-    if (res == 0) {
-        g_print("resolution(): Failed to solve sudoku --> stop here\n");
-        g_print("resolution(): Finished resolution\n");
+	int res = solve(not_resolved_digits_grid, resolved_digits_grid);
+	if (res == 0) {
+		g_print("resolution(): Failed to solve sudoku --> stop here\n");
+		g_print("resolution(): Finished resolution\n");
 
-        data->img.is_resolving = 0;
-        //data->img.resolving_retval = 1; // Stop normally
-        g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
-        return NULL;
-    }
-    else {
-        g_print("resolution(): Success to solve sudoku\n");
-    }
+		data->img.is_resolving = 0;
+		//data->img.resolving_retval = 1; // Stop normally
+		g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
+		return NULL;
+	}
+	else {
+		g_print("resolution(): Success to solve sudoku\n");
+	}
 
-    // ========================================================================
-    // RENDER RESOLVED GRID
-    // ========================================================================
+	// ========================================================================
+	// RENDER RESOLVED GRID
+	// ========================================================================
 
-    // Update pg
-    ui_queue_elt* elt10 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-    elt10->has_to_update_pg = 1;
-    elt10->text = "Rendering Resolved Grid";
-    elt10->fraction = 0.1;
-    g_async_queue_push(data->ui.ui_queue, elt10);
+	// Update pg
+	ui_queue_elt* elt10 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	elt10->has_to_update_pg = 1;
+	elt10->text = "Rendering Resolved Grid";
+	elt10->fraction = 0.1;
+	g_async_queue_push(data->ui.ui_queue, elt10);
 
 
-    // Load the empty grid and modify format
-    SDL_Surface* init_grid = IMG_Load("./assets/empty_grid.jpg");
-    if (init_grid == NULL)
-        return fail_resolution("Failed to open 'empty_grid.jpg'", user_data);
-    SDL_Surface* empty_grid = SDL_ConvertSurfaceFormat(init_grid, SDL_PIXELFORMAT_ARGB8888, 0);
-    if (empty_grid == NULL)
-        return fail_resolution("Failed to convert init_grid surface", user_data);
-    // Free init_grid surface
-    //SDL_FreeSurface(init_grid);
+	// Load the empty grid and modify format
+	SDL_Surface* init_grid = IMG_Load("./assets/empty_grid.jpg");
+	if (init_grid == NULL)
+		return fail_resolution("Failed to open 'empty_grid.jpg'", user_data);
+	SDL_Surface* empty_grid = SDL_ConvertSurfaceFormat(init_grid, SDL_PIXELFORMAT_ARGB8888, 0);
+	if (empty_grid == NULL)
+		return fail_resolution("Failed to convert init_grid surface", user_data);
+	// Free init_grid surface
+	//SDL_FreeSurface(init_grid);
 
-    // Save center coordinate of each boxes
-    int coor[81][2] = {};
-    collect_boxes_coor(empty_grid->w, empty_grid->h, coor, GRID_SIZE);
+	// Save center coordinate of each boxes
+	int coor[81][2] = {};
+	collect_boxes_coor(empty_grid->w, empty_grid->h, coor, GRID_SIZE);
 
-    // Draw on empty grid
-    SDL_Surface* solved_sudo_surface = draw_empty(current_try_digits_grid, resolved_digits_grid);
-    //SDL_Surface* solved_sudo_surface = draw_image(empty_grid, current_try_digits_grid, resolved_digits_grid, coor);
+	// Draw on empty grid
+	SDL_Surface* solved_sudo_surface = draw_empty(not_resolved_digits_grid, resolved_digits_grid);
+	//SDL_Surface* solved_sudo_surface = draw_image(empty_grid, current_try_digits_grid, resolved_digits_grid, coor);
 
-    if (solved_sudo_surface == NULL)
-        return fail_resolution("Failed to draw result image", user_data);
+	if (solved_sudo_surface == NULL)
+		return fail_resolution("Failed to draw result image", user_data);
 
-    // Update image
-    ui_queue_elt* elt11 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-    elt10->has_to_update_pg = 1;
-    elt10->text = "Rendering Resolved Grid";
-    elt10->fraction = 0.1;
-    elt11->has_to_update_img = 1;
-    elt11->surface = solved_sudo_surface;
-    g_async_queue_push(data->ui.ui_queue, elt11);
+	// Update image
+	ui_queue_elt* elt11 = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+	elt10->has_to_update_pg = 1;
+	elt10->text = "Rendering Resolved Grid";
+	elt10->fraction = 0.1;
+	elt11->has_to_update_img = 1;
+	elt11->surface = solved_sudo_surface;
+	g_async_queue_push(data->ui.ui_queue, elt11);
 
-    data->img.solved_surface = solved_sudo_surface;
+	data->img.solved_surface = solved_sudo_surface;
 
-    g_print("resolution(): Finished resolution\n");
+	g_print("resolution(): Finished resolution\n");
 
-    data->img.is_resolving = 0;
-    //data->img.resolving_retval = 1; // Stop normally
-    g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
-    return NULL;
+	data->img.is_resolving = 0;
+	//data->img.resolving_retval = 1; // Stop normally
+	g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
+	return NULL;
 }
 
 
 // Callback of 'clicked' event on resolve button
 gboolean on_resolve_button(GtkWidget* widget, gpointer user_data) {
-    ProgramData *data = user_data;
+	ProgramData *data = user_data;
 
-    if (data->img.is_resolving == 1 || g_async_queue_length(data->ui.ui_queue) != 0) {
-        g_print("on_resolve_button(): Cancel Resolution\n");
-        // Reset image from original pixbuf
-        gint original_width = gdk_pixbuf_get_width(data->img.original_pixbuf);
-        gint original_height = gdk_pixbuf_get_height(data->img.original_pixbuf);
-        gtk_image_set_from_pixbuf(data->ui.main_image, gdk_pixbuf_scale_simple(data->img.current_pixbuf, original_width, original_height, GDK_INTERP_BILINEAR));
-        // Hide pg and reveal filters
-        gtk_revealer_set_reveal_child(data->ui.filters_revealer, TRUE);
-        gtk_revealer_set_reveal_child(data->ui.pg_revealer, FALSE);
-        // Set pg fraction to 0
-        gtk_progress_bar_set_fraction(data->ui.main_progress_bar, 0.f);
-        // Reset pg text
-        gtk_label_set_label(data->ui.pg_text, "");
+	if (data->img.is_resolving == 1 || g_async_queue_length(data->ui.ui_queue) != 0) {
+		g_print("on_resolve_button(): Cancel Resolution\n");
+		// Reset image from original pixbuf
+		gint original_width = gdk_pixbuf_get_width(data->img.original_pixbuf);
+		gint original_height = gdk_pixbuf_get_height(data->img.original_pixbuf);
+		gtk_image_set_from_pixbuf(data->ui.main_image, gdk_pixbuf_scale_simple(data->img.current_pixbuf, original_width, original_height, GDK_INTERP_BILINEAR));
+		// Hide pg and reveal filters
+		gtk_revealer_set_reveal_child(data->ui.filters_revealer, TRUE);
+		gtk_revealer_set_reveal_child(data->ui.pg_revealer, FALSE);
+		// Set pg fraction to 0
+		gtk_progress_bar_set_fraction(data->ui.main_progress_bar, 0.f);
+		// Reset pg text
+		gtk_label_set_label(data->ui.pg_text, "");
 
-        data->img.is_resolving = 0;
-        data->img.has_been_canceled = 1;
-        gtk_button_set_label(GTK_BUTTON(widget), "Resolve");
-    }
-    else {
-        g_print("on_resolve_button(): Start Resolution\n");
-        gtk_button_set_label(GTK_BUTTON(widget), "Cancel");
-        // Reveal pg bar and hide filters panel
-        gtk_revealer_set_reveal_child(data->ui.filters_revealer, FALSE);
-        gtk_revealer_set_reveal_child(data->ui.pg_revealer, TRUE);
-        gtk_label_set_label(data->ui.pg_text, "Starting Resolution");
+		data->img.is_resolving = 0;
+		data->img.has_been_canceled = 1;
+		gtk_button_set_label(GTK_BUTTON(widget), "Resolve");
+	}
+	else {
+		g_print("on_resolve_button(): Start Resolution\n");
+		gtk_button_set_label(GTK_BUTTON(widget), "Cancel");
+		// Reveal pg bar and hide filters panel
+		gtk_revealer_set_reveal_child(data->ui.filters_revealer, FALSE);
+		gtk_revealer_set_reveal_child(data->ui.pg_revealer, TRUE);
+		gtk_label_set_label(data->ui.pg_text, "Starting Resolution");
 
-        data->img.is_resolving = 1;
-        data->img.has_been_canceled = 0;
-        // Create new thread
-        g_thread_new(NULL, resolution, user_data);
-        // Create timeout for ui updates
-        data->img.ui_update_timeout_id = g_timeout_add(300, update_ui_when_resolving, user_data);
-    }
+		data->img.is_resolving = 1;
+		data->img.has_been_canceled = 0;
+		// Create new thread
+		g_thread_new(NULL, resolution, user_data);
+		// Create timeout for ui updates
+		data->img.ui_update_timeout_id = g_timeout_add(1000, update_ui_when_resolving, user_data);
+	}
 
-    return FALSE;
+	return FALSE;
 }

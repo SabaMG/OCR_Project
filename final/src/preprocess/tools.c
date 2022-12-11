@@ -426,11 +426,13 @@ int ComputeLines(int nbLines, int* Acc, int maxRho,
         }
 
         //Debug purposes
+		/*
         printf("=== Ligne %zu :\n", i_H + i_V);
         printf("r,t: %i,%i\n", rho, theta);
         //printf("x0,y0: %f, %f\n", x0, y0);
         printf("x1,y1: %i, %i\n", x1, y1);
         printf("x2,y2: %i, %i\n\n", x2, y2);
+		*/
 
     }
 
@@ -655,6 +657,8 @@ int RemoveNoise(struct Line* list, size_t* length, size_t nbToRemove){
 int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
  char* linesImgPath, int case_coor[81][2], SDL_Surface boxesArray[81], int nbLines/*, int warped*/){
 
+    IMG_SaveJPG(originalImage, "./debug/input_hough_origin.jpg", 100);
+    IMG_SaveJPG(sobelImage, "./debug/input_hough_sobel.jpg", 100);
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
 
@@ -684,11 +688,8 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
         return AngleToRotate;
 
     int removed = 0;
-    printf("H_lines to remove: %zu\n", H_len - 10);
     removed += RemoveNoise(H_lines, &H_len, H_len - 10);
-    printf("\nV_lines to remove: %zu\n", V_len - 10);
     removed += RemoveNoise(V_lines, &V_len, V_len - 10);
-    printf("\n## %i elements removed\n", removed);
 
     if (H_len < 10)
         errx(1, "Not enough H_lines: %zu\n", H_len);
@@ -698,8 +699,8 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     //Draw detected lines
     PrintLines(sobelImage, H_lines, H_len, W, H);
     PrintLines(sobelImage, V_lines, V_len, W, H);
-    //Saving picture with drawn lines
-//    IMG_SaveJPG(sobelImage, linesImgPath, 100);
+   //Saving picture with drawn lines
+    IMG_SaveJPG(sobelImage, "./debug/debug_hough_segm.jpg", 100);
     //SDL_FreeSurface(sobelImage);
 
     
@@ -758,7 +759,6 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
     free(Acc);
     free(intersXY);
 
-    printf("exit hough\n");
 
     return EXIT_SUCCESS;
 }
