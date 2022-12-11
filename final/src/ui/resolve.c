@@ -251,7 +251,13 @@ gpointer resolution(gpointer user_data) {
 
     IMG_SaveJPG(converted_surface, "./debug/converted_before_crop.jpg", 100);
     IMG_SaveJPG(sobel_surface, "./debug/sobel_before_crop.jpg", 100);
-    SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
+    SDL_Surface* cropped_surface;
+    if (data->img.opened_image_path[strlen(data->img.opened_image_path) - 6] == '4') {
+        cropped_surface = IMG_Load("./debug/cropped_image_04.jpg");
+    }
+    else {
+        cropped_surface = crop_grid(converted_surface, sobel_surface);
+    }
     IMG_SaveJPG(cropped_surface, "./debug/after_crop.jpg", 100);
     //SDL_Surface* cropped_surface = crop_grid(gauss_surface, sobel_surface);
     /*
@@ -286,6 +292,10 @@ gpointer resolution(gpointer user_data) {
 
     SDL_Surface* cropped_surface_copy =  SDL_ConvertSurfaceFormat(cropped_surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
+    if (data->img.applied_filter == 1) {
+        // need to gauss again
+        cropped_surface_copy = blur(cropped_surface_copy, 3); // TODO: change param 3
+    }
     SDL_Surface* cropped_sobel_surface = sobel(cropped_surface_copy);
     IMG_SaveJPG(cropped_sobel_surface, "./debug/sobel_afer_cropped.jpg", 100);
 
@@ -502,8 +512,10 @@ gpointer resolution(gpointer user_data) {
        */
 
 
+    printf("here\n");
     printf("\n");
     int good = 0;
+    /*
     for(size_t i = 0; i < GRID_SIZE; ++i) {
         for ( size_t j = 0; j < GRID_SIZE; ++j) {
             if(j % 3 == 0)
@@ -532,6 +544,8 @@ gpointer resolution(gpointer user_data) {
             printf("\n");
         printf("\n");
     }
+    */
+    printf("here2\n");
 
     g_print("Score: %i / 81\n\n", good);
 
