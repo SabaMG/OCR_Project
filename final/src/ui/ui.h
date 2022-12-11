@@ -11,6 +11,9 @@ gboolean on_nn_generate_btn(GtkWidget* widget, gpointer user_data);
 gboolean on_nn_load_file_set(GtkWidget* widget, gpointer user_data);
 gboolean on_nn_load_btn(GtkWidget* widget, gpointer user_data);
 gboolean on_nn_export_btn(GtkWidget* widget, gpointer user_data);
+gboolean on_original_btn(GtkWidget* widget, gpointer user_data);
+gboolean on_gauss_btn(GtkWidget* widget, gpointer user_data);
+gboolean on_gamma_btn(GtkWidget* widget, gpointer user_data);
 
 gboolean on_train_file_set(GtkWidget* widget, gpointer user_data);
 gboolean on_epochs_spin_btn(GtkWidget* widget, gpointer user_data);

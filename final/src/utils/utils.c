@@ -10,7 +10,26 @@ SDL_Surface *copy_surface(SDL_Surface *source) {
     return copie;
 }
 
-GdkPixbuf * gtk_image_new_from_sdl_surface (SDL_Surface *surface) {
+SDL_Surface* sdl_surface_new_from_gdk_pixbuf(SDL_Surface* source, GdkPixbuf *pixbuf) {
+    int rowstride;
+    guchar *pixels;
+
+    pixels = gdk_pixbuf_get_pixels (pixbuf);
+    rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+
+    Uint32 src_format = source->format->format;
+    Uint32 dst_format = SDL_PIXELFORMAT_RGB24;
+
+    SDL_Surface* surface = SDL_CreateRGBSurface(0, source->w, source->h, 32,0,0,0,0);
+    SDL_LockSurface(surface);
+    SDL_ConvertPixels (surface->w, surface->h, src_format,
+               surface->pixels, surface->pitch,
+               dst_format, pixels, rowstride);
+    SDL_UnlockSurface(surface);
+	return surface;
+}
+
+GdkPixbuf * gtk_image_new_from_sdl_surface(SDL_Surface *surface) {
     Uint32 src_format;
     Uint32 dst_format;
 

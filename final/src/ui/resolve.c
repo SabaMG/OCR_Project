@@ -63,9 +63,17 @@ gboolean update_ui_when_resolving(gpointer user_data) {
 		g_print("update_ui_when_resolving(): Resolving has stopped and queue is empty, kill ui updater\n");
 		// Reset pg fraction and text
 		gtk_progress_bar_set_fraction(data->ui.main_progress_bar, 0.f);
-		gtk_progress_bar_set_text(data->ui.main_progress_bar, "");
-		// Hide pg
-		gtk_widget_hide(GTK_WIDGET(data->ui.main_progress_bar));
+		gtk_label_set_label(data->ui.pg_text, "");
+		// Activate original button
+		gtk_widget_set_sensitive(GTK_WIDGET(data->ui.original_btn), TRUE);
+		// disable filters gamma / gauss button
+		//gtk_widget_set_sensitive(GTK_WIDGET(data->ui.gauss_btn), FALSE);
+		//gtk_widget_set_sensitive(GTK_WIDGET(data->ui.gamma_btn), FALSE);
+		gtk_toggle_button_set_active(data->ui.gauss_btn, FALSE);
+		gtk_toggle_button_set_active(data->ui.gamma_btn, FALSE);
+		// Hide pg and show filters
+		gtk_revealer_set_reveal_child(data->ui.pg_revealer, FALSE);
+		gtk_revealer_set_reveal_child(data->ui.filters_revealer, TRUE);
 		// Set sensitivity of resolve btn to false
 		gtk_widget_set_sensitive(GTK_WIDGET(data->ui.resolve_button), FALSE);
 		// Update resolve_btn label
@@ -80,7 +88,7 @@ gboolean update_ui_when_resolving(gpointer user_data) {
 		// Update pg if needed
 		if (elt->has_to_update_pg == 1) {
 			g_print("update_ui_when_resolving(): Updating progress bar --> %s\n", elt->text);
-			gtk_progress_bar_set_text(data->ui.main_progress_bar, elt->text);
+			gtk_label_set_label(data->ui.pg_text, elt->text);
 			double last_fraction = gtk_progress_bar_get_fraction(data->ui.main_progress_bar);
 			gtk_progress_bar_set_fraction(data->ui.main_progress_bar, last_fraction + elt->fraction);
 		}
@@ -96,19 +104,13 @@ gboolean update_ui_when_resolving(gpointer user_data) {
 			float surf_height;
 			float surf_width;
 			float ratio;
-			//if (elt->ratio_can_changed == 1) {
-				surf_height  = elt->surface->h;
-				surf_width  = elt->surface->w;
-				//printf("height = %f * width\n", surf_height / surf_width);
-				ratio = surf_height / surf_width;
-				//original_width -= 200;
-				gint height = gtk_widget_get_allocated_height(GTK_WIDGET(data->ui.window));
-				if (ratio * original_width < height) {
-					original_height = ratio * original_width;
-					printf("height: %f\n", original_height);
-					printf("width: %f\n", original_width);
-				}
-			//}
+			surf_height  = elt->surface->h;
+			surf_width  = elt->surface->w;
+			ratio = surf_height / surf_width;
+			gint height = gtk_widget_get_allocated_height(GTK_WIDGET(data->ui.window));
+			if (ratio * original_width < height) {
+				original_height = ratio * original_width;
+			}
 
 			// Rescale pixbuf
 			//data->ui.image_pixbuf = pixbuf; 
@@ -127,24 +129,31 @@ gpointer resolution(gpointer user_data) {
 	g_print("resolution(): Start Resolution\n");
 
 	// Check if image can be opened
-	if (data->img.opened_image_path == NULL)
-		return fail_resolution("Failed to find opened image path", user_data);
+	//if (data->img.opened_image_path == NULL)
+		//return fail_resolution("Failed to find opened image path", user_data);
 
 	// ========================================================================
-	// LOAD IMAGE
+	// GET IMAGE
 	// ========================================================================
 
 	// Update pg
+	/*
 	ui_queue_elt* elt = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
 	elt->has_to_update_pg = 1;
-	elt->text = "Loading Surface";
+	elt->text = "Creating SDL Surface From Pixbuf";
 	elt->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, elt);
+	*/
 
-	SDL_Surface* original_surface = IMG_Load(data->img.opened_image_path);
+	// Create Surface form current pixebuf
+	//SDL_Surface* loaded_surface = IMG_Load(data->img.opened_image_path);
+	//SDL_Surface* original_surface = sdl_surface_new_from_gdk_pixbuf(loaded_surface, data->img.current_pixbuf);
+	// Create surface normally
+	//SDL_Surface* original_surface = IMG_Load(data->img.opened_image_path);
+
 	// Handle error
-	if (original_surface == NULL)
-		return fail_resolution("Failed to load image", user_data);
+	if (data->img.filtered_surface == NULL)
+		return fail_resolution("Filtered surface is null", user_data);
 
 	// ========================================================================
 	// CONVERT SURFACE FORMAT | SAVE ORIGINAL SURFACE
@@ -157,34 +166,44 @@ gpointer resolution(gpointer user_data) {
 	elt2->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, elt2);
 
-	SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(original_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+	//SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(data->img.original_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+	SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(data->img.filtered_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+
 
 	// Free old surface
+	/*
 	if (original_surface != NULL)
 		SDL_FreeSurface(original_surface);
+		*/
 
 	// Handle error
 	if (converted_surface == NULL)
 		return fail_resolution("Failed to convert image", user_data);
 
 	// ========================================================================
-	// GAUSS FILTER
+	// GAUSS FILTER if any
 	// ========================================================================
 
-	// Update pg
-	ui_queue_elt* gauss_e = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-	gauss_e->has_to_update_pg = 1;
-	gauss_e->text = "Gauss Filter";
-	gauss_e->fraction = 0.1;
-	g_async_queue_push(data->ui.ui_queue, gauss_e);
-
 	SDL_Surface* gauss_surface = SDL_ConvertSurfaceFormat(converted_surface, SDL_PIXELFORMAT_ARGB8888, 0);
-	gauss_surface = blur(gauss_surface, 3); // TODO: change param 3
+	//gauss_surface = blur(gauss_surface, 3); // TODO: change param 3
+	/*
+	if (data->img.applied_filter == 1) {
+		// Update pg
+		ui_queue_elt* gauss_e = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+		gauss_e->has_to_update_pg = 1;
+		gauss_e->text = "Gauss Filter";
+		gauss_e->fraction = 0.1;
+		g_async_queue_push(data->ui.ui_queue, gauss_e);
 
-	ui_queue_elt* gauss_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
-	gauss_i->has_to_update_img = 1;
-	gauss_i->surface = gauss_surface;
-	g_async_queue_push(data->ui.ui_queue, gauss_i);
+		gauss_surface = SDL_ConvertSurfaceFormat(converted_surface, SDL_PIXELFORMAT_ARGB8888, 0);
+		gauss_surface = blur(gauss_surface, 3); // TODO: change param 3
+
+		ui_queue_elt* gauss_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
+		gauss_i->has_to_update_img = 1;
+		gauss_i->surface = gauss_surface;
+		g_async_queue_push(data->ui.ui_queue, gauss_i);
+	}
+	*/
 
 	// ========================================================================
 	// SOBEL FILTER ORIGINAL IMAGE
@@ -197,8 +216,16 @@ gpointer resolution(gpointer user_data) {
 	sobel_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, sobel_e);
 
-	//SDL_Surface* sobel_surface = sobel(gauss_surface);
-	SDL_Surface* sobel_surface = sobel(converted_surface);
+	//SDL_Surface* sobel_surface = sobel(converted_surface);
+	SDL_Surface* sobel_surface;
+	if (data->img.applied_filter == 1) {
+		sobel_surface = sobel(gauss_surface);
+		IMG_SaveJPG(sobel_surface, "./sobel_from_gauss.jpg", 100);
+	}
+	else {
+		sobel_surface = sobel(converted_surface);
+		IMG_SaveJPG(sobel_surface, "./sobel_from_converted.jpg", 100);
+	}
 
 	// Update image
 	ui_queue_elt* sobel_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -217,7 +244,17 @@ gpointer resolution(gpointer user_data) {
 	ff_e->fraction = 0.1;
 	g_async_queue_push(data->ui.ui_queue, ff_e);
 
-	SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
+	//SDL_Surface* cropped_surface = crop_grid(converted_surface, sobel_surface);
+	//SDL_Surface* cropped_surface = crop_grid(gauss_surface, sobel_surface);
+	SDL_Surface* cropped_surface;
+	if (data->img.applied_filter == 1) {
+		cropped_surface = crop_grid(gauss_surface, sobel_surface);
+		IMG_SaveJPG(cropped_surface, "./cropped_from_gauss.jpg", 100);
+	}
+	else {
+		cropped_surface = crop_grid(converted_surface, sobel_surface);
+		IMG_SaveJPG(sobel_surface, "./cropped_from_converted.jpg", 100);
+	}
 
 	// Update image
 	ui_queue_elt* ff_i = (ui_queue_elt*)malloc(sizeof(ui_queue_elt));
@@ -246,6 +283,7 @@ gpointer resolution(gpointer user_data) {
 	sobel_i2->has_to_update_img = 1;
 	sobel_i2->surface = cropped_sobel_surface;
 	g_async_queue_push(data->ui.ui_queue, sobel_i2);
+
 	// ========================================================================
 	// IMAGE EDGES DETECTION | HOUGH
 	// ========================================================================
@@ -331,12 +369,6 @@ gpointer resolution(gpointer user_data) {
 			SDL_FreeSurface(segmentation_surface);
 		segmentation_surface = tmp_segmentation_surface;
 	}
-
-	data->img.is_resolving = 0;
-	//data->img.resolving_retval = 1; // Stop normally
-	g_thread_exit(NULL); //TODO: a enlever sinon bugg sur pie
-	return NULL;
-
 
 	// ========================================================================
 	// RESIZE DIGIT IMAGE
@@ -617,12 +649,17 @@ gboolean on_resolve_button(GtkWidget* widget, gpointer user_data) {
 
 	if (data->img.is_resolving == 1 || g_async_queue_length(data->ui.ui_queue) != 0) {
 		g_print("on_resolve_button(): Cancel Resolution\n");
-		// Hide pg
-		gtk_widget_hide(GTK_WIDGET(data->ui.main_progress_bar));
+		// Reset image from original pixbuf
+		gint original_width = gdk_pixbuf_get_width(data->img.original_pixbuf);
+		gint original_height = gdk_pixbuf_get_height(data->img.original_pixbuf);
+		gtk_image_set_from_pixbuf(data->ui.main_image, gdk_pixbuf_scale_simple(data->img.current_pixbuf, original_width, original_height, GDK_INTERP_BILINEAR));
+		// Hide pg and reveal filters
+		gtk_revealer_set_reveal_child(data->ui.filters_revealer, TRUE);
+		gtk_revealer_set_reveal_child(data->ui.pg_revealer, FALSE);
 		// Set pg fraction to 0
 		gtk_progress_bar_set_fraction(data->ui.main_progress_bar, 0.f);
 		// Reset pg text
-		gtk_progress_bar_set_text(data->ui.main_progress_bar, "");
+		gtk_label_set_label(data->ui.pg_text, "");
 
 		data->img.is_resolving = 0;
 		data->img.has_been_canceled = 1;
@@ -631,7 +668,11 @@ gboolean on_resolve_button(GtkWidget* widget, gpointer user_data) {
 	else {
 		g_print("on_resolve_button(): Start Resolution\n");
 		gtk_button_set_label(GTK_BUTTON(widget), "Cancel");
-		gtk_widget_show(GTK_WIDGET(data->ui.main_progress_bar));
+		// Reveal pg bar and hide filters panel
+		gtk_revealer_set_reveal_child(data->ui.filters_revealer, FALSE);
+		gtk_revealer_set_reveal_child(data->ui.pg_revealer, TRUE);
+		gtk_label_set_label(data->ui.pg_text, "Starting Resolution");
+
 		data->img.is_resolving = 1;
 		data->img.has_been_canceled = 0;
 		// Create new thread

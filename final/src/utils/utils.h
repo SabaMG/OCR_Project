@@ -25,6 +25,12 @@ typedef struct UserInterface {
 	GtkLabel* main_info_label;
 	GtkProgressBar* main_progress_bar;
 	GAsyncQueue* ui_queue;
+	GtkLabel* pg_text;
+	GtkRevealer* filters_revealer;
+	GtkRevealer* pg_revealer;
+	GtkButton* original_btn;
+	GtkToggleButton* gauss_btn;
+	GtkToggleButton* gamma_btn;
 } UserInterface;
 
 typedef struct NetworkData {
@@ -46,6 +52,13 @@ typedef struct ImageData {
 	int has_been_canceled;
 	int resolving_retval;
 	int ui_update_timeout_id;
+	GdkPixbuf* original_pixbuf;
+	GdkPixbuf* current_pixbuf;
+	int applied_filter; // 0 -> original | 1 -> gauss | 2 -> gamma | 3 -> gauss + gamma
+	SDL_Surface* original_surface;
+	SDL_Surface* filtered_surface;
+	SDL_Surface* gauss_surface;
+	SDL_Surface* gamma_surface;
 } ImageData;
 
 typedef struct ProgramData {
@@ -55,6 +68,8 @@ typedef struct ProgramData {
 } ProgramData;
 
 SDL_Surface *copy_surface(SDL_Surface *source);
+
+SDL_Surface* sdl_surface_new_from_gdk_pixbuf(SDL_Surface* source, GdkPixbuf *pixbuf);
 
 GdkPixbuf * gtk_image_new_from_sdl_surface (SDL_Surface *surface);
 

@@ -634,8 +634,8 @@ int Segmentation(SDL_Surface* originalImage, SDL_Surface* sobelImage,
 
     if(SDL_LockSurface(sobelImage) != 0)
         printf("Unable to lock the surface");
-	//IMG_SaveJPG(sobelImage, "./sobelImage.jpg", 100);
-	//IMG_SaveJPG(originalImage, "./originImage.jpg", 100);
+	IMG_SaveJPG(sobelImage, "./sobelImage.jpg", 100);
+	IMG_SaveJPG(originalImage, "./originImage.jpg", 100);
 
     int W = sobelImage->w;//Width of the edge picture
     int H = sobelImage->h;//Height of the edge picture
