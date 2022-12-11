@@ -409,10 +409,12 @@ void training(Layer *network, char *training_folder_path, double learning_rate, 
 
 				surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
 
+				/*
 				if (w_flag) {
 					//printf("wflag, passage en niveau de gris blanc sur noir\n");
 					surface_to_grayscale(surface);
 				}
+				*/
 
 				Uint32* pixels = surface->pixels;
 				for (int y = 0; y < surface->h; y++) {
